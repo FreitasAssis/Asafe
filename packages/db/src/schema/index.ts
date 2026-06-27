@@ -1,11 +1,18 @@
 /**
  * Schema Drizzle do Asafe (ver PLANNING.md §5).
  *
- * ETAPA 2: traduzir as tabelas do §5 (user, group, membership, song,
- * song_arrangement, tag, song_tag, user_song_tag_override, repertoire,
- * repertoire_item, pericope, song_pericope, liturgical_day, lectionary, ...)
- * para definições Drizzle, e as políticas RLS do §6.
- *
- * Placeholder por enquanto — a etapa 2 preenche este diretório.
+ * ETAPA 2: traduz as tabelas do §5 e as políticas RLS do §6 para Drizzle.
  */
-export {};
+export * from "./enums";
+export * from "./user";
+export * from "./group";
+export * from "./membership";
+export * from "./song";
+export * from "./tag";
+export * from "./songTag";
+export * from "./userSongTagOverride";
+export * from "./repertoire";
+export * from "./repertoireItem";
+export * from "./repertoireTheme";
+export * from "./slotTemplate";
+export * from "./shareLink";
