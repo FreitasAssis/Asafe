@@ -1,0 +1,27 @@
+{
+  "name": "asafe",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Asafe — organize e compartilhe repertórios de música litúrgica católica.",
+  "license": "AGPL-3.0-only",
+  "packageManager": "yarn@4.5.2",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "typescript": "^5.6.0"
+  }
+}
