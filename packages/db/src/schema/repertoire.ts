@@ -1,0 +1,65 @@
+import { sql } from "drizzle-orm";
+import {
+  date,
+  pgPolicy,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
+import { authenticatedRole } from "drizzle-orm/supabase";
+import { repertoireType, visibility } from "./enums";
+import { group } from "./group";
+import { user } from "./user";
+
+/**
+ * Repertório (ver PLANNING.md §5/§6).
+ *
+ * MVP (Fase 1): SEM colunas litúrgicas (liturgical_key/liturgical_snapshot),
+ * que entram aditivas na Fase 2.
+ *
+ * RLS (políticas separadas por comando p/ clareza):
+ *  - SELECT: dono, OU membro do grupo (group_id setado), OU público.
+ *  - INSERT/UPDATE/DELETE: apenas o dono (owner_id = auth.uid()).
+ *    O dono sempre enxerga via SELECT (cobre o RETURNING do INSERT).
+ */
+export const repertoire = pgTable(
+  "repertoire",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    type: repertoireType("type").notNull(),
+    date: date("date"),
+    ownerId: uuid("owner_id")
+      .notNull()
+      .references(() => user.id),
+    groupId: uuid("group_id").references(() => group.id),
+    visibility: visibility("visibility").notNull().default("private"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    pgPolicy("repertoire_select", {
+      for: "select",
+      to: authenticatedRole,
+      using: sql`${t.ownerId} = auth.uid() OR (${t.groupId} is not null AND public.is_group_member(${t.groupId})) OR ${t.visibility} = 'public'`,
+    }),
+    pgPolicy("repertoire_insert", {
+      for: "insert",
+      to: authenticatedRole,
+      withCheck: sql`${t.ownerId} = auth.uid()`,
+    }),
+    pgPolicy("repertoire_update", {
+      for: "update",
+      to: authenticatedRole,
+      using: sql`${t.ownerId} = auth.uid()`,
+      withCheck: sql`${t.ownerId} = auth.uid()`,
+    }),
+    pgPolicy("repertoire_delete", {
+      for: "delete",
+      to: authenticatedRole,
+      using: sql`${t.ownerId} = auth.uid()`,
+    }),
+  ],
+).enableRLS();
