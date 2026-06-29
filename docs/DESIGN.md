@@ -128,8 +128,8 @@ histórico entre celebrações — ataca diretamente a repetição semana a sema
 
 - **Armazenamento interno em ChordPro** (dá transposição, esconder cifra, reflow). O usuário
   **não precisa** conhecer ChordPro.
-- **Entrada:** campo com **preview ao vivo**, aceitando "acordes sobre a letra" (estilo
-  CifraClub), ChordPro direto (detectado pela presença de `[ ]`), ou **só letra**.
+- **Entrada:** campo com **preview ao vivo**, aceitando "acordes sobre a letra" (o formato
+  que o músico já usa), ChordPro direto (detectado pela presença de `[ ]`), ou **só letra**.
 - **Exibição:** cifra+letra / só letra / esconder cifra (toggle por usuário); **modo palco**
   (tema escuro, fonte grande, autoscroll, capo); **modo projeção** (letra grande para telão).
 - **Navegação sincronizada (Fase 3):** modo palco espelhado em tempo real entre os aparelhos
