@@ -26,6 +26,10 @@ out/
 supabase/.branches/
 supabase/.temp/
 
+# Planos de implementação efêmeros — ficam locais, fora do git.
+# (Documentação durável de design fica em docs/DESIGN.md, versionada.)
+docs/plans/
+
 # Logs
 *.log
 npm-debug.log*
