@@ -1,8 +1,12 @@
 /**
- * @asafe/chordpro — wrappers do ChordSheetJS para o Asafe (ver PLANNING.md §8).
+ * @asafe/chordpro — engine de ChordPro do Asafe (DESIGN §7).
  *
- * Armazenamos internamente em ChordPro (dá transposição, esconder cifra, reflow).
- * Os wrappers de alto nível (parse de "acordes sobre a letra", transpose por semitons,
- * hideChords, detectFormat) entram na Fase 1 via TDD — este é o ponto de entrada.
+ * Armazenamos sempre em ChordPro (dá transposição, esconder cifra, reflow); o usuário
+ * cola no formato que conhecer e a engine normaliza. Cada função fica num arquivo por
+ * contexto; este index é o barril público do pacote.
  */
-export * as ChordSheetJS from "chordsheetjs";
+export * from "./detect-format";
+export * from "./to-chordpro";
+export * from "./transpose";
+export * from "./strip-chords";
+export * from "./to-html";
