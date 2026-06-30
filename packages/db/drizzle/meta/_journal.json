@@ -50,6 +50,13 @@
       "when": 1782830629101,
       "tag": "0006_talented_old_lace",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1782841795266,
+      "tag": "0007_share_repertoire_full",
+      "breakpoints": true
     }
   ]
 }
