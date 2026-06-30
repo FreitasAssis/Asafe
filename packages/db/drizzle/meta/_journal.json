@@ -43,6 +43,13 @@
       "when": 1782590091524,
       "tag": "0005_quiet_spacker_dave",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1782830629101,
+      "tag": "0006_talented_old_lace",
+      "breakpoints": true
     }
   ]
 }
