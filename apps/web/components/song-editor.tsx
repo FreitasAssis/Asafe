@@ -6,6 +6,7 @@ import {
   audioProvider,
   isAllowedAudioUrl,
   MAX_AUDIO_LINKS,
+  type TagCategory,
 } from "@asafe/core";
 import {
   detectFormat,
@@ -16,11 +17,15 @@ import {
 import { browserClient } from "@/lib/supabase/client";
 import {
   createSong,
+  createTag,
   deleteSong,
+  setSongTags,
   updateSong,
   type Song,
+  type Tag,
 } from "@/lib/songs";
 import { ChordPreview } from "./chord-preview";
+import { TagPicker } from "./tag-picker";
 
 const FORMAT_LABEL: Record<string, string> = {
   chordpro: "ChordPro",
@@ -28,7 +33,15 @@ const FORMAT_LABEL: Record<string, string> = {
   "lyrics-only": "só letra",
 };
 
-export function SongEditor({ userId, song }: { userId: string; song?: Song }) {
+export function SongEditor({
+  userId,
+  tags,
+  song,
+}: {
+  readonly userId: string;
+  readonly tags: Tag[];
+  readonly song?: Song;
+}) {
   const router = useRouter();
   const editing = Boolean(song);
 
@@ -42,6 +55,39 @@ export function SongEditor({ userId, song }: { userId: string; song?: Song }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
+
+  // Tags disponíveis (globais + pessoais) e as selecionadas nesta música.
+  const [availableTags, setAvailableTags] = useState<Tag[]>(tags);
+  const [selectedTags, setSelectedTags] = useState<Set<string>>(
+    new Set(song?.tagIds ?? []),
+  );
+
+  function toggleTag(id: string) {
+    setSelectedTags((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function handleCreateTag(name: string, category: TagCategory) {
+    // Evita duplicar (case-insensitive na mesma categoria): se já existe, só seleciona.
+    const existing = availableTags.find(
+      (t) => t.category === category && t.name.toLowerCase() === name.toLowerCase(),
+    );
+    if (existing) {
+      toggleTag(existing.id);
+      return;
+    }
+    try {
+      const created = await createTag(browserClient(), userId, name, category);
+      setAvailableTags((prev) => [...prev, created]);
+      setSelectedTags((prev) => new Set(prev).add(created.id));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro ao criar tag.");
+    }
+  }
 
   const detected = cifra.trim() ? detectFormat(cifra) : null;
 
@@ -99,8 +145,10 @@ export function SongEditor({ userId, song }: { userId: string; song?: Song }) {
     setSaving(true);
     try {
       const supabase = browserClient();
+      const tagIds = [...selectedTags];
       if (editing && song) {
         await updateSong(supabase, song.id, input);
+        await setSongTags(supabase, song.id, tagIds);
         // "Assa" o transpose no estado para manter o editor coerente com o salvo.
         setCifra(chordproBody);
         setOffset(0);
@@ -108,6 +156,7 @@ export function SongEditor({ userId, song }: { userId: string; song?: Song }) {
         router.refresh();
       } else {
         const created = await createSong(supabase, userId, input);
+        await setSongTags(supabase, created.id, tagIds);
         router.push(`/musicas/${created.id}`);
         router.refresh();
       }
@@ -238,6 +287,13 @@ export function SongEditor({ userId, song }: { userId: string; song?: Song }) {
           </button>
         )}
       </section>
+
+      <TagPicker
+        tags={availableTags}
+        selected={selectedTags}
+        onToggle={toggleTag}
+        onCreate={(name, category) => void handleCreateTag(name, category)}
+      />
 
       {error && <p style={{ color: "#c00" }}>{error}</p>}
       {savedMsg && <p style={{ color: "#2a7" }}>{savedMsg}</p>}

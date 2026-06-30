@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { serverClient } from "@/lib/supabase/server";
-import { getSong } from "@/lib/songs";
+import { getSong, listTags } from "@/lib/songs";
 import { SongEditor } from "@/components/song-editor";
 
 export default async function EditarMusica({
@@ -15,8 +15,8 @@ export default async function EditarMusica({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const song = await getSong(supabase, id);
+  const [song, tags] = await Promise.all([getSong(supabase, id), listTags(supabase)]);
   if (!song) notFound();
 
-  return <SongEditor userId={user.id} song={song} />;
+  return <SongEditor userId={user.id} tags={tags} song={song} />;
 }

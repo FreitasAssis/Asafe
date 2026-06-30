@@ -9,10 +9,10 @@ import { tag } from "./tag";
  * PK composta (songId, tagId).
  *
  * RLS:
- *  - SELECT: liberado a todos os logados (using true). O vínculo só faz sentido
- *    sobre itens de catálogo global, então não há vazamento de dados pessoais.
- *  - Escrita: curadoria/admin via service role (que contorna RLS); não há policy
- *    de escrita para authenticated nesta etapa.
+ *  - SELECT: liberado a todos os logados (using true).
+ *  - Escrita (insert/delete): o usuário liga/desliga tags apenas nas SUAS músicas
+ *    (own song). Vale para tags globais ou próprias. Curadoria sobre música global
+ *    continua via service role. (Override de música global = user_song_tag_override.)
  */
 export const songTag = pgTable(
   "song_tag",
@@ -30,6 +30,16 @@ export const songTag = pgTable(
       for: "select",
       to: authenticatedRole,
       using: sql`true`,
+    }),
+    pgPolicy("song_tag_insert_own", {
+      for: "insert",
+      to: authenticatedRole,
+      withCheck: sql`exists (select 1 from song s where s.id = ${t.songId} and s.owner_id = auth.uid())`,
+    }),
+    pgPolicy("song_tag_delete_own", {
+      for: "delete",
+      to: authenticatedRole,
+      using: sql`exists (select 1 from song s where s.id = ${t.songId} and s.owner_id = auth.uid())`,
     }),
   ],
 ).enableRLS();

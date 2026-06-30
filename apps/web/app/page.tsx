@@ -27,9 +27,9 @@ export default async function Home() {
       <p>
         Olá, <strong>{user.email}</strong> — você está dentro.
       </p>
-      <p>
+      <p style={{ display: "flex", gap: 10 }}>
         <a
-          href="/musicas/nova"
+          href="/musicas"
           style={{
             display: "inline-block",
             padding: "10px 16px",
@@ -39,11 +39,21 @@ export default async function Home() {
             textDecoration: "none",
           }}
         >
+          Meu catálogo
+        </a>
+        <a
+          href="/musicas/nova"
+          style={{
+            display: "inline-block",
+            padding: "10px 16px",
+            border: "1px solid #2563eb",
+            color: "#2563eb",
+            borderRadius: 6,
+            textDecoration: "none",
+          }}
+        >
           + Nova música
         </a>
-      </p>
-      <p style={{ color: "#888" }}>
-        A listagem do seu catálogo chega na próxima etapa.
       </p>
     </main>
   );

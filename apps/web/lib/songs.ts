@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { TagCategory } from "@asafe/core";
 
 /** Campos editáveis de uma música própria (camelCase no app; snake_case no banco). */
 export interface SongInput {
@@ -11,6 +12,22 @@ export interface SongInput {
 
 export interface Song extends SongInput {
   id: string;
+  tagIds: string[];
+}
+
+export interface Tag {
+  id: string;
+  name: string;
+  category: TagCategory;
+  ownerId: string | null;
+}
+
+/** Item da listagem do catálogo (música + as tags que tem). */
+export interface SongListItem {
+  id: string;
+  title: string;
+  composer: string | null;
+  tagIds: string[];
 }
 
 interface SongRow {
@@ -20,6 +37,7 @@ interface SongRow {
   default_key: string | null;
   chordpro_body: string | null;
   audio_links: string[];
+  song_tag?: { tag_id: string }[];
 }
 
 function rowToSong(row: SongRow): Song {
@@ -30,6 +48,7 @@ function rowToSong(row: SongRow): Song {
     defaultKey: row.default_key,
     chordproBody: row.chordpro_body ?? "",
     audioLinks: row.audio_links ?? [],
+    tagIds: (row.song_tag ?? []).map((st) => st.tag_id),
   };
 }
 
@@ -43,21 +62,30 @@ function inputToRow(input: SongInput) {
   };
 }
 
-/** Carrega uma música por id (RLS garante que só o dono lê a própria). */
-export async function getSong(
-  supabase: SupabaseClient,
-  id: string,
-): Promise<Song | null> {
-  const { data, error } = await supabase
-    .from("song")
-    .select("id, title, composer, default_key, chordpro_body, audio_links")
-    .eq("id", id)
-    .maybeSingle();
+const SONG_COLS = "id, title, composer, default_key, chordpro_body, audio_links, song_tag(tag_id)";
+
+/** Carrega uma música por id, com suas tags (RLS: só o dono lê a própria). */
+export async function getSong(supabase: SupabaseClient, id: string): Promise<Song | null> {
+  const { data, error } = await supabase.from("song").select(SONG_COLS).eq("id", id).maybeSingle();
   if (error) throw error;
   return data ? rowToSong(data as SongRow) : null;
 }
 
-/** Cria uma música própria. `ownerId` vem da sessão (RLS exige owner_id = auth.uid()). */
+/** Lista as minhas músicas (com tags) para o catálogo, ordenadas por título. */
+export async function listSongs(supabase: SupabaseClient): Promise<SongListItem[]> {
+  const { data, error } = await supabase
+    .from("song")
+    .select("id, title, composer, song_tag(tag_id)")
+    .order("title");
+  if (error) throw error;
+  return (data as SongRow[]).map((r) => ({
+    id: r.id,
+    title: r.title,
+    composer: r.composer,
+    tagIds: (r.song_tag ?? []).map((st) => st.tag_id),
+  }));
+}
+
 export async function createSong(
   supabase: SupabaseClient,
   ownerId: string,
@@ -66,7 +94,7 @@ export async function createSong(
   const { data, error } = await supabase
     .from("song")
     .insert({ ...inputToRow(input), owner_id: ownerId, visibility: "private" })
-    .select("id, title, composer, default_key, chordpro_body, audio_links")
+    .select(SONG_COLS)
     .single();
   if (error) throw error;
   return rowToSong(data as SongRow);
@@ -84,4 +112,62 @@ export async function updateSong(
 export async function deleteSong(supabase: SupabaseClient, id: string): Promise<void> {
   const { error } = await supabase.from("song").delete().eq("id", id);
   if (error) throw error;
+}
+
+/** Tags visíveis ao usuário: globais (owner_id nulo) + as próprias (RLS resolve). */
+export async function listTags(supabase: SupabaseClient): Promise<Tag[]> {
+  const { data, error } = await supabase
+    .from("tag")
+    .select("id, name, category, owner_id")
+    .order("name");
+  if (error) throw error;
+  return (data as { id: string; name: string; category: TagCategory; owner_id: string | null }[]).map(
+    (t) => ({ id: t.id, name: t.name, category: t.category, ownerId: t.owner_id }),
+  );
+}
+
+/** Cria uma tag pessoal (owner = você). */
+export async function createTag(
+  supabase: SupabaseClient,
+  ownerId: string,
+  name: string,
+  category: TagCategory,
+): Promise<Tag> {
+  const { data, error } = await supabase
+    .from("tag")
+    .insert({ name, category, owner_id: ownerId })
+    .select("id, name, category, owner_id")
+    .single();
+  if (error) throw error;
+  const t = data as { id: string; name: string; category: TagCategory; owner_id: string | null };
+  return { id: t.id, name: t.name, category: t.category, ownerId: t.owner_id };
+}
+
+/** Aplica o conjunto de tags de uma música (diff: liga as novas, desliga as removidas). */
+export async function setSongTags(
+  supabase: SupabaseClient,
+  songId: string,
+  tagIds: string[],
+): Promise<void> {
+  const { data, error } = await supabase.from("song_tag").select("tag_id").eq("song_id", songId);
+  if (error) throw error;
+  const existing = new Set((data as { tag_id: string }[]).map((r) => r.tag_id));
+  const selected = new Set(tagIds);
+  const toAdd = tagIds.filter((id) => !existing.has(id));
+  const toRemove = [...existing].filter((id) => !selected.has(id));
+
+  if (toRemove.length > 0) {
+    const { error: delErr } = await supabase
+      .from("song_tag")
+      .delete()
+      .eq("song_id", songId)
+      .in("tag_id", toRemove);
+    if (delErr) throw delErr;
+  }
+  if (toAdd.length > 0) {
+    const { error: insErr } = await supabase
+      .from("song_tag")
+      .insert(toAdd.map((tagId) => ({ song_id: songId, tag_id: tagId })));
+    if (insErr) throw insErr;
+  }
 }
