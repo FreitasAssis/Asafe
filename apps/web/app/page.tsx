@@ -1,18 +1,34 @@
-import type { RepertoireType } from "@asafe/core";
+import { redirect } from "next/navigation";
+import { serverClient } from "@/lib/supabase/server";
+import { SignOutButton } from "@/components/sign-out-button";
 
-export default function Home() {
-  // Prova de fumaça: o app web consome o pacote @asafe/core do monorepo.
-  const exemplo: RepertoireType = "Missa";
+/** Rota "/" — shell logado. Sem sessão, o middleware já manda para /login;
+ * confirmamos aqui por defesa em profundidade. Catálogo e editor chegam na fatia C. */
+export default async function Home() {
+  const supabase = await serverClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login");
 
   return (
-    <main style={{ fontFamily: "system-ui", padding: "2rem", maxWidth: 640 }}>
-      <h1>Asafe 🎵</h1>
+    <main style={{ maxWidth: 640, margin: "2rem auto", fontFamily: "system-ui" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <h1 style={{ margin: 0 }}>Asafe 🎵</h1>
+        <SignOutButton />
+      </div>
       <p>
-        Organize e compartilhe repertórios de música litúrgica católica.
-        Em construção — veja <code>PLANNING.md</code>.
+        Olá, <strong>{user.email}</strong> — você está dentro.
       </p>
-      <p style={{ color: "#666" }}>
-        Tipo de repertório de exemplo (de <code>@asafe/core</code>): {exemplo}
+      <p style={{ color: "#888" }}>
+        Seu catálogo e o editor de cifras chegam na próxima etapa.
       </p>
     </main>
   );
