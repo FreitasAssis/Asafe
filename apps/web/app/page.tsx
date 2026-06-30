@@ -42,6 +42,19 @@ export default async function Home() {
           Meu catálogo
         </a>
         <a
+          href="/repertorios"
+          style={{
+            display: "inline-block",
+            padding: "10px 16px",
+            background: "#2563eb",
+            color: "#fff",
+            borderRadius: 6,
+            textDecoration: "none",
+          }}
+        >
+          Repertórios
+        </a>
+        <a
           href="/musicas/nova"
           style={{
             display: "inline-block",
