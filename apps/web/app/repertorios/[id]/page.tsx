@@ -3,6 +3,7 @@ import { serverClient } from "@/lib/supabase/server";
 import { getRepertoire, slotTemplate } from "@/lib/repertoires";
 import { listSongs, listTags } from "@/lib/songs";
 import { listShareLinks } from "@/lib/share-links";
+import { listGroups } from "@/lib/groups";
 import { RepertoireBuilder } from "@/components/repertoire-builder";
 
 export default async function MontarRepertorio({
@@ -20,11 +21,13 @@ export default async function MontarRepertorio({
   const repertoire = await getRepertoire(supabase, id);
   if (!repertoire) notFound();
 
-  const [template, songs, tags, shareLinks] = await Promise.all([
+  const isOwner = repertoire.ownerId === user.id;
+  const [template, songs, tags, shareLinks, groups] = await Promise.all([
     slotTemplate(supabase, repertoire.type),
     listSongs(supabase),
     listTags(supabase),
-    listShareLinks(supabase, repertoire.id),
+    isOwner ? listShareLinks(supabase, repertoire.id) : Promise.resolve([]),
+    isOwner ? listGroups(supabase) : Promise.resolve([]),
   ]);
 
   return (
@@ -34,6 +37,8 @@ export default async function MontarRepertorio({
       songs={songs}
       tags={tags}
       shareLinks={shareLinks}
+      isOwner={isOwner}
+      groups={groups}
     />
   );
 }

@@ -17,6 +17,7 @@ function traduzErro(msg: string): string {
 
 export function LoginForm() {
   const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +30,11 @@ export function LoginForm() {
     const { error } =
       action === "entrar"
         ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password });
+        : await supabase.auth.signUp({
+            email,
+            password,
+            options: { data: { display_name: name.trim() || null } },
+          });
     setLoading(false);
     if (error) {
       setError(traduzErro(error.message));
@@ -47,6 +52,14 @@ export function LoginForm() {
       }}
       style={{ display: "flex", flexDirection: "column", gap: 12 }}
     >
+      <input
+        type="text"
+        placeholder="seu nome (ao criar conta)"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        autoComplete="name"
+        style={{ padding: 10, fontSize: 16 }}
+      />
       <input
         type="email"
         placeholder="seu@email.com"
