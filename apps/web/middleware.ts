@@ -1,8 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-/** Rotas públicas (sem sessão). Páginas públicas de leitura por token entram aqui depois. */
-const PUBLIC_PATHS = ["/login"];
+/** Rotas públicas (sem sessão): login e as páginas públicas de leitura por token (/r/...). */
+const PUBLIC_PATHS = ["/login", "/r"];
 
 /**
  * Renova a sessão do Supabase a cada request (refresh do cookie) e protege as rotas:

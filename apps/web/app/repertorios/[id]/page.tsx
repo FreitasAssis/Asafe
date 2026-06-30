@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { serverClient } from "@/lib/supabase/server";
 import { getRepertoire, slotTemplate } from "@/lib/repertoires";
 import { listSongs, listTags } from "@/lib/songs";
+import { listShareLinks } from "@/lib/share-links";
 import { RepertoireBuilder } from "@/components/repertoire-builder";
 
 export default async function MontarRepertorio({
@@ -19,13 +20,20 @@ export default async function MontarRepertorio({
   const repertoire = await getRepertoire(supabase, id);
   if (!repertoire) notFound();
 
-  const [template, songs, tags] = await Promise.all([
+  const [template, songs, tags, shareLinks] = await Promise.all([
     slotTemplate(supabase, repertoire.type),
     listSongs(supabase),
     listTags(supabase),
+    listShareLinks(supabase, repertoire.id),
   ]);
 
   return (
-    <RepertoireBuilder repertoire={repertoire} template={template} songs={songs} tags={tags} />
+    <RepertoireBuilder
+      repertoire={repertoire}
+      template={template}
+      songs={songs}
+      tags={tags}
+      shareLinks={shareLinks}
+    />
   );
 }

@@ -17,18 +17,22 @@ import {
   type RepertoireItemFull,
   type SlotTemplate,
 } from "@/lib/repertoires";
+import type { ShareLink } from "@/lib/share-links";
 import { SongPicker } from "./song-picker";
+import { ShareSection } from "./share-section";
 
 export function RepertoireBuilder({
   repertoire,
   template,
   songs,
   tags,
+  shareLinks,
 }: {
   readonly repertoire: Repertoire;
   readonly template: SlotTemplate;
   readonly songs: SongListItem[];
   readonly tags: Tag[];
+  readonly shareLinks: ShareLink[];
 }) {
   const router = useRouter();
   const [title, setTitle] = useState(repertoire.title);
@@ -228,6 +232,8 @@ export function RepertoireBuilder({
         </button>
       </div>
       <div style={{ color: "#888", fontSize: 13, marginTop: 4 }}>{repertoire.type}</div>
+
+      <ShareSection repertoireId={repertoire.id} initialLinks={shareLinks} />
 
       {error && <p style={{ color: "#c00" }}>{error}</p>}
       {savedMsg && <p style={{ color: "#2a7" }}>{savedMsg}</p>}
