@@ -24,6 +24,50 @@ async function signUp(email: string) {
 
 const uniq = () => `${Date.now()}_${Math.random().toString(36).slice(2)}`;
 
+/** Ids de dados globais (owner_id null) criados pelos testes, limpos no afterAll. */
+const createdGlobalSongIds: string[] = [];
+const createdGlobalTagIds: string[] = [];
+
+/** Insere uma tag global via service role e registra o id para limpeza. */
+async function seedGlobalTag(name: string, category: string) {
+  const { data, error } = await service
+    .from("tag")
+    .insert({ name, category, owner_id: null })
+    .select()
+    .single();
+  if (error) throw error;
+  createdGlobalTagIds.push(data!.id as string);
+  return data!;
+}
+
+/** Apaga (service role) os dados globais criados pelos testes, dependentes primeiro. */
+afterAll(async () => {
+  if (createdGlobalSongIds.length) {
+    await service.from("song_tag").delete().in("song_id", createdGlobalSongIds);
+    await service
+      .from("user_song_tag_override")
+      .delete()
+      .in("song_id", createdGlobalSongIds);
+    await service
+      .from("repertoire_item")
+      .delete()
+      .in("song_id", createdGlobalSongIds);
+    await service.from("song").delete().in("id", createdGlobalSongIds);
+  }
+  if (createdGlobalTagIds.length) {
+    await service.from("song_tag").delete().in("tag_id", createdGlobalTagIds);
+    await service
+      .from("user_song_tag_override")
+      .delete()
+      .in("tag_id", createdGlobalTagIds);
+    await service
+      .from("repertoire_theme")
+      .delete()
+      .in("tag_id", createdGlobalTagIds);
+    await service.from("tag").delete().in("id", createdGlobalTagIds);
+  }
+});
+
 /** Semeia uma song global (owner_id null) via service role. */
 async function seedGlobalSong(title: string) {
   const { data, error } = await service
@@ -32,6 +76,7 @@ async function seedGlobalSong(title: string) {
     .select()
     .single();
   if (error) throw error;
+  createdGlobalSongIds.push(data!.id as string);
   return data!.id as string;
 }
 
@@ -285,12 +330,7 @@ describe("repertoire_theme (RLS)", () => {
     const groupId = await createGroupWithMember(a, b.userId);
 
     // tag global via service role
-    const { data: tag, error: tagErr } = await service
-      .from("tag")
-      .insert({ name: `Tema ${uniq()}`, category: "tema", owner_id: null })
-      .select()
-      .single();
-    expect(tagErr).toBeNull();
+    const tag = await seedGlobalTag(`Tema ${uniq()}`, "tema");
 
     const { data: rep } = await a.client
       .from("repertoire")
@@ -465,18 +505,8 @@ describe("repertoire co-edição por editores do grupo (RLS)", () => {
     await addMember(a, groupId, b.userId, "editor");
     await addMember(a, groupId, c.userId, "viewer");
 
-    const { data: tag, error: tagErr } = await service
-      .from("tag")
-      .insert({ name: `Tema ${uniq()}`, category: "tema", owner_id: null })
-      .select()
-      .single();
-    expect(tagErr).toBeNull();
-    const { data: tag2, error: tag2Err } = await service
-      .from("tag")
-      .insert({ name: `Tema ${uniq()}`, category: "tema", owner_id: null })
-      .select()
-      .single();
-    expect(tag2Err).toBeNull();
+    const tag = await seedGlobalTag(`Tema ${uniq()}`, "tema");
+    const tag2 = await seedGlobalTag(`Tema ${uniq()}`, "tema");
 
     const { data: rep, error: repErr } = await a.client
       .from("repertoire")
@@ -540,15 +570,8 @@ describe("slot_template (RLS)", () => {
   it("slot_template é legível por qualquer logado (sem permission denied)", async () => {
     const a = await signUp(`a_${uniq()}@asafe.test`);
 
-    // semeia um template via service role (idempotente via upsert no type PK)
-    const { error: seedErr } = await service.from("slot_template").upsert({
-      type: "Missa",
-      slots: ["entrada", "ofertorio", "comunhao", "final"],
-      reorderable: false,
-      allow_custom_slots: true,
-    });
-    expect(seedErr).toBeNull();
-
+    // O template "Missa" já vem do seed canônico (globalSetup). Aqui só provamos
+    // que um usuário logado consegue lê-lo (sem permission denied), sem sobrescrevê-lo.
     const { data, error } = await a.client
       .from("slot_template")
       .select("*")

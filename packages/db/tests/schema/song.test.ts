@@ -24,8 +24,19 @@ async function signUp(email: string) {
 
 const uniq = () => `${Date.now()}_${Math.random().toString(36).slice(2)}`;
 
+/** Ids de songs globais (owner_id null) criadas pelos testes, limpas no afterAll. */
+const createdGlobalSongIds: string[] = [];
+
 describe("song (RLS)", () => {
   afterAll(async () => {
+    if (createdGlobalSongIds.length) {
+      await service.from("song_tag").delete().in("song_id", createdGlobalSongIds);
+      await service
+        .from("repertoire_item")
+        .delete()
+        .in("song_id", createdGlobalSongIds);
+      await service.from("song").delete().in("id", createdGlobalSongIds);
+    }
     await closeDb();
   });
 
@@ -67,6 +78,7 @@ describe("song (RLS)", () => {
       .single();
     expect(gErr).toBeNull();
     expect(global!.owner_id).toBeNull();
+    createdGlobalSongIds.push(global!.id as string);
 
     const { data: aSel, error: aErr } = await a.client
       .from("song")
