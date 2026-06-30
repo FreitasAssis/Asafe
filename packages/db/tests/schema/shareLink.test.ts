@@ -24,6 +24,9 @@ async function signUp(email: string) {
 
 const uniq = () => `${Date.now()}_${Math.random().toString(36).slice(2)}`;
 
+/** Ids de songs globais (owner_id null) criadas pelos testes, limpas no afterAll. */
+const createdGlobalSongIds: string[] = [];
+
 /** Semeia uma song global (owner_id null) via service role. */
 async function seedGlobalSong(title: string) {
   const { data, error } = await service
@@ -32,6 +35,7 @@ async function seedGlobalSong(title: string) {
     .select()
     .single();
   if (error) throw error;
+  createdGlobalSongIds.push(data!.id as string);
   return data!.id as string;
 }
 
@@ -73,6 +77,13 @@ async function createShareLink(
 
 describe("share_link + acesso público por token", () => {
   afterAll(async () => {
+    if (createdGlobalSongIds.length) {
+      await service
+        .from("repertoire_item")
+        .delete()
+        .in("song_id", createdGlobalSongIds);
+      await service.from("song").delete().in("id", createdGlobalSongIds);
+    }
     await closeDb();
   });
 

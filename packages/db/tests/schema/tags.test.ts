@@ -24,8 +24,37 @@ async function signUp(email: string) {
 
 const uniq = () => `${Date.now()}_${Math.random().toString(36).slice(2)}`;
 
+/** Ids de dados globais (owner_id null) criados pelos testes, limpos no afterAll. */
+const createdGlobalSongIds: string[] = [];
+const createdGlobalTagIds: string[] = [];
+
 describe("tag / song_tag / user_song_tag_override (RLS)", () => {
   afterAll(async () => {
+    // Dependentes primeiro (FKs), depois song/tag. Só os ids capturados aqui.
+    if (createdGlobalSongIds.length) {
+      await service.from("song_tag").delete().in("song_id", createdGlobalSongIds);
+      await service
+        .from("user_song_tag_override")
+        .delete()
+        .in("song_id", createdGlobalSongIds);
+      await service
+        .from("repertoire_item")
+        .delete()
+        .in("song_id", createdGlobalSongIds);
+      await service.from("song").delete().in("id", createdGlobalSongIds);
+    }
+    if (createdGlobalTagIds.length) {
+      await service.from("song_tag").delete().in("tag_id", createdGlobalTagIds);
+      await service
+        .from("user_song_tag_override")
+        .delete()
+        .in("tag_id", createdGlobalTagIds);
+      await service
+        .from("repertoire_theme")
+        .delete()
+        .in("tag_id", createdGlobalTagIds);
+      await service.from("tag").delete().in("id", createdGlobalTagIds);
+    }
     await closeDb();
   });
 
@@ -33,13 +62,14 @@ describe("tag / song_tag / user_song_tag_override (RLS)", () => {
     const a = await signUp(`a_${uniq()}@asafe.test`);
     const b = await signUp(`b_${uniq()}@asafe.test`);
 
-    // Tag global via service role.
+    // Tag global via service role. Nome único para não colidir com o seed.
     const { data: globalTag, error: gErr } = await service
       .from("tag")
-      .insert({ name: "Entrada", category: "momento", owner_id: null })
+      .insert({ name: `Entrada ${uniq()}`, category: "momento", owner_id: null })
       .select()
       .single();
     expect(gErr).toBeNull();
+    createdGlobalTagIds.push(globalTag!.id as string);
 
     // Tag pessoal de A.
     const { data: personalTag, error: pErr } = await a.client
@@ -84,11 +114,13 @@ describe("tag / song_tag / user_song_tag_override (RLS)", () => {
       .insert({ title: "Hino Global", owner_id: null })
       .select()
       .single();
+    createdGlobalSongIds.push(gSong!.id as string);
     const { data: gTag } = await service
       .from("tag")
-      .insert({ name: "Comunhão", category: "momento", owner_id: null })
+      .insert({ name: `Comunhão ${uniq()}`, category: "momento", owner_id: null })
       .select()
       .single();
+    createdGlobalTagIds.push(gTag!.id as string);
     const { error: linkErr } = await service
       .from("song_tag")
       .insert({ song_id: gSong!.id, tag_id: gTag!.id });
@@ -121,11 +153,13 @@ describe("tag / song_tag / user_song_tag_override (RLS)", () => {
       .insert({ title: "Para Override", owner_id: null })
       .select()
       .single();
+    createdGlobalSongIds.push(gSong!.id as string);
     const { data: gTag } = await service
       .from("tag")
-      .insert({ name: "Saída", category: "momento", owner_id: null })
+      .insert({ name: `Saída ${uniq()}`, category: "momento", owner_id: null })
       .select()
       .single();
+    createdGlobalTagIds.push(gTag!.id as string);
 
     // A cria override próprio.
     const { data: ovr, error: ovrErr } = await a.client
