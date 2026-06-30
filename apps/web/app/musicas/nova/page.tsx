@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { serverClient } from "@/lib/supabase/server";
+import { listTags } from "@/lib/songs";
 import { SongEditor } from "@/components/song-editor";
 
 export default async function NovaMusica() {
@@ -9,5 +10,6 @@ export default async function NovaMusica() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  return <SongEditor userId={user.id} />;
+  const tags = await listTags(supabase);
+  return <SongEditor userId={user.id} tags={tags} />;
 }
