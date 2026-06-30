@@ -40,6 +40,13 @@ export const song = pgTable(
       to: authenticatedRole,
       using: sql`${t.ownerId} is null OR ${t.ownerId} = auth.uid()`,
     }),
+    // Membro de um grupo lê as músicas que estão num repertório compartilhado com o
+    // grupo — para ver/co-editar o conteúdo (DESIGN/fatia E2). Permissiva = OR.
+    pgPolicy("song_select_group", {
+      for: "select",
+      to: authenticatedRole,
+      using: sql`exists (select 1 from repertoire_item ri join repertoire r on r.id = ri.repertoire_id where ri.song_id = ${t.id} and r.group_id is not null and public.is_group_member(r.group_id))`,
+    }),
     pgPolicy("song_write_own", {
       for: "all",
       to: authenticatedRole,

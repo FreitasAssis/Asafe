@@ -1,0 +1,1 @@
+CREATE POLICY "song_select_group" ON "song" AS PERMISSIVE FOR SELECT TO "authenticated" USING (exists (select 1 from repertoire_item ri join repertoire r on r.id = ri.repertoire_id where ri.song_id = "song"."id" and r.group_id is not null and public.is_group_member(r.group_id)));
