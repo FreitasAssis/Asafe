@@ -14,6 +14,8 @@ export interface RepertoireItemFull {
   songTitle: string;
   momentSlot: string | null;
   order: number;
+  transpose: number;
+  notes: string | null;
 }
 
 export interface Repertoire {
@@ -70,8 +72,24 @@ interface ItemRow {
   song_id: string;
   moment_slot: string | null;
   order: number;
+  transpose: number;
+  notes: string | null;
   song: { title: string } | null;
 }
+
+function rowToItem(it: ItemRow): RepertoireItemFull {
+  return {
+    id: it.id,
+    songId: it.song_id,
+    songTitle: it.song?.title ?? "(música)",
+    momentSlot: it.moment_slot,
+    order: it.order,
+    transpose: it.transpose,
+    notes: it.notes,
+  };
+}
+
+const ITEM_COLS = "id, song_id, moment_slot, order, transpose, notes, song(title)";
 
 /** Repertório com seus itens (cada um com o título da música). */
 export async function getRepertoire(
@@ -80,7 +98,7 @@ export async function getRepertoire(
 ): Promise<Repertoire | null> {
   const { data, error } = await supabase
     .from("repertoire")
-    .select("id, title, type, date, repertoire_item(id, song_id, moment_slot, order, song(title))")
+    .select(`id, title, type, date, repertoire_item(${ITEM_COLS})`)
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -98,13 +116,7 @@ export async function getRepertoire(
     title: row.title,
     type: row.type,
     date: row.date,
-    items: (row.repertoire_item ?? []).map((it) => ({
-      id: it.id,
-      songId: it.song_id,
-      songTitle: it.song?.title ?? "(música)",
-      momentSlot: it.moment_slot,
-      order: it.order,
-    })),
+    items: (row.repertoire_item ?? []).map(rowToItem),
   };
 }
 
@@ -147,21 +159,43 @@ export async function addItem(
       moment_slot: momentSlot,
       order,
     })
-    .select("id, song_id, moment_slot, order, song(title)")
+    .select(ITEM_COLS)
     .single();
   if (error) throw error;
-  const it = data as unknown as ItemRow;
-  return {
-    id: it.id,
-    songId: it.song_id,
-    songTitle: it.song?.title ?? "(música)",
-    momentSlot: it.moment_slot,
-    order: it.order,
-  };
+  return rowToItem(data as unknown as ItemRow);
 }
 
 export async function removeItem(supabase: SupabaseClient, itemId: string): Promise<void> {
   const { error } = await supabase.from("repertoire_item").delete().eq("id", itemId);
+  if (error) throw error;
+}
+
+/** Tom por ocorrência (semitons), separado da cifra salva. */
+export async function setItemTranspose(
+  supabase: SupabaseClient,
+  itemId: string,
+  transpose: number,
+): Promise<void> {
+  const { error } = await supabase.from("repertoire_item").update({ transpose }).eq("id", itemId);
+  if (error) throw error;
+}
+
+export async function setItemNotes(
+  supabase: SupabaseClient,
+  itemId: string,
+  notes: string | null,
+): Promise<void> {
+  const { error } = await supabase.from("repertoire_item").update({ notes }).eq("id", itemId);
+  if (error) throw error;
+}
+
+/** Atualiza a posição (order) de um item dentro do momento. */
+export async function setItemOrder(
+  supabase: SupabaseClient,
+  itemId: string,
+  order: number,
+): Promise<void> {
+  const { error } = await supabase.from("repertoire_item").update({ order }).eq("id", itemId);
   if (error) throw error;
 }
 

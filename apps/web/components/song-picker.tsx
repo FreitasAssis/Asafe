@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { filterSongs, TAG_CATEGORY_COLORS, type TagCategory } from "@asafe/core";
 import type { SongListItem, Tag } from "@/lib/songs";
+import { FreshnessTag } from "./freshness-tag";
 
 const CATEGORIES: TagCategory[] = [
   "momento",
@@ -135,7 +136,7 @@ export function SongPicker({
                   cursor: "pointer",
                 }}
               >
-                + {s.title}
+                + {s.title} <FreshnessTag lastUsed={s.lastUsed} />
               </button>
             </li>
           ))

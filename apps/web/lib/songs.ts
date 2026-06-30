@@ -28,6 +28,8 @@ export interface SongListItem {
   title: string;
   composer: string | null;
   tagIds: string[];
+  /** Última data efetiva de uso (YYYY-MM-DD) entre meus repertórios, ou null. */
+  lastUsed: string | null;
 }
 
 interface SongRow {
@@ -71,18 +73,34 @@ export async function getSong(supabase: SupabaseClient, id: string): Promise<Son
   return data ? rowToSong(data as SongRow) : null;
 }
 
-/** Lista as minhas músicas (com tags) para o catálogo, ordenadas por título. */
+/** Lista as minhas músicas (com tags e frescor) para o catálogo, ordenadas por título. */
 export async function listSongs(supabase: SupabaseClient): Promise<SongListItem[]> {
-  const { data, error } = await supabase
-    .from("song")
-    .select("id, title, composer, song_tag(tag_id)")
-    .order("title");
-  if (error) throw error;
-  return (data as SongRow[]).map((r) => ({
+  const [songsRes, usageRes] = await Promise.all([
+    supabase.from("song").select("id, title, composer, song_tag(tag_id)").order("title"),
+    supabase.from("repertoire_item").select("song_id, repertoire(date, created_at)"),
+  ]);
+  if (songsRes.error) throw songsRes.error;
+  if (usageRes.error) throw usageRes.error;
+
+  // Última data efetiva de uso (data da celebração ou, na falta, criação) por música.
+  const lastUsed = new Map<string, string>();
+  const usage = usageRes.data as unknown as {
+    song_id: string;
+    repertoire: { date: string | null; created_at: string } | null;
+  }[];
+  for (const row of usage) {
+    if (!row.repertoire) continue;
+    const eff = (row.repertoire.date ?? row.repertoire.created_at).slice(0, 10);
+    const prev = lastUsed.get(row.song_id);
+    if (!prev || eff > prev) lastUsed.set(row.song_id, eff);
+  }
+
+  return (songsRes.data as SongRow[]).map((r) => ({
     id: r.id,
     title: r.title,
     composer: r.composer,
     tagIds: (r.song_tag ?? []).map((st) => st.tag_id),
+    lastUsed: lastUsed.get(r.id) ?? null,
   }));
 }
 
