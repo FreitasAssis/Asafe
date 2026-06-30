@@ -9,6 +9,7 @@ import {
 } from "@asafe/core";
 import { browserClient } from "@/lib/supabase/client";
 import { createRepertoire } from "@/lib/repertoires";
+import { Breadcrumb } from "@/components/breadcrumb";
 
 export function NewRepertoireForm({ userId }: { readonly userId: string }) {
   const router = useRouter();
@@ -41,6 +42,7 @@ export function NewRepertoireForm({ userId }: { readonly userId: string }) {
 
   return (
     <main style={{ maxWidth: 440, margin: "2rem auto", padding: "0 1rem" }}>
+      <Breadcrumb items={[{ label: "Repertórios", href: "/repertorios" }, { label: "Novo" }]} />
       <h1>Novo repertório</h1>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <label style={{ fontSize: 13, color: "#666" }}>Tipo</label>

@@ -8,6 +8,7 @@ import {
   type TagCategory,
 } from "@asafe/core";
 import type { SongListItem, Tag } from "@/lib/songs";
+import { Fab } from "@/components/fab";
 import { FreshnessTag } from "./freshness-tag";
 
 const CATEGORIES: TagCategory[] = [
@@ -94,10 +95,8 @@ export function Catalog({
 
   return (
     <main style={{ maxWidth: 760, margin: "1.5rem auto", padding: "0 1rem" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1 style={{ margin: 0 }}>Meu catálogo</h1>
-        <a href="/musicas/nova">+ Nova música</a>
-      </div>
+      <h1 style={{ marginTop: 0 }}>Meu catálogo</h1>
+      <Fab href="/musicas/nova" label="Nova música" />
 
       <input
         placeholder="Buscar por título ou compositor…"

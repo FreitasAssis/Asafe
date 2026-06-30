@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { REPERTOIRE_TYPE_LABELS } from "@asafe/core";
 import { serverClient } from "@/lib/supabase/server";
 import { listRepertoires } from "@/lib/repertoires";
+import { Fab } from "@/components/fab";
 
 export default async function Repertorios() {
   const supabase = await serverClient();
@@ -14,10 +15,8 @@ export default async function Repertorios() {
 
   return (
     <main style={{ maxWidth: 720, margin: "1.5rem auto", padding: "0 1rem", fontFamily: "system-ui" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1 style={{ margin: 0 }}>Repertórios</h1>
-        <a href="/repertorios/novo">+ Novo repertório</a>
-      </div>
+      <h1 style={{ marginTop: 0 }}>Repertórios</h1>
+      <Fab href="/repertorios/novo" label="Novo repertório" />
 
       {repertoires.length === 0 ? (
         <p style={{ color: "#888" }}>Você ainda não tem repertórios. Crie o primeiro!</p>

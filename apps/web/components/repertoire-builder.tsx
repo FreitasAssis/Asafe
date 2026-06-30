@@ -20,6 +20,7 @@ import {
 } from "@/lib/repertoires";
 import type { ShareLink } from "@/lib/share-links";
 import type { Group } from "@/lib/groups";
+import { Breadcrumb } from "@/components/breadcrumb";
 import { SongPicker } from "./song-picker";
 import { ShareSection } from "./share-section";
 
@@ -232,7 +233,7 @@ export function RepertoireBuilder({
   return (
     <main style={{ maxWidth: 720, margin: "1.5rem auto", padding: "0 1rem" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <a href="/repertorios">← repertórios</a>
+        <Breadcrumb items={[{ label: "Repertórios", href: "/repertorios" }, { label: title }]} />
         {isOwner && (
           <button type="button" onClick={() => void destroy()} style={{ color: "#c00" }}>
             Excluir
