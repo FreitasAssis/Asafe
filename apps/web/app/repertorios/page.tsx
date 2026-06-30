@@ -32,6 +32,7 @@ export default async function Repertorios() {
                 {" "}
                 — {REPERTOIRE_TYPE_LABELS[r.type]}
                 {r.date ? ` · ${r.date}` : ""}
+                {r.groupName ? ` · 👥 ${r.groupName}` : ""}
               </span>
             </li>
           ))}

@@ -6,6 +6,7 @@ export interface RepertoireListItem {
   title: string;
   type: RepertoireType;
   date: string | null;
+  groupName: string | null;
 }
 
 export interface RepertoireItemFull {
@@ -23,6 +24,8 @@ export interface Repertoire {
   title: string;
   type: RepertoireType;
   date: string | null;
+  ownerId: string;
+  groupId: string | null;
   items: RepertoireItemFull[];
 }
 
@@ -60,11 +63,25 @@ export async function listRepertoires(
 ): Promise<RepertoireListItem[]> {
   const { data, error } = await supabase
     .from("repertoire")
-    .select("id, title, type, date")
+    .select("id, title, type, date, group(name)")
     .order("date", { ascending: false, nullsFirst: false })
     .order("title");
   if (error) throw error;
-  return data as RepertoireListItem[];
+  return (
+    data as unknown as {
+      id: string;
+      title: string;
+      type: RepertoireType;
+      date: string | null;
+      group: { name: string } | null;
+    }[]
+  ).map((r) => ({
+    id: r.id,
+    title: r.title,
+    type: r.type,
+    date: r.date,
+    groupName: r.group?.name ?? null,
+  }));
 }
 
 interface ItemRow {
@@ -98,7 +115,7 @@ export async function getRepertoire(
 ): Promise<Repertoire | null> {
   const { data, error } = await supabase
     .from("repertoire")
-    .select(`id, title, type, date, repertoire_item(${ITEM_COLS})`)
+    .select(`id, title, type, date, owner_id, group_id, repertoire_item(${ITEM_COLS})`)
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -109,6 +126,8 @@ export async function getRepertoire(
     title: string;
     type: RepertoireType;
     date: string | null;
+    owner_id: string;
+    group_id: string | null;
     repertoire_item: ItemRow[];
   };
   return {
@@ -116,8 +135,23 @@ export async function getRepertoire(
     title: row.title,
     type: row.type,
     date: row.date,
+    ownerId: row.owner_id,
+    groupId: row.group_id,
     items: (row.repertoire_item ?? []).map(rowToItem),
   };
+}
+
+/** Compartilha (ou descompartilha) o repertório com um grupo. Só o dono (RLS). */
+export async function setRepertoireGroup(
+  supabase: SupabaseClient,
+  id: string,
+  groupId: string | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from("repertoire")
+    .update({ group_id: groupId, visibility: groupId ? "group" : "private" })
+    .eq("id", id);
+  if (error) throw error;
 }
 
 export async function createRepertoire(

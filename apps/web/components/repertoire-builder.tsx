@@ -12,12 +12,14 @@ import {
   setItemNotes,
   setItemOrder,
   setItemTranspose,
+  setRepertoireGroup,
   updateRepertoire,
   type Repertoire,
   type RepertoireItemFull,
   type SlotTemplate,
 } from "@/lib/repertoires";
 import type { ShareLink } from "@/lib/share-links";
+import type { Group } from "@/lib/groups";
 import { SongPicker } from "./song-picker";
 import { ShareSection } from "./share-section";
 
@@ -27,16 +29,21 @@ export function RepertoireBuilder({
   songs,
   tags,
   shareLinks,
+  isOwner,
+  groups,
 }: {
   readonly repertoire: Repertoire;
   readonly template: SlotTemplate;
   readonly songs: SongListItem[];
   readonly tags: Tag[];
   readonly shareLinks: ShareLink[];
+  readonly isOwner: boolean;
+  readonly groups: Group[];
 }) {
   const router = useRouter();
   const [title, setTitle] = useState(repertoire.title);
   const [date, setDate] = useState(repertoire.date ?? "");
+  const [groupId, setGroupId] = useState(repertoire.groupId ?? "");
   const [items, setItems] = useState<RepertoireItemFull[]>(repertoire.items);
   const [pickerSlot, setPickerSlot] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -144,6 +151,17 @@ export function RepertoireBuilder({
     }
   }
 
+  async function changeGroup(value: string) {
+    setGroupId(value);
+    try {
+      await setRepertoireGroup(browserClient(), repertoire.id, value || null);
+      setSavedMsg(value ? "Compartilhado com o grupo ✓" : "Não compartilhado");
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro ao compartilhar.");
+    }
+  }
+
   function SlotSection({
     slotKey,
     label,
@@ -215,25 +233,53 @@ export function RepertoireBuilder({
     <main style={{ maxWidth: 720, margin: "1.5rem auto", padding: "0 1rem" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <a href="/repertorios">← repertórios</a>
-        <button type="button" onClick={() => void destroy()} style={{ color: "#c00" }}>
-          Excluir
-        </button>
+        {isOwner && (
+          <button type="button" onClick={() => void destroy()} style={{ color: "#c00" }}>
+            Excluir
+          </button>
+        )}
       </div>
 
-      <div style={{ display: "flex", gap: 8, marginTop: 12, alignItems: "center" }}>
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          style={{ flex: 1, padding: 10, fontSize: 18, fontWeight: 600 }}
-        />
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ padding: 8 }} />
-        <button type="button" onClick={() => void saveMeta()}>
-          Salvar
-        </button>
+      {isOwner ? (
+        <div style={{ display: "flex", gap: 8, marginTop: 12, alignItems: "center" }}>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            style={{ flex: 1, padding: 10, fontSize: 18, fontWeight: 600 }}
+          />
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ padding: 8 }} />
+          <button type="button" onClick={() => void saveMeta()}>
+            Salvar
+          </button>
+        </div>
+      ) : (
+        <h1 style={{ marginTop: 12 }}>
+          {title}
+          {date ? <span style={{ color: "#888", fontWeight: 400, fontSize: 16 }}> · {date}</span> : null}
+        </h1>
+      )}
+      <div style={{ color: "#888", fontSize: 13, marginTop: 4 }}>
+        {repertoire.type}
+        {!isOwner && " · compartilhado com você"}
       </div>
-      <div style={{ color: "#888", fontSize: 13, marginTop: 4 }}>{repertoire.type}</div>
 
-      <ShareSection repertoireId={repertoire.id} initialLinks={shareLinks} />
+      {isOwner && (
+        <div style={{ marginTop: 10, fontSize: 14 }}>
+          <label>
+            Compartilhar com grupo:{" "}
+            <select value={groupId} onChange={(e) => void changeGroup(e.target.value)}>
+              <option value="">— não compartilhado —</option>
+              {groups.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
+
+      {isOwner && <ShareSection repertoireId={repertoire.id} initialLinks={shareLinks} />}
 
       {error && <p style={{ color: "#c00" }}>{error}</p>}
       {savedMsg && <p style={{ color: "#2a7" }}>{savedMsg}</p>}
