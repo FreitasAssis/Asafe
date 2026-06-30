@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { MembershipRole } from "@asafe/core";
 import { browserClient } from "@/lib/supabase/client";
+import { Breadcrumb } from "@/components/breadcrumb";
 import {
   approveRequest,
   createInvite,
@@ -132,9 +133,7 @@ export function GroupDetail({
 
   return (
     <main style={{ maxWidth: 720, margin: "1.5rem auto", padding: "0 1rem", fontFamily: "system-ui" }}>
-      <a href="/grupos" style={{ fontSize: 13, color: "#666" }}>
-        ← grupos
-      </a>
+      <Breadcrumb items={[{ label: "Grupos", href: "/grupos" }, { label: group.name }]} />
       <h1 style={{ margin: "8px 0 0" }}>{group.name}</h1>
 
       <section style={{ marginTop: 16 }}>

@@ -11,5 +11,5 @@ export default async function MusicasCatalogo() {
   if (!user) redirect("/login");
 
   const [songs, tags] = await Promise.all([listSongs(supabase), listTags(supabase)]);
-  return <Catalog songs={songs} tags={tags} />;
+  return <Catalog songs={songs} tags={tags} userId={user.id} />;
 }

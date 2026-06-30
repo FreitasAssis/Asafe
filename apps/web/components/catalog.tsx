@@ -7,7 +7,11 @@ import {
   TAG_CATEGORY_LABELS,
   type TagCategory,
 } from "@asafe/core";
-import type { SongListItem, Tag } from "@/lib/songs";
+import { useRouter } from "next/navigation";
+import { browserClient } from "@/lib/supabase/client";
+import { deleteSong, type SongListItem, type Tag } from "@/lib/songs";
+import { Fab } from "@/components/fab";
+import { RowActions } from "@/components/row-actions";
 import { FreshnessTag } from "./freshness-tag";
 
 const CATEGORIES: TagCategory[] = [
@@ -43,10 +47,13 @@ function Chip({ tag, on, onClick }: { tag: Tag; on?: boolean; onClick?: () => vo
 export function Catalog({
   songs,
   tags,
+  userId,
 }: {
   readonly songs: SongListItem[];
   readonly tags: Tag[];
+  readonly userId: string;
 }) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -94,10 +101,8 @@ export function Catalog({
 
   return (
     <main style={{ maxWidth: 760, margin: "1.5rem auto", padding: "0 1rem" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1 style={{ margin: 0 }}>Meu catálogo</h1>
-        <a href="/musicas/nova">+ Nova música</a>
-      </div>
+      <h1 style={{ marginTop: 0 }}>Meu catálogo</h1>
+      <Fab href="/musicas/nova" label="Nova música" />
 
       <input
         placeholder="Buscar por título ou compositor…"
@@ -141,11 +146,25 @@ export function Catalog({
               key={s.id}
               style={{ padding: "10px 0", borderBottom: "1px solid #eee" }}
             >
-              <a href={`/musicas/${s.id}`} style={{ fontSize: 17, fontWeight: 600 }}>
-                {s.title}
-              </a>
-              {s.composer && <span style={{ color: "#888" }}> — {s.composer}</span>}{" "}
-              <FreshnessTag lastUsed={s.lastUsed} />
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ flex: 1 }}>
+                  <a href={`/musicas/${s.id}`} style={{ fontSize: 17, fontWeight: 600 }}>
+                    {s.title}
+                  </a>
+                  {s.composer && <span style={{ color: "#888" }}> — {s.composer}</span>}{" "}
+                  <FreshnessTag lastUsed={s.lastUsed} />
+                </div>
+                {s.ownerId === userId && (
+                  <RowActions
+                    editHref={`/musicas/${s.id}/editar`}
+                    confirmText={`Excluir "${s.title}"?`}
+                    onDelete={async () => {
+                      await deleteSong(browserClient(), s.id);
+                      router.refresh();
+                    }}
+                  />
+                )}
+              </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
                 {s.tagIds
                   .map((id) => tagById.get(id))

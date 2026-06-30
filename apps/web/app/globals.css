@@ -10,6 +10,136 @@ body {
   margin: 0;
 }
 
+/* ===== Shell de navegação (sidebar + conteúdo) ===== */
+.app-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 12px;
+  border-right: 1px solid #eee;
+  background: #fafafa;
+  z-index: 30;
+}
+.app-brand {
+  font-size: 18px;
+  font-weight: 700;
+  text-decoration: none;
+  color: inherit;
+  padding: 4px 8px 12px;
+}
+.app-navlink {
+  padding: 8px 10px;
+  border-radius: 6px;
+  text-decoration: none;
+  color: #333;
+  font-size: 15px;
+}
+.app-navlink:hover {
+  background: #eee;
+}
+.app-navlink[aria-current="page"] {
+  background: #2563eb;
+  color: #fff;
+}
+.app-sidebar-footer {
+  margin-top: auto;
+  border-top: 1px solid #eee;
+  padding-top: 12px;
+  font-size: 13px;
+  color: #666;
+}
+.app-content {
+  margin-left: 220px;
+}
+/* Barra superior com hambúrguer (só aparece no mobile) */
+.app-topbar {
+  display: none;
+}
+.app-backdrop {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .app-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+  }
+  .app-sidebar.open {
+    transform: translateX(0);
+  }
+  .app-content {
+    margin-left: 0;
+  }
+  .app-topbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid #eee;
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 20;
+  }
+  .app-burger {
+    font-size: 20px;
+    line-height: 1;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+  .app-backdrop.open {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 25;
+  }
+}
+
+/* Botão de ação flutuante (FAB) */
+.app-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #fff;
+  font-size: 30px;
+  line-height: 54px;
+  text-align: center;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  z-index: 40;
+}
+.app-fab:hover {
+  background: #1d4ed8;
+}
+
+/* Trilha de navegação (breadcrumb) */
+.breadcrumb {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 12px;
+}
+.breadcrumb a {
+  color: #2563eb;
+  text-decoration: none;
+}
+.breadcrumb a:hover {
+  text-decoration: underline;
+}
+.breadcrumb .sep {
+  margin: 0 6px;
+  color: #ccc;
+}
+
 /* Cifra renderizada pelo @asafe/chordpro (HtmlDivFormatter): acordes sobre a letra. */
 .chord-preview .chord-sheet {
   white-space: pre-wrap;

@@ -24,6 +24,7 @@ import {
   type Song,
   type Tag,
 } from "@/lib/songs";
+import { Breadcrumb } from "@/components/breadcrumb";
 import { ChordPreview } from "./chord-preview";
 import { TagPicker } from "./tag-picker";
 
@@ -157,7 +158,7 @@ export function SongEditor({
       } else {
         const created = await createSong(supabase, userId, input);
         await setSongTags(supabase, created.id, tagIds);
-        router.push(`/musicas/${created.id}`);
+        router.push(`/musicas/${created.id}/editar`);
         router.refresh();
       }
     } catch (e) {
@@ -173,7 +174,7 @@ export function SongEditor({
     setSaving(true);
     try {
       await deleteSong(browserClient(), song.id);
-      router.push("/");
+      router.push("/musicas");
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro ao excluir.");
@@ -183,10 +184,18 @@ export function SongEditor({
 
   return (
     <main style={{ maxWidth: 960, margin: "1.5rem auto", padding: "0 1rem" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1 style={{ margin: 0 }}>{editing ? "Editar música" : "Nova música"}</h1>
-        <a href="/">← voltar</a>
-      </div>
+      <Breadcrumb
+        items={
+          song
+            ? [
+                { label: "Catálogo", href: "/musicas" },
+                { label: song.title, href: `/musicas/${song.id}` },
+                { label: "Editar" },
+              ]
+            : [{ label: "Catálogo", href: "/musicas" }, { label: "Nova música" }]
+        }
+      />
+      <h1 style={{ marginTop: 8 }}>{editing ? "Editar música" : "Nova música"}</h1>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
         <input

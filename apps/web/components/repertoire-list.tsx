@@ -1,0 +1,61 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { REPERTOIRE_TYPE_LABELS } from "@asafe/core";
+import { browserClient } from "@/lib/supabase/client";
+import { deleteRepertoire, type RepertoireListItem } from "@/lib/repertoires";
+import { RowActions } from "@/components/row-actions";
+
+/** Lista de repertórios com ações por linha (lápis/lixeira só para o dono). */
+export function RepertoireList({
+  items,
+  userId,
+}: {
+  readonly items: RepertoireListItem[];
+  readonly userId: string;
+}) {
+  const router = useRouter();
+
+  if (items.length === 0) {
+    return <p style={{ color: "#888" }}>Você ainda não tem repertórios. Crie o primeiro!</p>;
+  }
+
+  return (
+    <ul style={{ listStyle: "none", padding: 0 }}>
+      {items.map((r) => (
+        <li
+          key={r.id}
+          style={{
+            padding: "10px 0",
+            borderBottom: "1px solid #eee",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <div style={{ flex: 1 }}>
+            <a href={`/repertorios/${r.id}`} style={{ fontSize: 17, fontWeight: 600 }}>
+              {r.title}
+            </a>
+            <span style={{ color: "#888" }}>
+              {" "}
+              — {REPERTOIRE_TYPE_LABELS[r.type]}
+              {r.date ? ` · ${r.date}` : ""}
+              {r.groupName ? ` · 👥 ${r.groupName}` : ""}
+            </span>
+          </div>
+          {r.ownerId === userId && (
+            <RowActions
+              editHref={`/repertorios/${r.id}/editar`}
+              confirmText={`Excluir "${r.title}"?`}
+              onDelete={async () => {
+                await deleteRepertoire(browserClient(), r.id);
+                router.refresh();
+              }}
+            />
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
