@@ -59,11 +59,11 @@ export function ShareSection({
 
   return (
     <section
-      style={{ marginTop: 16, padding: 12, border: "1px solid #eee", borderRadius: 8 }}
+      style={{ marginTop: 16, padding: 12, border: "1px solid var(--border)", borderRadius: 8 }}
     >
       <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
         <strong>Compartilhar</strong>
-        <label style={{ fontSize: 12, color: "#666" }}>
+        <label style={{ fontSize: 12, color: "var(--text-muted)" }}>
           validade (opcional){" "}
           <input type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
         </label>
@@ -80,11 +80,11 @@ export function ShareSection({
               <code style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis" }}>
                 /r/{l.token.slice(0, 12)}…
               </code>
-              {l.expiresAt && <span style={{ color: "#888" }}>até {l.expiresAt}</span>}
+              {l.expiresAt && <span style={{ color: "var(--text-muted)" }}>até {l.expiresAt}</span>}
               <button type="button" onClick={() => void copy(l.token)}>
                 copiar
               </button>
-              <button type="button" onClick={() => void revoke(l.id)} style={{ color: "#c00" }}>
+              <button type="button" onClick={() => void revoke(l.id)} style={{ color: "var(--danger)" }}>
                 revogar
               </button>
             </li>

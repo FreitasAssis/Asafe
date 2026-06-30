@@ -67,7 +67,7 @@ export function TagPicker({
   const categories: TagCategory[] = [...CLOSED_TAG_CATEGORIES, ...OPEN_TAG_CATEGORIES];
   return (
     <section style={{ marginTop: 16 }}>
-      <label style={{ fontSize: 13, color: "#666" }}>Tags</label>
+      <label style={{ fontSize: 13, color: "var(--text-muted)" }}>Tags</label>
       {categories.map((cat) => {
         const catTags = tags.filter((t) => t.category === cat);
         const color = TAG_CATEGORY_COLORS[cat];

@@ -17,15 +17,15 @@ export default async function Grupos() {
       <h1 style={{ margin: 0 }}>Grupos</h1>
 
       {groups.length === 0 ? (
-        <p style={{ color: "#888" }}>Você ainda não participa de grupos. Crie o primeiro!</p>
+        <p style={{ color: "var(--text-muted)" }}>Você ainda não participa de grupos. Crie o primeiro!</p>
       ) : (
         <ul style={{ listStyle: "none", padding: 0 }}>
           {groups.map((g) => (
-            <li key={g.id} style={{ padding: "10px 0", borderBottom: "1px solid #eee" }}>
+            <li key={g.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
               <a href={`/grupos/${g.id}`} style={{ fontSize: 17, fontWeight: 600 }}>
                 {g.name}
               </a>
-              {g.ownerId === user.id && <span style={{ color: "#888" }}> (dono)</span>}
+              {g.ownerId === user.id && <span style={{ color: "var(--text-muted)" }}> (dono)</span>}
             </li>
           ))}
         </ul>

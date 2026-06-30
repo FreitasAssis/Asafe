@@ -134,7 +134,7 @@ export function Catalog({
       )}
 
       {filtered.length === 0 ? (
-        <p style={{ color: "#888" }}>
+        <p style={{ color: "var(--text-muted)" }}>
           {songs.length === 0
             ? "Você ainda não tem músicas. Crie a primeira!"
             : "Nenhuma música com esse filtro."}
@@ -144,14 +144,14 @@ export function Catalog({
           {filtered.map((s) => (
             <li
               key={s.id}
-              style={{ padding: "10px 0", borderBottom: "1px solid #eee" }}
+              style={{ padding: "10px 0", borderBottom: "1px solid var(--border)" }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <div style={{ flex: 1 }}>
                   <a href={`/musicas/${s.id}`} style={{ fontSize: 17, fontWeight: 600 }}>
                     {s.title}
                   </a>
-                  {s.composer && <span style={{ color: "#888" }}> — {s.composer}</span>}{" "}
+                  {s.composer && <span style={{ color: "var(--text-muted)" }}> — {s.composer}</span>}{" "}
                   <FreshnessTag lastUsed={s.lastUsed} />
                 </div>
                 {s.ownerId === userId && (

@@ -146,10 +146,10 @@ export function GroupDetail({
             >
               <span style={{ flex: 1 }}>
                 {m.name ?? m.email} · {ROLE_LABELS[m.role]}
-                {m.name && <span style={{ color: "#999", fontSize: 12 }}> ({m.email})</span>}
+                {m.name && <span style={{ color: "var(--text-muted)", fontSize: 12 }}> ({m.email})</span>}
               </span>
               {isOwner && m.role !== "owner" && (
-                <button type="button" onClick={() => void remove(m.userId)} style={{ color: "#c00" }}>
+                <button type="button" onClick={() => void remove(m.userId)} style={{ color: "var(--danger)" }}>
                   remover
                 </button>
               )}
@@ -169,12 +169,12 @@ export function GroupDetail({
               >
                 <span style={{ flex: 1 }}>
                   {r.name ?? r.email} · {ROLE_LABELS[r.role]}
-                  {r.name && <span style={{ color: "#999", fontSize: 12 }}> ({r.email})</span>}
+                  {r.name && <span style={{ color: "var(--text-muted)", fontSize: 12 }}> ({r.email})</span>}
                 </span>
                 <button type="button" onClick={() => void approve(r)} style={{ color: "#2a7" }}>
                   aprovar
                 </button>
-                <button type="button" onClick={() => void reject(r.userId)} style={{ color: "#c00" }}>
+                <button type="button" onClick={() => void reject(r.userId)} style={{ color: "var(--danger)" }}>
                   recusar
                 </button>
               </li>
@@ -184,10 +184,10 @@ export function GroupDetail({
       )}
 
       {isOwner && (
-        <section style={{ marginTop: 16, padding: 12, border: "1px solid #eee", borderRadius: 8 }}>
+        <section style={{ marginTop: 16, padding: 12, border: "1px solid var(--border)", borderRadius: 8 }}>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <strong>Convidar</strong>
-            <label style={{ fontSize: 12, color: "#666" }}>
+            <label style={{ fontSize: 12, color: "var(--text-muted)" }}>
               papel{" "}
               <select value={role} onChange={(e) => setRole(e.target.value as "editor" | "viewer")}>
                 <option value="viewer">leitor</option>
@@ -211,7 +211,7 @@ export function GroupDetail({
                   <button type="button" onClick={() => void copy(i.token)}>
                     copiar
                   </button>
-                  <button type="button" onClick={() => void revoke(i.id)} style={{ color: "#c00" }}>
+                  <button type="button" onClick={() => void revoke(i.id)} style={{ color: "var(--danger)" }}>
                     revogar
                   </button>
                 </li>
@@ -223,10 +223,10 @@ export function GroupDetail({
 
       {!isOwner && (
         <section style={{ marginTop: 16 }}>
-          <button type="button" onClick={() => void leave()} disabled={busy} style={{ color: "#c00" }}>
+          <button type="button" onClick={() => void leave()} disabled={busy} style={{ color: "var(--danger)" }}>
             Sair do grupo
           </button>
-          {msg && <span style={{ fontSize: 12, color: "#c00", marginLeft: 8 }}>{msg}</span>}
+          {msg && <span style={{ fontSize: 12, color: "var(--danger)", marginLeft: 8 }}>{msg}</span>}
         </section>
       )}
     </main>

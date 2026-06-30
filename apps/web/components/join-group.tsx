@@ -52,7 +52,7 @@ export function JoinGroup({ token }: { readonly token: string }) {
           </button>
         </>
       )}
-      {error && <p style={{ color: "#c00" }}>{error}</p>}
+      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
     </main>
   );
 }

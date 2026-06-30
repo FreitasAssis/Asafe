@@ -3,7 +3,7 @@ import { freshnessLabel, type FreshnessLevel } from "@asafe/core";
 const COLOR: Record<FreshnessLevel, string> = {
   fresca: "#059669", // verde — nunca/há muito
   recente: "#d97706", // âmbar — cantou faz pouco (atenção)
-  ok: "#888", // neutro
+  ok: "var(--text-muted)", // neutro
 };
 
 /** Rótulo de frescor ("há 3 semanas" / "nunca usada") colorido por nível. */

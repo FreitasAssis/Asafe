@@ -230,7 +230,7 @@ export function SongEditor({
         }}
       >
         <div>
-          <label style={{ fontSize: 13, color: "#666" }}>
+          <label style={{ fontSize: 13, color: "var(--text-muted)" }}>
             Cole a cifra{detected ? ` — formato: ${FORMAT_LABEL[detected]}` : ""}
           </label>
           <textarea
@@ -268,7 +268,7 @@ export function SongEditor({
 
       {/* Links de áudio */}
       <section style={{ marginTop: 16 }}>
-        <label style={{ fontSize: 13, color: "#666" }}>
+        <label style={{ fontSize: 13, color: "var(--text-muted)" }}>
           Links de áudio (até {MAX_AUDIO_LINKS}) — YouTube, Spotify, Deezer, SoundCloud, Apple Music
         </label>
         {audioLinks.map((link, i) => {
@@ -281,7 +281,7 @@ export function SongEditor({
                 onChange={(e) => setLink(i, e.target.value)}
                 style={{ flex: 1, padding: 8 }}
               />
-              <span style={{ fontSize: 12, width: 90, color: provider ? "#2a7" : "#c00" }}>
+              <span style={{ fontSize: 12, width: 90, color: provider ? "#2a7" : "var(--danger)" }}>
                 {link.trim() ? (provider ?? "não suportado") : ""}
               </span>
               <button type="button" onClick={() => removeLink(i)}>
@@ -304,7 +304,7 @@ export function SongEditor({
         onCreate={(name, category) => void handleCreateTag(name, category)}
       />
 
-      {error && <p style={{ color: "#c00" }}>{error}</p>}
+      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
       {savedMsg && <p style={{ color: "#2a7" }}>{savedMsg}</p>}
 
       <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
@@ -316,7 +316,7 @@ export function SongEditor({
             type="button"
             onClick={() => void remove()}
             disabled={saving}
-            style={{ padding: "10px 18px", color: "#c00" }}
+            style={{ padding: "10px 18px", color: "var(--danger)" }}
           >
             Excluir
           </button>

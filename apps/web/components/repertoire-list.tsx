@@ -17,7 +17,7 @@ export function RepertoireList({
   const router = useRouter();
 
   if (items.length === 0) {
-    return <p style={{ color: "#888" }}>Você ainda não tem repertórios. Crie o primeiro!</p>;
+    return <p style={{ color: "var(--text-muted)" }}>Você ainda não tem repertórios. Crie o primeiro!</p>;
   }
 
   return (
@@ -27,7 +27,7 @@ export function RepertoireList({
           key={r.id}
           style={{
             padding: "10px 0",
-            borderBottom: "1px solid #eee",
+            borderBottom: "1px solid var(--border)",
             display: "flex",
             alignItems: "center",
             gap: 8,
@@ -37,7 +37,7 @@ export function RepertoireList({
             <a href={`/repertorios/${r.id}`} style={{ fontSize: 17, fontWeight: 600 }}>
               {r.title}
             </a>
-            <span style={{ color: "#888" }}>
+            <span style={{ color: "var(--text-muted)" }}>
               {" "}
               — {REPERTOIRE_TYPE_LABELS[r.type]}
               {r.date ? ` · ${r.date}` : ""}

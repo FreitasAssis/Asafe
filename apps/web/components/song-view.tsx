@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { audioProvider } from "@asafe/core";
 import { stripChords } from "@asafe/chordpro";
 import type { Song, Tag } from "@/lib/songs";
+import { readPrefs, writePrefs } from "@/lib/preferences";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { EditPencil } from "@/components/edit-pencil";
 import { ChordPreview } from "./chord-preview";
@@ -19,6 +20,11 @@ export function SongView({
   readonly canEdit: boolean;
 }) {
   const [hide, setHide] = useState(false);
+  useEffect(() => setHide(Boolean(readPrefs().hideChords)), []);
+  function toggleHide(v: boolean) {
+    setHide(v);
+    writePrefs({ hideChords: v });
+  }
   const tagById = new Map(tags.map((t) => [t.id, t]));
   const body = hide ? stripChords(song.chordproBody) : song.chordproBody;
 
@@ -29,14 +35,14 @@ export function SongView({
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
         <div>
           <h1 style={{ margin: 0 }}>{song.title}</h1>
-          <div style={{ color: "#888", fontSize: 14 }}>
+          <div style={{ color: "var(--text-muted)", fontSize: 14 }}>
             {song.composer ? song.composer : "sem compositor"}
             {song.defaultKey ? ` · tom ${song.defaultKey}` : ""}
           </div>
         </div>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <label style={{ fontSize: 13, whiteSpace: "nowrap" }}>
-            <input type="checkbox" checked={hide} onChange={(e) => setHide(e.target.checked)} /> esconder
+            <input type="checkbox" checked={hide} onChange={(e) => toggleHide(e.target.checked)} /> esconder
             cifra
           </label>
           {canEdit && <EditPencil href={`/musicas/${song.id}/editar`} />}

@@ -2,20 +2,6 @@
 
 import { useState } from "react";
 
-const ICON: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  width: 28,
-  height: 28,
-  borderRadius: 6,
-  border: "1px solid #ddd",
-  background: "#fff",
-  textDecoration: "none",
-  fontSize: 14,
-  lineHeight: 1,
-};
-
 /** Ações por linha de lista: lápis (editar) + lixeira (excluir). Mostre só a quem pode. */
 export function RowActions({
   editHref,
@@ -39,8 +25,8 @@ export function RowActions({
   }
 
   return (
-    <span style={{ display: "inline-flex", gap: 6, flexShrink: 0 }}>
-      <a href={editHref} title="Editar" aria-label="Editar" style={ICON}>
+    <span className="inline-flex shrink-0 gap-1.5">
+      <a href={editHref} title="Editar" aria-label="Editar" className="icon-btn">
         ✏️
       </a>
       <button
@@ -49,7 +35,7 @@ export function RowActions({
         disabled={busy}
         title="Excluir"
         aria-label="Excluir"
-        style={{ ...ICON, color: "#c00", cursor: busy ? "default" : "pointer" }}
+        className="icon-btn text-danger"
       >
         🗑️
       </button>
