@@ -1,13 +1,186 @@
+@import "tailwindcss";
+
+/* ===== Tokens de cor (papel e tinta) — modo claro ===== */
 :root {
-  font-family: system-ui, sans-serif;
+  --bg: #f4eee1; /* pergaminho */
+  --surface: #fbf8ef;
+  --text: #1e1c1a; /* tinta */
+  --text-muted: #6e685c; /* pedra escuro (AA) */
+  --primary: #2f3a5e; /* índigo vésperas */
+  --on-primary: #f4eee1;
+  --accent: #b0894a; /* latão */
+  --border: #e3dbc9;
+  --season: #4f7a55; /* acento litúrgico (estático por ora: tempo comum) */
+  --danger: #b23b2e;
 }
 
-* {
-  box-sizing: border-box;
+/* ===== Modo escuro / palco ===== */
+:root[data-theme="dark"] {
+  --bg: #1e1c1a;
+  --surface: #26231f;
+  --text: #f4eee1;
+  --text-muted: #a89e8c;
+  --primary: #8e9ac4; /* índigo clareia */
+  --on-primary: #1e1c1a;
+  --accent: #c2a14e; /* dourado lê melhor no escuro */
+  --border: #3a352f;
+  --danger: #e0786b;
 }
 
-body {
-  margin: 0;
+/* Mapeia os tokens (runtime) para as utilitárias do Tailwind (bg-bg, text-ink, …). */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-ink: var(--text);
+  --color-muted: var(--text-muted);
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --color-season: var(--season);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-inter, ui-sans-serif, system-ui, sans-serif);
+  --font-serif: var(--font-fraunces, ui-serif, Georgia, serif);
+}
+
+@layer base {
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-inter, ui-sans-serif, system-ui, sans-serif);
+  }
+  a {
+    color: var(--primary);
+  }
+  h1,
+  h2 {
+    font-family: var(--font-fraunces, ui-serif, Georgia, serif);
+  }
+  /* Defaults sensatos para controles sem classe explícita (o re-skin fino usa .btn/.input). */
+  button:not([class]) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+  }
+  button:not([class]):hover {
+    background: color-mix(in srgb, var(--text) 6%, var(--surface));
+  }
+  button:not([class]):disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+  input:not([class]):not([type="checkbox"]):not([type="radio"]),
+  select:not([class]),
+  textarea:not([class]) {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 15px;
+  }
+  input:not([class])::placeholder,
+  textarea:not([class])::placeholder {
+    color: var(--text-muted);
+  }
+}
+
+/* ===== Primitivos (usados pelas telas) ===== */
+@layer components {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .btn:hover {
+    background: color-mix(in srgb, var(--text) 6%, var(--surface));
+  }
+  .btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+  .btn-primary {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--on-primary);
+  }
+  .btn-primary:hover {
+    background: var(--primary);
+    filter: brightness(1.08);
+  }
+  .btn-danger {
+    color: var(--danger);
+  }
+  .input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 15px;
+  }
+  .input::placeholder {
+    color: var(--text-muted);
+  }
+  .btn:focus-visible,
+  .input:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 1px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .icon-btn:hover {
+    background: color-mix(in srgb, var(--text) 6%, var(--surface));
+  }
 }
 
 /* ===== Shell de navegação (sidebar + conteúdo) ===== */
@@ -19,42 +192,34 @@ body {
   flex-direction: column;
   gap: 4px;
   padding: 16px 12px;
-  border-right: 1px solid #eee;
-  background: #fafafa;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
   z-index: 30;
-}
-.app-brand {
-  font-size: 18px;
-  font-weight: 700;
-  text-decoration: none;
-  color: inherit;
-  padding: 4px 8px 12px;
 }
 .app-navlink {
   padding: 8px 10px;
   border-radius: 6px;
   text-decoration: none;
-  color: #333;
+  color: var(--text);
   font-size: 15px;
 }
 .app-navlink:hover {
-  background: #eee;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
 }
 .app-navlink[aria-current="page"] {
-  background: #2563eb;
-  color: #fff;
+  background: var(--primary);
+  color: var(--on-primary);
 }
 .app-sidebar-footer {
   margin-top: auto;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--border);
   padding-top: 12px;
   font-size: 13px;
-  color: #666;
+  color: var(--text-muted);
 }
 .app-content {
   margin-left: 220px;
 }
-/* Barra superior com hambúrguer (só aparece no mobile) */
 .app-topbar {
   display: none;
 }
@@ -78,10 +243,10 @@ body {
     align-items: center;
     gap: 10px;
     padding: 10px 14px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--border);
     position: sticky;
     top: 0;
-    background: #fff;
+    background: var(--bg);
     z-index: 20;
   }
   .app-burger {
@@ -91,12 +256,13 @@ body {
     border: none;
     cursor: pointer;
     padding: 4px 8px;
+    color: var(--text);
   }
   .app-backdrop.open {
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.45);
     z-index: 25;
   }
 }
@@ -109,27 +275,27 @@ body {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: #2563eb;
-  color: #fff;
+  background: var(--primary);
+  color: var(--on-primary);
   font-size: 30px;
   line-height: 54px;
   text-align: center;
   text-decoration: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
   z-index: 40;
 }
 .app-fab:hover {
-  background: #1d4ed8;
+  filter: brightness(1.08);
 }
 
 /* Trilha de navegação (breadcrumb) */
 .breadcrumb {
   font-size: 13px;
-  color: #888;
+  color: var(--text-muted);
   margin-bottom: 12px;
 }
 .breadcrumb a {
-  color: #2563eb;
+  color: var(--primary);
   text-decoration: none;
 }
 .breadcrumb a:hover {
@@ -137,7 +303,7 @@ body {
 }
 .breadcrumb .sep {
   margin: 0 6px;
-  color: #ccc;
+  color: var(--border);
 }
 
 /* Cifra renderizada pelo @asafe/chordpro (HtmlDivFormatter): acordes sobre a letra. */
@@ -145,32 +311,26 @@ body {
   white-space: pre-wrap;
   line-height: 1.1;
 }
-
 .chord-preview .paragraph {
   margin-bottom: 1em;
 }
-
 .chord-preview .row {
   display: flex;
   flex-wrap: wrap;
 }
-
 .chord-preview .column {
   display: flex;
   flex-direction: column;
 }
-
 .chord-preview .chord {
   font-weight: 700;
-  color: #2563eb;
+  color: var(--accent);
   min-height: 1.2em;
   white-space: pre;
 }
-
 .chord-preview .chord:not(:empty) {
   padding-right: 10px;
 }
-
 .chord-preview .lyrics {
   white-space: pre;
 }
