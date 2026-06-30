@@ -166,6 +166,10 @@ convite, não aula, e tudo desligável. Aparece do mais leve ao mais explícito:
 1º acesso (fechável), tela "Sobre", e um toque contextual quando um **Salmo de Asaf** cai na
 liturgia do dia (aproveitando o eixo de perícope) — o nome vira um fio que reaparece de leve.
 
+**Identidade visual** (paleta "papel e tinta", acento litúrgico dinâmico, monograma da lira,
+tipografia, modo palco e tokens CSS): ver [`docs/identidade-visual.md`](identidade-visual.md).
+A adoção é uma fatia própria — a passada de UI pré-launch.
+
 ## 11. Decisões em aberto / riscos
 
 - Licenciamento CNBB para textos oficiais (§8).
