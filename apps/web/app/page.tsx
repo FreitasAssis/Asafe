@@ -27,8 +27,23 @@ export default async function Home() {
       <p>
         Olá, <strong>{user.email}</strong> — você está dentro.
       </p>
+      <p>
+        <a
+          href="/musicas/nova"
+          style={{
+            display: "inline-block",
+            padding: "10px 16px",
+            background: "#2563eb",
+            color: "#fff",
+            borderRadius: 6,
+            textDecoration: "none",
+          }}
+        >
+          + Nova música
+        </a>
+      </p>
       <p style={{ color: "#888" }}>
-        Seu catálogo e o editor de cifras chegam na próxima etapa.
+        A listagem do seu catálogo chega na próxima etapa.
       </p>
     </main>
   );

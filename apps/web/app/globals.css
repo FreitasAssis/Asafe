@@ -1,0 +1,46 @@
+:root {
+  font-family: system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+/* Cifra renderizada pelo @asafe/chordpro (HtmlDivFormatter): acordes sobre a letra. */
+.chord-preview .chord-sheet {
+  white-space: pre-wrap;
+  line-height: 1.1;
+}
+
+.chord-preview .paragraph {
+  margin-bottom: 1em;
+}
+
+.chord-preview .row {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.chord-preview .column {
+  display: flex;
+  flex-direction: column;
+}
+
+.chord-preview .chord {
+  font-weight: 700;
+  color: #2563eb;
+  min-height: 1.2em;
+  white-space: pre;
+}
+
+.chord-preview .chord:not(:empty) {
+  padding-right: 10px;
+}
+
+.chord-preview .lyrics {
+  white-space: pre;
+}
