@@ -233,7 +233,13 @@ export function RepertoireBuilder({
   return (
     <main style={{ maxWidth: 720, margin: "1.5rem auto", padding: "0 1rem" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <Breadcrumb items={[{ label: "Repertórios", href: "/repertorios" }, { label: title }]} />
+        <Breadcrumb
+          items={[
+            { label: "Repertórios", href: "/repertorios" },
+            { label: title, href: `/repertorios/${repertoire.id}` },
+            { label: "Editar" },
+          ]}
+        />
         {isOwner && (
           <button type="button" onClick={() => void destroy()} style={{ color: "#c00" }}>
             Excluir

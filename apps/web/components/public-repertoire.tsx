@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   arrangeRepertoire,
   REPERTOIRE_TYPE_LABELS,
@@ -57,13 +57,21 @@ function ItemView({ item, hide }: { item: PublicItem; hide: boolean }) {
 }
 
 /** Página pública de leitura de um repertório (só leitura, sem login). */
-export function PublicRepertoire({ pkg }: { readonly pkg: SharedPackage }) {
+export function PublicRepertoire({
+  pkg,
+  header,
+}: {
+  readonly pkg: SharedPackage;
+  /** Conteúdo opcional no topo (breadcrumb + lápis na visualização in-app). */
+  readonly header?: ReactNode;
+}) {
   const [hide, setHide] = useState(false);
   const arranged = arrangeRepertoire(pkg.slots, pkg.items);
   const slotsWithItems = arranged.slots.filter((s) => s.items.length > 0);
 
   return (
     <main style={{ maxWidth: 720, margin: "1.5rem auto", padding: "0 1rem", fontFamily: "system-ui" }}>
+      {header}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h1 style={{ margin: 0 }}>{pkg.repertoire.title}</h1>

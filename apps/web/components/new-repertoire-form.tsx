@@ -32,7 +32,7 @@ export function NewRepertoireForm({ userId }: { readonly userId: string }) {
         type,
         date: date.trim() || null,
       });
-      router.push(`/repertorios/${id}`);
+      router.push(`/repertorios/${id}/editar`);
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro ao criar.");

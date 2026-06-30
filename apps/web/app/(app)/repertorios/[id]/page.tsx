@@ -1,12 +1,12 @@
 import { notFound, redirect } from "next/navigation";
 import { serverClient } from "@/lib/supabase/server";
-import { getRepertoire, slotTemplate } from "@/lib/repertoires";
-import { listSongs, listTags } from "@/lib/songs";
-import { listShareLinks } from "@/lib/share-links";
-import { listGroups } from "@/lib/groups";
-import { RepertoireBuilder } from "@/components/repertoire-builder";
+import { getRepertoire, getRepertoirePackage } from "@/lib/repertoires";
+import { myMembershipRole } from "@/lib/groups";
+import { PublicRepertoire } from "@/components/public-repertoire";
+import { Breadcrumb } from "@/components/breadcrumb";
+import { EditPencil } from "@/components/edit-pencil";
 
-export default async function MontarRepertorio({
+export default async function VerRepertorio({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -18,27 +18,29 @@ export default async function MontarRepertorio({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const repertoire = await getRepertoire(supabase, id);
-  if (!repertoire) notFound();
-
-  const isOwner = repertoire.ownerId === user.id;
-  const [template, songs, tags, shareLinks, groups] = await Promise.all([
-    slotTemplate(supabase, repertoire.type),
-    listSongs(supabase),
-    listTags(supabase),
-    isOwner ? listShareLinks(supabase, repertoire.id) : Promise.resolve([]),
-    isOwner ? listGroups(supabase) : Promise.resolve([]),
+  const [pkg, repertoire] = await Promise.all([
+    getRepertoirePackage(supabase, id),
+    getRepertoire(supabase, id),
   ]);
+  if (!pkg || !repertoire) notFound();
 
-  return (
-    <RepertoireBuilder
-      repertoire={repertoire}
-      template={template}
-      songs={songs}
-      tags={tags}
-      shareLinks={shareLinks}
-      isOwner={isOwner}
-      groups={groups}
-    />
+  // Edita o dono ou um editor do grupo (viewer só lê).
+  const isOwner = repertoire.ownerId === user.id;
+  const role = repertoire.groupId
+    ? await myMembershipRole(supabase, repertoire.groupId, user.id)
+    : null;
+  const canEdit = isOwner || role === "editor";
+
+  const header = (
+    <div
+      style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}
+    >
+      <Breadcrumb
+        items={[{ label: "Repertórios", href: "/repertorios" }, { label: pkg.repertoire.title }]}
+      />
+      {canEdit && <EditPencil href={`/repertorios/${id}/editar`} />}
+    </div>
   );
+
+  return <PublicRepertoire pkg={pkg} header={header} />;
 }

@@ -1,9 +1,9 @@
 import { notFound, redirect } from "next/navigation";
 import { serverClient } from "@/lib/supabase/server";
 import { getSong, listTags } from "@/lib/songs";
-import { SongView } from "@/components/song-view";
+import { SongEditor } from "@/components/song-editor";
 
-export default async function VerMusica({
+export default async function EditarMusica({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -18,7 +18,5 @@ export default async function VerMusica({
   const [song, tags] = await Promise.all([getSong(supabase, id), listTags(supabase)]);
   if (!song) notFound();
 
-  // Só o dono edita a música (RLS song_write_own).
-  const canEdit = song.ownerId === user.id;
-  return <SongView song={song} tags={tags} canEdit={canEdit} />;
+  return <SongEditor userId={user.id} tags={tags} song={song} />;
 }

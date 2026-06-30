@@ -131,6 +131,22 @@ export async function rejectRequest(
   if (error) throw error;
 }
 
+/** Meu papel no grupo (owner/editor/viewer), ou null se não sou membro. */
+export async function myMembershipRole(
+  supabase: SupabaseClient,
+  groupId: string,
+  userId: string,
+): Promise<MembershipRole | null> {
+  const { data, error } = await supabase
+    .from("membership")
+    .select("role")
+    .eq("group_id", groupId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as { role: MembershipRole } | null)?.role ?? null;
+}
+
 export async function listInvites(
   supabase: SupabaseClient,
   groupId: string,

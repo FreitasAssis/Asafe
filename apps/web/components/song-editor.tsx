@@ -158,7 +158,7 @@ export function SongEditor({
       } else {
         const created = await createSong(supabase, userId, input);
         await setSongTags(supabase, created.id, tagIds);
-        router.push(`/musicas/${created.id}`);
+        router.push(`/musicas/${created.id}/editar`);
         router.refresh();
       }
     } catch (e) {
@@ -174,7 +174,7 @@ export function SongEditor({
     setSaving(true);
     try {
       await deleteSong(browserClient(), song.id);
-      router.push("/");
+      router.push("/musicas");
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro ao excluir.");
@@ -185,10 +185,15 @@ export function SongEditor({
   return (
     <main style={{ maxWidth: 960, margin: "1.5rem auto", padding: "0 1rem" }}>
       <Breadcrumb
-        items={[
-          { label: "Catálogo", href: "/musicas" },
-          { label: song ? song.title : "Nova música" },
-        ]}
+        items={
+          song
+            ? [
+                { label: "Catálogo", href: "/musicas" },
+                { label: song.title, href: `/musicas/${song.id}` },
+                { label: "Editar" },
+              ]
+            : [{ label: "Catálogo", href: "/musicas" }, { label: "Nova música" }]
+        }
       />
       <h1 style={{ marginTop: 8 }}>{editing ? "Editar música" : "Nova música"}</h1>
 

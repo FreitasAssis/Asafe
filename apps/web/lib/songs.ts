@@ -12,6 +12,7 @@ export interface SongInput {
 
 export interface Song extends SongInput {
   id: string;
+  ownerId: string | null;
   tagIds: string[];
 }
 
@@ -27,6 +28,7 @@ export interface SongListItem {
   id: string;
   title: string;
   composer: string | null;
+  ownerId: string | null;
   tagIds: string[];
   /** Última data efetiva de uso (YYYY-MM-DD) entre meus repertórios, ou null. */
   lastUsed: string | null;
@@ -39,6 +41,7 @@ interface SongRow {
   default_key: string | null;
   chordpro_body: string | null;
   audio_links: string[];
+  owner_id: string | null;
   song_tag?: { tag_id: string }[];
 }
 
@@ -50,6 +53,7 @@ function rowToSong(row: SongRow): Song {
     defaultKey: row.default_key,
     chordproBody: row.chordpro_body ?? "",
     audioLinks: row.audio_links ?? [],
+    ownerId: row.owner_id,
     tagIds: (row.song_tag ?? []).map((st) => st.tag_id),
   };
 }
@@ -64,7 +68,8 @@ function inputToRow(input: SongInput) {
   };
 }
 
-const SONG_COLS = "id, title, composer, default_key, chordpro_body, audio_links, song_tag(tag_id)";
+const SONG_COLS =
+  "id, title, composer, default_key, chordpro_body, audio_links, owner_id, song_tag(tag_id)";
 
 /** Carrega uma música por id, com suas tags (RLS: só o dono lê a própria). */
 export async function getSong(supabase: SupabaseClient, id: string): Promise<Song | null> {
@@ -76,7 +81,7 @@ export async function getSong(supabase: SupabaseClient, id: string): Promise<Son
 /** Lista as minhas músicas (com tags e frescor) para o catálogo, ordenadas por título. */
 export async function listSongs(supabase: SupabaseClient): Promise<SongListItem[]> {
   const [songsRes, usageRes] = await Promise.all([
-    supabase.from("song").select("id, title, composer, song_tag(tag_id)").order("title"),
+    supabase.from("song").select("id, title, composer, owner_id, song_tag(tag_id)").order("title"),
     supabase.from("repertoire_item").select("song_id, repertoire(date, created_at)"),
   ]);
   if (songsRes.error) throw songsRes.error;
@@ -99,6 +104,7 @@ export async function listSongs(supabase: SupabaseClient): Promise<SongListItem[
     id: r.id,
     title: r.title,
     composer: r.composer,
+    ownerId: r.owner_id,
     tagIds: (r.song_tag ?? []).map((st) => st.tag_id),
     lastUsed: lastUsed.get(r.id) ?? null,
   }));

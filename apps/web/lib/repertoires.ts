@@ -1,11 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { RepertoireType, SlotDef } from "@asafe/core";
+import type { SharedPackage } from "@/components/public-repertoire";
 
 export interface RepertoireListItem {
   id: string;
   title: string;
   type: RepertoireType;
   date: string | null;
+  ownerId: string;
   groupName: string | null;
 }
 
@@ -63,7 +65,7 @@ export async function listRepertoires(
 ): Promise<RepertoireListItem[]> {
   const { data, error } = await supabase
     .from("repertoire")
-    .select("id, title, type, date, group(name)")
+    .select("id, title, type, date, owner_id, group(name)")
     .order("date", { ascending: false, nullsFirst: false })
     .order("title");
   if (error) throw error;
@@ -73,6 +75,7 @@ export async function listRepertoires(
       title: string;
       type: RepertoireType;
       date: string | null;
+      owner_id: string;
       group: { name: string } | null;
     }[]
   ).map((r) => ({
@@ -80,6 +83,7 @@ export async function listRepertoires(
     title: r.title,
     type: r.type,
     date: r.date,
+    ownerId: r.owner_id,
     groupName: r.group?.name ?? null,
   }));
 }
@@ -138,6 +142,53 @@ export async function getRepertoire(
     ownerId: row.owner_id,
     groupId: row.group_id,
     items: (row.repertoire_item ?? []).map(rowToItem),
+  };
+}
+
+/**
+ * Pacote de leitura do repertório (mesma forma do link público), porém via RLS
+ * autenticado. Lê a cifra de cada música — permitido ao dono ou a membros do grupo
+ * (política `song_select_group`). Retorna null se o repertório não for visível.
+ */
+export async function getRepertoirePackage(
+  supabase: SupabaseClient,
+  id: string,
+): Promise<SharedPackage | null> {
+  const { data, error } = await supabase
+    .from("repertoire")
+    .select(
+      `title, type, date, repertoire_item(id, moment_slot, order, transpose, notes, song(title, chordpro_body))`,
+    )
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const row = data as unknown as {
+    title: string;
+    type: RepertoireType;
+    date: string | null;
+    repertoire_item: {
+      id: string;
+      moment_slot: string | null;
+      order: number;
+      transpose: number;
+      notes: string | null;
+      song: { title: string; chordpro_body: string | null } | null;
+    }[];
+  };
+  const { slots } = await slotTemplate(supabase, row.type);
+  return {
+    repertoire: { title: row.title, type: row.type, date: row.date },
+    slots,
+    items: (row.repertoire_item ?? []).map((it) => ({
+      id: it.id,
+      momentSlot: it.moment_slot,
+      order: it.order,
+      transpose: it.transpose,
+      notes: it.notes,
+      title: it.song?.title ?? "(música)",
+      chordpro: it.song?.chordpro_body ?? null,
+    })),
   };
 }
 
