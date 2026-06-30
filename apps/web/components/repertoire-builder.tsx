@@ -9,6 +9,9 @@ import {
   addItem,
   deleteRepertoire,
   removeItem,
+  setItemNotes,
+  setItemOrder,
+  setItemTranspose,
   updateRepertoire,
   type Repertoire,
   type RepertoireItemFull,
@@ -68,6 +71,50 @@ export function RepertoireBuilder({
     }
   }
 
+  async function changeTranspose(item: RepertoireItemFull, delta: number) {
+    const transpose = item.transpose + delta;
+    setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, transpose } : i)));
+    try {
+      await setItemTranspose(browserClient(), item.id, transpose);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro ao transpor.");
+    }
+  }
+
+  async function saveNotes(item: RepertoireItemFull, notes: string) {
+    const value = notes.trim() || null;
+    setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, notes: value } : i)));
+    try {
+      await setItemNotes(browserClient(), item.id, value);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro ao salvar nota.");
+    }
+  }
+
+  /** Move um item para cima/baixo dentro do momento (troca o `order` com o vizinho). */
+  async function move(item: RepertoireItemFull, slotItems: RepertoireItemFull[], dir: "up" | "down") {
+    const idx = slotItems.findIndex((i) => i.id === item.id);
+    const target = dir === "up" ? idx - 1 : idx + 1;
+    if (target < 0 || target >= slotItems.length) return;
+    const neighbor = slotItems[target]!;
+    setItems((prev) =>
+      prev.map((i) => {
+        if (i.id === item.id) return { ...i, order: neighbor.order };
+        if (i.id === neighbor.id) return { ...i, order: item.order };
+        return i;
+      }),
+    );
+    try {
+      const sb = browserClient();
+      await Promise.all([
+        setItemOrder(sb, item.id, neighbor.order),
+        setItemOrder(sb, neighbor.id, item.order),
+      ]);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro ao reordenar.");
+    }
+  }
+
   async function saveMeta() {
     setSavedMsg(null);
     try {
@@ -113,8 +160,36 @@ export function RepertoireBuilder({
         </div>
         <ul style={{ listStyle: "none", padding: 0, margin: "4px 0" }}>
           {slotItems.map((it) => (
-            <li key={it.id} style={{ display: "flex", gap: 8, alignItems: "center", padding: "2px 0" }}>
-              <a href={`/musicas/${it.songId}`}>{it.songTitle}</a>
+            <li
+              key={it.id}
+              style={{ display: "flex", gap: 8, alignItems: "center", padding: "3px 0", flexWrap: "wrap" }}
+            >
+              <a href={`/musicas/${it.songId}`} style={{ minWidth: 120 }}>
+                {it.songTitle}
+              </a>
+              <span style={{ display: "inline-flex", gap: 4, alignItems: "center", fontSize: 12 }}>
+                <button type="button" onClick={() => void changeTranspose(it, -1)}>
+                  −
+                </button>
+                <span style={{ minWidth: 44, textAlign: "center" }}>
+                  tom {it.transpose > 0 ? `+${it.transpose}` : it.transpose}
+                </span>
+                <button type="button" onClick={() => void changeTranspose(it, 1)}>
+                  +
+                </button>
+              </span>
+              <input
+                defaultValue={it.notes ?? ""}
+                placeholder="nota…"
+                onBlur={(e) => void saveNotes(it, e.target.value)}
+                style={{ fontSize: 12, padding: "2px 6px", width: 140 }}
+              />
+              <button type="button" onClick={() => void move(it, slotItems, "up")} style={{ fontSize: 12 }}>
+                ↑
+              </button>
+              <button type="button" onClick={() => void move(it, slotItems, "down")} style={{ fontSize: 12 }}>
+                ↓
+              </button>
               <button type="button" onClick={() => void remove(it.id)} style={{ fontSize: 12 }}>
                 remover
               </button>

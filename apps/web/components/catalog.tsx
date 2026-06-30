@@ -8,6 +8,7 @@ import {
   type TagCategory,
 } from "@asafe/core";
 import type { SongListItem, Tag } from "@/lib/songs";
+import { FreshnessTag } from "./freshness-tag";
 
 const CATEGORIES: TagCategory[] = [
   "momento",
@@ -143,7 +144,8 @@ export function Catalog({
               <a href={`/musicas/${s.id}`} style={{ fontSize: 17, fontWeight: 600 }}>
                 {s.title}
               </a>
-              {s.composer && <span style={{ color: "#888" }}> — {s.composer}</span>}
+              {s.composer && <span style={{ color: "#888" }}> — {s.composer}</span>}{" "}
+              <FreshnessTag lastUsed={s.lastUsed} />
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
                 {s.tagIds
                   .map((id) => tagById.get(id))
