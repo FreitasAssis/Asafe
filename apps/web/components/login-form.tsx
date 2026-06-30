@@ -50,7 +50,7 @@ export function LoginForm() {
         e.preventDefault();
         void handle("entrar");
       }}
-      style={{ display: "flex", flexDirection: "column", gap: 12 }}
+      className="flex flex-col gap-3"
     >
       <input
         type="text"
@@ -58,7 +58,7 @@ export function LoginForm() {
         value={name}
         onChange={(e) => setName(e.target.value)}
         autoComplete="name"
-        style={{ padding: 10, fontSize: 16 }}
+        className="input"
       />
       <input
         type="email"
@@ -67,7 +67,7 @@ export function LoginForm() {
         onChange={(e) => setEmail(e.target.value)}
         required
         autoComplete="email"
-        style={{ padding: 10, fontSize: 16 }}
+        className="input"
       />
       <input
         type="password"
@@ -76,20 +76,20 @@ export function LoginForm() {
         onChange={(e) => setPassword(e.target.value)}
         required
         autoComplete="current-password"
-        style={{ padding: 10, fontSize: 16 }}
+        className="input"
       />
 
-      {error && <p style={{ color: "#c00", margin: 0 }}>{error}</p>}
+      {error && <p className="m-0 text-danger">{error}</p>}
 
-      <div style={{ display: "flex", gap: 8 }}>
-        <button type="submit" disabled={loading} style={{ flex: 1, padding: 10 }}>
+      <div className="flex gap-2">
+        <button type="submit" disabled={loading} className="btn btn-primary flex-1">
           Entrar
         </button>
         <button
           type="button"
           disabled={loading}
           onClick={() => void handle("criar")}
-          style={{ flex: 1, padding: 10 }}
+          className="btn flex-1"
         >
           Criar conta
         </button>

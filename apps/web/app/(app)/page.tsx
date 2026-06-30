@@ -18,7 +18,7 @@ export default async function Home() {
       <p>
         Olá, <strong>{name}</strong> — você está dentro.
       </p>
-      <p style={{ color: "#666" }}>
+      <p style={{ color: "var(--text-muted)" }}>
         Use o menu ao lado para abrir seu <a href="/musicas">catálogo</a>, seus{" "}
         <a href="/repertorios">repertórios</a> ou seus <a href="/grupos">grupos</a>.
       </p>

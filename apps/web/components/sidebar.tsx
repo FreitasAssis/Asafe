@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { browserClient } from "@/lib/supabase/client";
+import { Brand } from "@/components/brand";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const LINKS = [
   { href: "/musicas", label: "Catálogo" },
@@ -36,8 +38,8 @@ export function Sidebar({ userName }: { readonly userName: string }) {
         >
           ☰
         </button>
-        <a href="/" className="app-brand" style={{ padding: 0 }}>
-          Asafe 🎵
+        <a href="/" aria-label="Início">
+          <Brand />
         </a>
       </div>
 
@@ -50,8 +52,8 @@ export function Sidebar({ userName }: { readonly userName: string }) {
       />
 
       <nav className={`app-sidebar${open ? " open" : ""}`} aria-label="Navegação principal">
-        <a href="/" className="app-brand" onClick={() => setOpen(false)}>
-          Asafe 🎵
+        <a href="/" aria-label="Início" className="px-2 pb-3 pt-1" onClick={() => setOpen(false)}>
+          <Brand />
         </a>
         {LINKS.map((l) => (
           <a
@@ -65,10 +67,13 @@ export function Sidebar({ userName }: { readonly userName: string }) {
           </a>
         ))}
         <div className="app-sidebar-footer">
-          <div style={{ marginBottom: 8, color: "#333", fontWeight: 600 }}>{userName}</div>
-          <button type="button" onClick={() => void signOut()} style={{ padding: "6px 10px" }}>
-            Sair
-          </button>
+          <div className="mb-2 font-semibold text-ink">{userName}</div>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => void signOut()} className="btn">
+              Sair
+            </button>
+            <ThemeToggle />
+          </div>
         </div>
       </nav>
     </>

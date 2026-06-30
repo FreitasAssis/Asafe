@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   arrangeRepertoire,
   REPERTOIRE_TYPE_LABELS,
@@ -8,6 +8,7 @@ import {
   type SlotDef,
 } from "@asafe/core";
 import { stripChords, toHtml, transpose } from "@asafe/chordpro";
+import { readPrefs, writePrefs } from "@/lib/preferences";
 
 export interface PublicItem {
   id: string;
@@ -36,7 +37,7 @@ function ItemView({ item, hide }: { item: PublicItem; hide: boolean }) {
       <div style={{ fontWeight: 600 }}>
         {item.title}
         {item.transpose ? (
-          <span style={{ color: "#888", fontWeight: 400, fontSize: 13 }}>
+          <span style={{ color: "var(--text-muted)", fontWeight: 400, fontSize: 13 }}>
             {" "}
             (tom {item.transpose > 0 ? `+${item.transpose}` : item.transpose})
           </span>
@@ -66,6 +67,7 @@ export function PublicRepertoire({
   readonly header?: ReactNode;
 }) {
   const [hide, setHide] = useState(false);
+  useEffect(() => setHide(Boolean(readPrefs().hideChords)), []);
   const arranged = arrangeRepertoire(pkg.slots, pkg.items);
   const slotsWithItems = arranged.slots.filter((s) => s.items.length > 0);
 
@@ -75,24 +77,31 @@ export function PublicRepertoire({
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h1 style={{ margin: 0 }}>{pkg.repertoire.title}</h1>
-          <div style={{ color: "#888", fontSize: 14 }}>
+          <div style={{ color: "var(--text-muted)", fontSize: 14 }}>
             {REPERTOIRE_TYPE_LABELS[pkg.repertoire.type]}
             {pkg.repertoire.date ? ` · ${pkg.repertoire.date}` : ""}
           </div>
         </div>
         <label style={{ fontSize: 13 }}>
-          <input type="checkbox" checked={hide} onChange={(e) => setHide(e.target.checked)} />{" "}
+          <input
+            type="checkbox"
+            checked={hide}
+            onChange={(e) => {
+              setHide(e.target.checked);
+              writePrefs({ hideChords: e.target.checked });
+            }}
+          />{" "}
           esconder cifra
         </label>
       </div>
 
       {slotsWithItems.length === 0 && arranged.unslotted.length === 0 && (
-        <p style={{ color: "#888" }}>Este repertório ainda não tem músicas.</p>
+        <p style={{ color: "var(--text-muted)" }}>Este repertório ainda não tem músicas.</p>
       )}
 
       {slotsWithItems.map((s) => (
         <section key={s.key} style={{ marginTop: 16 }}>
-          <h2 style={{ fontSize: 16, borderBottom: "2px solid #eee", paddingBottom: 2 }}>
+          <h2 style={{ fontSize: 16, borderBottom: "2px solid var(--border)", paddingBottom: 2 }}>
             {s.label}
           </h2>
           {s.items.map((it) => (
@@ -109,7 +118,7 @@ export function PublicRepertoire({
         </section>
       )}
 
-      <footer style={{ marginTop: 32, color: "#bbb", fontSize: 12, textAlign: "center" }}>
+      <footer style={{ marginTop: 32, color: "var(--text-muted)", fontSize: 12, textAlign: "center" }}>
         Asafe 🎵
       </footer>
     </main>

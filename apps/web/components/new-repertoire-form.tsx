@@ -41,15 +41,15 @@ export function NewRepertoireForm({ userId }: { readonly userId: string }) {
   }
 
   return (
-    <main style={{ maxWidth: 440, margin: "2rem auto", padding: "0 1rem" }}>
+    <main className="mx-auto my-8 max-w-md px-4">
       <Breadcrumb items={[{ label: "Repertórios", href: "/repertorios" }, { label: "Novo" }]} />
-      <h1>Novo repertório</h1>
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <label style={{ fontSize: 13, color: "#666" }}>Tipo</label>
+      <h1 className="font-serif text-2xl font-semibold">Novo repertório</h1>
+      <div className="mt-3 flex flex-col gap-2.5">
+        <label className="text-[13px] text-muted">Tipo</label>
         <select
           value={type}
           onChange={(e) => setType(e.target.value as RepertoireType)}
-          style={{ padding: 10, fontSize: 16 }}
+          className="input"
         >
           {REPERTOIRE_TYPES.map((t) => (
             <option key={t} value={t}>
@@ -62,14 +62,14 @@ export function NewRepertoireForm({ userId }: { readonly userId: string }) {
           placeholder="Título (ex.: Missa de domingo)"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          style={{ padding: 10, fontSize: 16 }}
+          className="input"
         />
-        <label style={{ fontSize: 13, color: "#666" }}>Data (opcional)</label>
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ padding: 10 }} />
+        <label className="text-[13px] text-muted">Data (opcional)</label>
+        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="input" />
 
-        {error && <p style={{ color: "#c00" }}>{error}</p>}
+        {error && <p className="text-danger">{error}</p>}
 
-        <button type="button" onClick={() => void create()} disabled={saving} style={{ padding: 12 }}>
+        <button type="button" onClick={() => void create()} disabled={saving} className="btn btn-primary">
           {saving ? "Criando…" : "Criar e montar"}
         </button>
       </div>

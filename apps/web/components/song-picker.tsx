@@ -72,7 +72,7 @@ export function SongPicker({
         borderRadius: 8,
         padding: 12,
         marginTop: 8,
-        background: "#fafafa",
+        background: "var(--surface)",
       }}
     >
       <div style={{ display: "flex", gap: 8 }}>
@@ -120,7 +120,7 @@ export function SongPicker({
 
       <ul style={{ listStyle: "none", padding: 0, margin: "8px 0 0", maxHeight: 220, overflow: "auto" }}>
         {filtered.length === 0 ? (
-          <li style={{ color: "#888" }}>Nenhuma música encontrada.</li>
+          <li style={{ color: "var(--text-muted)" }}>Nenhuma música encontrada.</li>
         ) : (
           filtered.map((s) => (
             <li key={s.id} style={{ padding: "4px 0" }}>

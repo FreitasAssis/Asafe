@@ -8,7 +8,7 @@ import { toHtml } from "@asafe/chordpro";
 export function ChordPreview({ chordpro }: { chordpro: string }) {
   const html = chordpro.trim() ? toHtml(chordpro) : "";
   if (!html) {
-    return <p style={{ color: "#aaa" }}>O preview da cifra aparece aqui.</p>;
+    return <p style={{ color: "var(--text-muted)" }}>O preview da cifra aparece aqui.</p>;
   }
   return (
     <div

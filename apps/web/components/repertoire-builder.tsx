@@ -179,7 +179,7 @@ export function RepertoireBuilder({
       <section style={{ marginTop: 14 }}>
         <div style={{ fontWeight: 600 }}>
           {label}
-          {optional && <span style={{ color: "#aaa", fontWeight: 400 }}> (opcional)</span>}
+          {optional && <span style={{ color: "var(--text-muted)", fontWeight: 400 }}> (opcional)</span>}
         </div>
         <ul style={{ listStyle: "none", padding: 0, margin: "4px 0" }}>
           {slotItems.map((it) => (
@@ -241,7 +241,7 @@ export function RepertoireBuilder({
           ]}
         />
         {isOwner && (
-          <button type="button" onClick={() => void destroy()} style={{ color: "#c00" }}>
+          <button type="button" onClick={() => void destroy()} style={{ color: "var(--danger)" }}>
             Excluir
           </button>
         )}
@@ -262,10 +262,10 @@ export function RepertoireBuilder({
       ) : (
         <h1 style={{ marginTop: 12 }}>
           {title}
-          {date ? <span style={{ color: "#888", fontWeight: 400, fontSize: 16 }}> · {date}</span> : null}
+          {date ? <span style={{ color: "var(--text-muted)", fontWeight: 400, fontSize: 16 }}> · {date}</span> : null}
         </h1>
       )}
-      <div style={{ color: "#888", fontSize: 13, marginTop: 4 }}>
+      <div style={{ color: "var(--text-muted)", fontSize: 13, marginTop: 4 }}>
         {repertoire.type}
         {!isOwner && " · compartilhado com você"}
       </div>
@@ -288,7 +288,7 @@ export function RepertoireBuilder({
 
       {isOwner && <ShareSection repertoireId={repertoire.id} initialLinks={shareLinks} />}
 
-      {error && <p style={{ color: "#c00" }}>{error}</p>}
+      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
       {savedMsg && <p style={{ color: "#2a7" }}>{savedMsg}</p>}
 
       {isSarau ? (

@@ -33,7 +33,7 @@ export default async function SharedPage({
     return (
       <main style={{ maxWidth: 480, margin: "4rem auto", padding: "0 1rem", fontFamily: "system-ui" }}>
         <h1>Link inválido ou expirado</h1>
-        <p style={{ color: "#666" }}>
+        <p style={{ color: "var(--text-muted)" }}>
           Este link de repertório não existe mais ou passou da validade. Peça um novo a quem
           compartilhou.
         </p>
