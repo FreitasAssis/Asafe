@@ -24,8 +24,13 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
 
   async function handle(action: "entrar" | "criar") {
-    setLoading(true);
     setError(null);
+    // "Criar conta" é um botão (não dispara a validação nativa): exige nome, e-mail e senha.
+    if (action === "criar" && (!name.trim() || !email.trim() || !password)) {
+      setError("Para criar conta, preencha nome, e-mail e senha.");
+      return;
+    }
+    setLoading(true);
     const supabase = browserClient();
     const { error } =
       action === "entrar"
@@ -33,7 +38,7 @@ export function LoginForm() {
         : await supabase.auth.signUp({
             email,
             password,
-            options: { data: { display_name: name.trim() || null } },
+            options: { data: { display_name: name.trim() } },
           });
     setLoading(false);
     if (error) {
