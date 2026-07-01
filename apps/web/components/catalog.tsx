@@ -56,6 +56,7 @@ export function Catalog({
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [tab, setTab] = useState<"meus" | "comunidade">("meus");
 
   const tagById = useMemo(() => new Map(tags.map((t) => [t.id, t])), [tags]);
 
@@ -90,6 +91,12 @@ export function Catalog({
     return result;
   }, [songs, groups, search]);
 
+  // Meus = minhas músicas; Comunidade = o resto do que posso usar (catálogo global + aprovadas).
+  const visible = useMemo(
+    () => filtered.filter((s) => (tab === "meus" ? s.ownerId === userId : s.ownerId !== userId)),
+    [filtered, tab, userId],
+  );
+
   function toggle(id: string) {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -101,7 +108,23 @@ export function Catalog({
 
   return (
     <main style={{ maxWidth: 760, margin: "1.5rem auto", padding: "0 1rem" }}>
-      <h1 style={{ marginTop: 0 }}>Meu catálogo</h1>
+      <h1 style={{ marginTop: 0 }}>Catálogo</h1>
+      <div className="mt-3 flex gap-1 border-b border-border">
+        <button
+          type="button"
+          onClick={() => setTab("meus")}
+          className={tab === "meus" ? "border-b-2 border-primary px-3 py-2 font-semibold text-ink" : "px-3 py-2 text-muted"}
+        >
+          Meus
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("comunidade")}
+          className={tab === "comunidade" ? "border-b-2 border-primary px-3 py-2 font-semibold text-ink" : "px-3 py-2 text-muted"}
+        >
+          Comunidade
+        </button>
+      </div>
       <Fab href="/musicas/nova" label="Nova música" />
 
       <input
@@ -133,15 +156,17 @@ export function Catalog({
         </div>
       )}
 
-      {filtered.length === 0 ? (
+      {visible.length === 0 ? (
         <p style={{ color: "var(--text-muted)" }}>
-          {songs.length === 0
-            ? "Você ainda não tem músicas. Crie a primeira!"
-            : "Nenhuma música com esse filtro."}
+          {tab === "comunidade"
+            ? "Nenhuma música da comunidade ainda."
+            : songs.length === 0
+              ? "Você ainda não tem músicas. Crie a primeira!"
+              : "Nenhuma música com esse filtro."}
         </p>
       ) : (
         <ul style={{ listStyle: "none", padding: 0 }}>
-          {filtered.map((s) => (
+          {visible.map((s) => (
             <li
               key={s.id}
               style={{ padding: "10px 0", borderBottom: "1px solid var(--border)" }}
