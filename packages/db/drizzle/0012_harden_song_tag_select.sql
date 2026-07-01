@@ -1,0 +1,1 @@
+ALTER POLICY "song_tag_select" ON "song_tag" TO authenticated USING (exists (select 1 from song s where s.id = "song_tag"."song_id"));

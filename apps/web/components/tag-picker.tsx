@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   CLOSED_TAG_CATEGORIES,
+  findSimilarTags,
   OPEN_TAG_CATEGORIES,
   TAG_CATEGORY_COLORS,
   TAG_CATEGORY_LABELS,
@@ -22,8 +23,20 @@ function chipStyle(color: string, on: boolean): React.CSSProperties {
   };
 }
 
-function NewTagInput({ onCreate }: { onCreate: (name: string) => void }) {
+function NewTagInput({
+  existing,
+  onCreate,
+  onPickExisting,
+}: {
+  readonly existing: Tag[];
+  readonly onCreate: (name: string) => void;
+  readonly onPickExisting: (id: string) => void;
+}) {
   const [value, setValue] = useState("");
+  // Tags parecidas já existentes (aviso, não bloqueia): "Maria" vs "Maria mãe".
+  // Compara com TODAS as categorias — a mesma ideia pode já existir em outra.
+  const similar = useMemo(() => findSimilarTags(value, existing), [value, existing]);
+
   function add() {
     const name = value.trim();
     if (!name) return;
@@ -31,7 +44,7 @@ function NewTagInput({ onCreate }: { onCreate: (name: string) => void }) {
     setValue("");
   }
   return (
-    <span style={{ display: "inline-flex", gap: 4 }}>
+    <span style={{ display: "inline-flex", flexDirection: "column", gap: 3 }}>
       <input
         value={value}
         onChange={(e) => setValue(e.target.value)}
@@ -44,6 +57,33 @@ function NewTagInput({ onCreate }: { onCreate: (name: string) => void }) {
         placeholder="+ nova tag"
         style={{ padding: "2px 8px", fontSize: 13, width: 110 }}
       />
+      {similar.length > 0 && (
+        <span style={{ fontSize: 11, color: "var(--text-muted)", maxWidth: 240 }}>
+          Já existe:{" "}
+          {similar.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              title={`Usar esta tag (${TAG_CATEGORY_LABELS[t.category]}) em vez de criar outra`}
+              onClick={() => {
+                onPickExisting(t.id);
+                setValue("");
+              }}
+              style={{
+                color: TAG_CATEGORY_COLORS[t.category],
+                textDecoration: "underline",
+                cursor: "pointer",
+                marginRight: 6,
+              }}
+            >
+              {t.name}{" "}
+              <span style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+                ({TAG_CATEGORY_LABELS[t.category]})
+              </span>
+            </button>
+          ))}
+        </span>
+      )}
     </span>
   );
 }
@@ -86,7 +126,13 @@ export function TagPicker({
                   {t.name}
                 </button>
               ))}
-              {isOpen && <NewTagInput onCreate={(name) => onCreate(name, cat)} />}
+              {isOpen && (
+                <NewTagInput
+                  existing={tags}
+                  onCreate={(name) => onCreate(name, cat)}
+                  onPickExisting={onToggle}
+                />
+              )}
             </div>
           </div>
         );

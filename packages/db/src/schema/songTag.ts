@@ -9,7 +9,9 @@ import { tag } from "./tag";
  * PK composta (songId, tagId).
  *
  * RLS:
- *  - SELECT: liberado a todos os logados (using true).
+ *  - SELECT: só os vínculos de músicas que o usuário já enxerga. Amarrado à RLS de
+ *    `song` (a subconsulta roda sob a RLS do próprio usuário), então tag de música
+ *    particular alheia não vaza — nem como par de UUIDs.
  *  - Escrita (insert/delete): o usuário liga/desliga tags apenas nas SUAS músicas
  *    (own song). Vale para tags globais ou próprias. Curadoria sobre música global
  *    continua via service role. (Override de música global = user_song_tag_override.)
@@ -29,7 +31,7 @@ export const songTag = pgTable(
     pgPolicy("song_tag_select", {
       for: "select",
       to: authenticatedRole,
-      using: sql`true`,
+      using: sql`exists (select 1 from song s where s.id = ${t.songId})`,
     }),
     pgPolicy("song_tag_insert_own", {
       for: "insert",
