@@ -10,6 +10,9 @@ export default function LoginPage() {
         <p className="mb-6 mt-3 text-muted">Entre para montar seus repertórios.</p>
       </div>
       <LoginForm />
+      <p className="mt-8 text-center text-sm text-muted">
+        <a href="/sobre">Sobre o Asafe</a>
+      </p>
     </main>
   );
 }

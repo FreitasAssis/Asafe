@@ -11,6 +11,8 @@ export interface Prefs {
   theme?: ThemePref;
   /** Default do toggle "esconder cifra" nas visualizações. */
   hideChords?: boolean;
+  /** Boas-vindas (história do nome) já dispensadas. */
+  welcomeDismissed?: boolean;
 }
 
 /** Parse tolerante (server ou client). Valores inválidos viram ausência. */
@@ -21,6 +23,7 @@ export function parsePrefs(raw: string | undefined | null): Prefs {
     return {
       theme: o.theme === "light" || o.theme === "dark" ? o.theme : undefined,
       hideChords: typeof o.hideChords === "boolean" ? o.hideChords : undefined,
+      welcomeDismissed: typeof o.welcomeDismissed === "boolean" ? o.welcomeDismissed : undefined,
     };
   } catch {
     return {};
