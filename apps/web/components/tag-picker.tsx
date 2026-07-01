@@ -25,17 +25,16 @@ function chipStyle(color: string, on: boolean): React.CSSProperties {
 
 function NewTagInput({
   existing,
-  color,
   onCreate,
   onPickExisting,
 }: {
   readonly existing: Tag[];
-  readonly color: string;
   readonly onCreate: (name: string) => void;
   readonly onPickExisting: (id: string) => void;
 }) {
   const [value, setValue] = useState("");
   // Tags parecidas já existentes (aviso, não bloqueia): "Maria" vs "Maria mãe".
+  // Compara com TODAS as categorias — a mesma ideia pode já existir em outra.
   const similar = useMemo(() => findSimilarTags(value, existing), [value, existing]);
 
   function add() {
@@ -59,20 +58,28 @@ function NewTagInput({
         style={{ padding: "2px 8px", fontSize: 13, width: 110 }}
       />
       {similar.length > 0 && (
-        <span style={{ fontSize: 11, color: "var(--text-muted)", maxWidth: 220 }}>
+        <span style={{ fontSize: 11, color: "var(--text-muted)", maxWidth: 240 }}>
           Já existe:{" "}
           {similar.map((t) => (
             <button
               key={t.id}
               type="button"
-              title="Usar esta tag em vez de criar outra"
+              title={`Usar esta tag (${TAG_CATEGORY_LABELS[t.category]}) em vez de criar outra`}
               onClick={() => {
                 onPickExisting(t.id);
                 setValue("");
               }}
-              style={{ color, textDecoration: "underline", cursor: "pointer", marginRight: 6 }}
+              style={{
+                color: TAG_CATEGORY_COLORS[t.category],
+                textDecoration: "underline",
+                cursor: "pointer",
+                marginRight: 6,
+              }}
             >
-              {t.name}
+              {t.name}{" "}
+              <span style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+                ({TAG_CATEGORY_LABELS[t.category]})
+              </span>
             </button>
           ))}
         </span>
@@ -121,8 +128,7 @@ export function TagPicker({
               ))}
               {isOpen && (
                 <NewTagInput
-                  existing={catTags}
-                  color={color}
+                  existing={tags}
                   onCreate={(name) => onCreate(name, cat)}
                   onPickExisting={onToggle}
                 />

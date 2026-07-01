@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   audioProvider,
+  findExactTag,
   isAllowedAudioUrl,
   MAX_AUDIO_LINKS,
   type TagCategory,
@@ -74,9 +75,10 @@ export function SongEditor({
   }
 
   async function handleCreateTag(name: string, category: TagCategory) {
-    // Evita duplicar (case-insensitive na mesma categoria): se já existe, só seleciona.
-    const existing = availableTags.find(
-      (t) => t.category === category && t.name.toLowerCase() === name.toLowerCase(),
+    // Não cria duplicata exata (mesmo nome ignorando acento/caixa) na categoria — reusa.
+    const existing = findExactTag(
+      name,
+      availableTags.filter((t) => t.category === category),
     );
     if (existing) {
       toggleTag(existing.id);
