@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TagCategory } from "@asafe/core";
+import type { CommunityStatus } from "./repertoires";
 
 /** Campos editáveis de uma música própria (camelCase no app; snake_case no banco). */
 export interface SongInput {
@@ -13,7 +14,16 @@ export interface SongInput {
 export interface Song extends SongInput {
   id: string;
   ownerId: string | null;
+  communityStatus: CommunityStatus;
   tagIds: string[];
+}
+
+/** Música pendente na fila de moderação. */
+export interface PendingSong {
+  id: string;
+  title: string;
+  ownerName: string | null;
+  ownerEmail: string;
 }
 
 export interface Tag {
@@ -42,6 +52,7 @@ interface SongRow {
   chordpro_body: string | null;
   audio_links: string[];
   owner_id: string | null;
+  community_status: CommunityStatus;
   song_tag?: { tag_id: string }[];
 }
 
@@ -54,6 +65,7 @@ function rowToSong(row: SongRow): Song {
     chordproBody: row.chordpro_body ?? "",
     audioLinks: row.audio_links ?? [],
     ownerId: row.owner_id,
+    communityStatus: row.community_status,
     tagIds: (row.song_tag ?? []).map((st) => st.tag_id),
   };
 }
@@ -69,13 +81,52 @@ function inputToRow(input: SongInput) {
 }
 
 const SONG_COLS =
-  "id, title, composer, default_key, chordpro_body, audio_links, owner_id, song_tag(tag_id)";
+  "id, title, composer, default_key, chordpro_body, audio_links, owner_id, community_status, song_tag(tag_id)";
 
-/** Carrega uma música por id, com suas tags (RLS: só o dono lê a própria). */
+/** Carrega uma música por id, com suas tags. */
 export async function getSong(supabase: SupabaseClient, id: string): Promise<Song | null> {
   const { data, error } = await supabase.from("song").select(SONG_COLS).eq("id", id).maybeSingle();
   if (error) throw error;
   return data ? rowToSong(data as SongRow) : null;
+}
+
+/** Dono sugere a música à comunidade (→ pending). */
+export async function requestPublishSong(
+  supabase: SupabaseClient,
+  id: string,
+): Promise<CommunityStatus | null> {
+  const { data, error } = await supabase.rpc("request_publish_song", { p_song_id: id });
+  if (error) throw error;
+  return (data as CommunityStatus | null) ?? null;
+}
+
+/** Dono retira a música da comunidade (→ none). */
+export async function withdrawPublishSong(
+  supabase: SupabaseClient,
+  id: string,
+): Promise<CommunityStatus | null> {
+  const { data, error } = await supabase.rpc("withdraw_publish_song", { p_song_id: id });
+  if (error) throw error;
+  return (data as CommunityStatus | null) ?? null;
+}
+
+/** Moderador decide sobre uma música: approve/reject/revoke. */
+export async function moderateSong(
+  supabase: SupabaseClient,
+  id: string,
+  decision: "approve" | "reject" | "revoke",
+): Promise<void> {
+  const { error } = await supabase.rpc("moderate_song", { p_song_id: id, p_decision: decision });
+  if (error) throw error;
+}
+
+/** Fila de moderação de músicas (só moderador vê linhas). */
+export async function listPendingSongs(supabase: SupabaseClient): Promise<PendingSong[]> {
+  const { data, error } = await supabase.rpc("pending_song_requests");
+  if (error) throw error;
+  return (
+    data as { id: string; title: string; owner_name: string | null; owner_email: string }[]
+  ).map((s) => ({ id: s.id, title: s.title, ownerName: s.owner_name, ownerEmail: s.owner_email }));
 }
 
 /** Lista as minhas músicas (com tags e frescor) para o catálogo, ordenadas por título. */

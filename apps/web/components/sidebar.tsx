@@ -13,7 +13,15 @@ const LINKS = [
 ] as const;
 
 /** Sidebar das páginas logadas: fixa no desktop, gaveta com ☰ no mobile. */
-export function Sidebar({ userName }: { readonly userName: string }) {
+export function Sidebar({
+  userName,
+  isModerator = false,
+  moderationCount = 0,
+}: {
+  readonly userName: string;
+  readonly isModerator?: boolean;
+  readonly moderationCount?: number;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -66,6 +74,24 @@ export function Sidebar({ userName }: { readonly userName: string }) {
             {l.label}
           </a>
         ))}
+        {isModerator && (
+          <a
+            href="/moderacao"
+            className="app-navlink flex items-center justify-between"
+            aria-current={isActive("/moderacao") ? "page" : undefined}
+            onClick={() => setOpen(false)}
+          >
+            <span>Moderação</span>
+            {moderationCount > 0 && (
+              <span
+                className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-semibold"
+                style={{ background: "var(--accent)", color: "var(--on-primary)" }}
+              >
+                {moderationCount}
+              </span>
+            )}
+          </a>
+        )}
         <div className="app-sidebar-footer">
           <div className="mb-2 font-semibold text-ink">{userName}</div>
           <div className="flex items-center gap-2">

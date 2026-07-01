@@ -2,6 +2,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { RepertoireType, SlotDef } from "@asafe/core";
 import type { SharedPackage } from "@/components/public-repertoire";
 
+/** Estado de publicação na comunidade (moderado). */
+export type CommunityStatus = "none" | "pending" | "approved" | "rejected";
+
 export interface RepertoireListItem {
   id: string;
   title: string;
@@ -9,6 +12,26 @@ export interface RepertoireListItem {
   date: string | null;
   ownerId: string;
   groupName: string | null;
+  communityStatus: CommunityStatus;
+}
+
+/** Item da aba Comunidade: repertório aprovado de outra pessoa (com o autor). */
+export interface CommunityRepertoireItem {
+  id: string;
+  title: string;
+  type: RepertoireType;
+  date: string | null;
+  authorName: string | null;
+  authorEmail: string;
+}
+
+/** Pedido de publicação pendente (visto pelo moderador). */
+export interface PendingRequest {
+  id: string;
+  title: string;
+  type: RepertoireType;
+  ownerName: string | null;
+  ownerEmail: string;
 }
 
 export interface RepertoireItemFull {
@@ -28,6 +51,7 @@ export interface Repertoire {
   date: string | null;
   ownerId: string;
   groupId: string | null;
+  communityStatus: CommunityStatus;
   items: RepertoireItemFull[];
 }
 
@@ -60,23 +84,25 @@ export async function slotTemplate(
   };
 }
 
+/**
+ * Meus repertórios (dono + compartilhados com meus grupos), via `repertoires_mine()`.
+ * Não inclui os da comunidade — a RLS liberaria aprovados a todos, então usamos a função
+ * que separa (senão o "Meus" misturaria repertório de estranho).
+ */
 export async function listRepertoires(
   supabase: SupabaseClient,
 ): Promise<RepertoireListItem[]> {
-  const { data, error } = await supabase
-    .from("repertoire")
-    .select("id, title, type, date, owner_id, group(name)")
-    .order("date", { ascending: false, nullsFirst: false })
-    .order("title");
+  const { data, error } = await supabase.rpc("repertoires_mine");
   if (error) throw error;
   return (
-    data as unknown as {
+    data as {
       id: string;
       title: string;
       type: RepertoireType;
       date: string | null;
       owner_id: string;
-      group: { name: string } | null;
+      community_status: CommunityStatus;
+      group_name: string | null;
     }[]
   ).map((r) => ({
     id: r.id,
@@ -84,8 +110,101 @@ export async function listRepertoires(
     type: r.type,
     date: r.date,
     ownerId: r.owner_id,
-    groupName: r.group?.name ?? null,
+    communityStatus: r.community_status,
+    groupName: r.group_name,
   }));
+}
+
+/** Aba Comunidade: repertórios aprovados de outras pessoas (via `repertoires_community()`). */
+export async function listCommunityRepertoires(
+  supabase: SupabaseClient,
+): Promise<CommunityRepertoireItem[]> {
+  const { data, error } = await supabase.rpc("repertoires_community");
+  if (error) throw error;
+  return (
+    data as {
+      id: string;
+      title: string;
+      type: RepertoireType;
+      date: string | null;
+      author_name: string | null;
+      author_email: string;
+    }[]
+  ).map((r) => ({
+    id: r.id,
+    title: r.title,
+    type: r.type,
+    date: r.date,
+    authorName: r.author_name,
+    authorEmail: r.author_email,
+  }));
+}
+
+/** Dono sugere o repertório à comunidade (→ pending). Retorna o novo estado ou null. */
+export async function requestPublish(
+  supabase: SupabaseClient,
+  id: string,
+): Promise<CommunityStatus | null> {
+  const { data, error } = await supabase.rpc("request_publish", { p_rep_id: id });
+  if (error) throw error;
+  return (data as CommunityStatus | null) ?? null;
+}
+
+/** Dono retira o repertório da comunidade (→ none). */
+export async function withdrawPublish(
+  supabase: SupabaseClient,
+  id: string,
+): Promise<CommunityStatus | null> {
+  const { data, error } = await supabase.rpc("withdraw_publish", { p_rep_id: id });
+  if (error) throw error;
+  return (data as CommunityStatus | null) ?? null;
+}
+
+/** Moderador decide: approve/reject/revoke. */
+export async function moderateRepertoire(
+  supabase: SupabaseClient,
+  id: string,
+  decision: "approve" | "reject" | "revoke",
+): Promise<void> {
+  const { error } = await supabase.rpc("moderate_repertoire", { p_rep_id: id, p_decision: decision });
+  if (error) throw error;
+}
+
+/** Fila de moderação (só moderador vê linhas). */
+export async function listPendingRequests(
+  supabase: SupabaseClient,
+): Promise<PendingRequest[]> {
+  const { data, error } = await supabase.rpc("pending_publish_requests");
+  if (error) throw error;
+  return (
+    data as {
+      id: string;
+      title: string;
+      type: RepertoireType;
+      owner_name: string | null;
+      owner_email: string;
+    }[]
+  ).map((r) => ({
+    id: r.id,
+    title: r.title,
+    type: r.type,
+    ownerName: r.owner_name,
+    ownerEmail: r.owner_email,
+  }));
+}
+
+/** O usuário atual é moderador/admin? */
+export async function isModerator(supabase: SupabaseClient): Promise<boolean> {
+  const { data, error } = await supabase.rpc("is_moderator");
+  if (error) throw error;
+  return Boolean(data);
+}
+
+/** Quantos itens (repertórios + músicas) aguardam moderação. 0 se não for moderador. */
+export async function pendingModerationCount(supabase: SupabaseClient): Promise<number> {
+  const { data, error } = await supabase.rpc("pending_moderation_count");
+  if (error) throw error;
+  return Number(data ?? 0);
 }
 
 interface ItemRow {
@@ -119,7 +238,7 @@ export async function getRepertoire(
 ): Promise<Repertoire | null> {
   const { data, error } = await supabase
     .from("repertoire")
-    .select(`id, title, type, date, owner_id, group_id, repertoire_item(${ITEM_COLS})`)
+    .select(`id, title, type, date, owner_id, group_id, community_status, repertoire_item(${ITEM_COLS})`)
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -132,6 +251,7 @@ export async function getRepertoire(
     date: string | null;
     owner_id: string;
     group_id: string | null;
+    community_status: CommunityStatus;
     repertoire_item: ItemRow[];
   };
   return {
@@ -141,6 +261,7 @@ export async function getRepertoire(
     date: row.date,
     ownerId: row.owner_id,
     groupId: row.group_id,
+    communityStatus: row.community_status,
     items: (row.repertoire_item ?? []).map(rowToItem),
   };
 }

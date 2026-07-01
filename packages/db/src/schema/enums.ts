@@ -36,3 +36,11 @@ export const tagOverrideAction = pgEnum("tag_override_action", [
 ]);
 
 export const visibility = pgEnum("visibility", ["private", "group", "public"]);
+
+/** Estado de publicação de um repertório na comunidade (moderado). */
+export const communityStatus = pgEnum("community_status", [
+  "none",
+  "pending",
+  "approved",
+  "rejected",
+]);

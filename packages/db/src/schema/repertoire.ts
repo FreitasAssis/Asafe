@@ -8,7 +8,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { authenticatedRole } from "drizzle-orm/supabase";
-import { repertoireType, visibility } from "./enums";
+import { communityStatus, repertoireType, visibility } from "./enums";
 import { group } from "./group";
 import { user } from "./user";
 
@@ -35,6 +35,7 @@ export const repertoire = pgTable(
       .references(() => user.id),
     groupId: uuid("group_id").references(() => group.id),
     visibility: visibility("visibility").notNull().default("private"),
+    communityStatus: communityStatus("community_status").notNull().default("none"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -43,7 +44,7 @@ export const repertoire = pgTable(
     pgPolicy("repertoire_select", {
       for: "select",
       to: authenticatedRole,
-      using: sql`${t.ownerId} = auth.uid() OR (${t.groupId} is not null AND public.is_group_member(${t.groupId})) OR ${t.visibility} = 'public'`,
+      using: sql`${t.ownerId} = auth.uid() OR (${t.groupId} is not null AND public.is_group_member(${t.groupId})) OR ${t.communityStatus} = 'approved' OR (${t.communityStatus} = 'pending' AND public.is_moderator())`,
     }),
     pgPolicy("repertoire_insert", {
       for: "insert",

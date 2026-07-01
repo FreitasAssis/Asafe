@@ -25,6 +25,7 @@ import {
   type Tag,
 } from "@/lib/songs";
 import { Breadcrumb } from "@/components/breadcrumb";
+import { CommunitySection } from "@/components/community-section";
 import { ChordPreview } from "./chord-preview";
 import { TagPicker } from "./tag-picker";
 
@@ -322,6 +323,10 @@ export function SongEditor({
           </button>
         )}
       </div>
+
+      {editing && song && song.ownerId === userId && (
+        <CommunitySection id={song.id} status={song.communityStatus} kind="song" />
+      )}
     </main>
   );
 }

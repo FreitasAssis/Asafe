@@ -31,7 +31,7 @@ export const repertoireTheme = pgTable(
     pgPolicy("repertoire_theme_select", {
       for: "select",
       to: authenticatedRole,
-      using: sql`exists (select 1 from repertoire r where r.id = ${t.repertoireId} and (r.owner_id = auth.uid() or (r.group_id is not null and public.is_group_member(r.group_id)) or r.visibility = 'public'))`,
+      using: sql`exists (select 1 from repertoire r where r.id = ${t.repertoireId} and (r.owner_id = auth.uid() or (r.group_id is not null and public.is_group_member(r.group_id)) or r.community_status = 'approved' or (r.community_status = 'pending' and public.is_moderator())))`,
     }),
     pgPolicy("repertoire_theme_insert", {
       for: "insert",

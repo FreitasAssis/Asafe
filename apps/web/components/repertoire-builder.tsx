@@ -23,6 +23,7 @@ import type { Group } from "@/lib/groups";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { SongPicker } from "./song-picker";
 import { ShareSection } from "./share-section";
+import { CommunitySection } from "./community-section";
 
 export function RepertoireBuilder({
   repertoire,
@@ -287,6 +288,10 @@ export function RepertoireBuilder({
       )}
 
       {isOwner && <ShareSection repertoireId={repertoire.id} initialLinks={shareLinks} />}
+
+      {isOwner && (
+        <CommunitySection id={repertoire.id} status={repertoire.communityStatus} kind="repertoire" />
+      )}
 
       {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
       {savedMsg && <p style={{ color: "#2a7" }}>{savedMsg}</p>}
