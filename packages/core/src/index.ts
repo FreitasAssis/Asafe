@@ -7,3 +7,4 @@ export * from "./arrange-repertoire";
 export * from "./repertoire-types";
 export * from "./freshness";
 export * from "./parse-song-import";
+export * from "./tag-similarity";
