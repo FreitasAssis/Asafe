@@ -246,3 +246,25 @@ export async function setSongTags(
     if (insErr) throw insErr;
   }
 }
+
+/** Cria várias músicas em sequência (importação em lote). Chama `onProgress` a cada uma. */
+export async function importSongs(
+  supabase: SupabaseClient,
+  ownerId: string,
+  songs: { title: string; chordproBody: string; tagIds: string[] }[],
+  onProgress?: (done: number) => void,
+): Promise<number> {
+  let done = 0;
+  for (const s of songs) {
+    const created = await createSong(supabase, ownerId, {
+      title: s.title,
+      composer: null,
+      defaultKey: null,
+      chordproBody: s.chordproBody,
+      audioLinks: [],
+    });
+    if (s.tagIds.length > 0) await setSongTags(supabase, created.id, s.tagIds);
+    onProgress?.(++done);
+  }
+  return done;
+}

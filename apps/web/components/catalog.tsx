@@ -108,7 +108,12 @@ export function Catalog({
 
   return (
     <main style={{ maxWidth: 760, margin: "1.5rem auto", padding: "0 1rem" }}>
-      <h1 style={{ marginTop: 0 }}>Catálogo</h1>
+      <div className="flex items-center justify-between">
+        <h1 style={{ marginTop: 0 }}>Catálogo</h1>
+        <a href="/musicas/importar" className="text-sm">
+          Importar em lote
+        </a>
+      </div>
       <div className="mt-3 flex gap-1 border-b border-border">
         <button
           type="button"
