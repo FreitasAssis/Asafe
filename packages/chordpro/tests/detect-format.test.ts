@@ -38,4 +38,14 @@ describe("detectFormat", () => {
     // "A" e "E" isolados são acordes válidos, mas a frase toda não é uma linha de acordes.
     expect(detectFormat("A casa caiu\nE todos correram")).toBe("lyrics-only");
   });
+
+  it("reconhece acordes alterados (meio-diminuto, aumentado, com bemol/sustenido no sufixo)", () => {
+    // Casos reais de cifras coladas: C#m7b5, F°7, G7+, F#m7+.
+    expect(detectFormat("C#m7b5   F#7\nSanto, Santo, Santo")).toBe(
+      "chords-over-lyrics",
+    );
+    expect(detectFormat("F°7    G7+\nSou trigo do Senhor")).toBe(
+      "chords-over-lyrics",
+    );
+  });
 });

@@ -6,6 +6,7 @@
  * contexto; este index é o barril público do pacote.
  */
 export * from "./detect-format";
+export * from "./chords-over-words";
 export * from "./to-chordpro";
 export * from "./transpose";
 export * from "./strip-chords";
