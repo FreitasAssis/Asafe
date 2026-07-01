@@ -161,7 +161,9 @@ describe("repertoire (RLS)", () => {
     expect(bSel).toHaveLength(0);
   });
 
-  it("repertório público de A é visível para B", async () => {
+  // A visibilidade 'public' sozinha NÃO expõe (isso era um vazamento). Tornar público é via
+  // moderação (community_status='approved') — ver comunidade.test.ts.
+  it("visibility='public' NÃO expõe o repertório de A para B", async () => {
     const a = await signUp(`a_${uniq()}@asafe.test`);
     const b = await signUp(`b_${uniq()}@asafe.test`);
 
@@ -182,7 +184,7 @@ describe("repertoire (RLS)", () => {
       .select("*")
       .eq("id", rep!.id);
     expect(bErr).toBeNull();
-    expect(bSel).toHaveLength(1);
+    expect(bSel ?? []).toHaveLength(0);
   });
 
   it("repertório de grupo: membro B vê, não-membro C não vê", async () => {
