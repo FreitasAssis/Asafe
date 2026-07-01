@@ -7,7 +7,7 @@ export const REPERTOIRE_TYPES: RepertoireType[] = [
   "Casamento",
   "Adoracao",
   "Terco",
-  "Sarau",
+  "Livre",
 ];
 
 /** Rótulos em PT dos tipos de repertório. */
@@ -17,5 +17,5 @@ export const REPERTOIRE_TYPE_LABELS: Record<RepertoireType, string> = {
   Adoracao: "Adoração",
   Terco: "Terço",
   GrupoDeOracao: "Grupo de oração",
-  Sarau: "Sarau",
+  Livre: "Livre",
 };

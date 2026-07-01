@@ -56,7 +56,7 @@ export function RepertoireBuilder({
     () => arrangeRepertoire(template.slots, items),
     [template.slots, items],
   );
-  const isSarau = template.slots.length === 0;
+  const isLivre = template.slots.length === 0;
 
   function openPicker(slot: string | null) {
     setPickerSlot(slot);
@@ -296,7 +296,7 @@ export function RepertoireBuilder({
       {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
       {savedMsg && <p style={{ color: "#2a7" }}>{savedMsg}</p>}
 
-      {isSarau ? (
+      {isLivre ? (
         <SlotSection slotKey={null} label="Músicas" slotItems={arranged.unslotted} />
       ) : (
         arranged.slots.map((s) => (
