@@ -32,7 +32,17 @@ Senhor (autor de uma dúzia de salmos). O app leva o nome e a missão.
 
 - ✅ Fundação do monorepo
 - ✅ Schema + RLS do MVP (`packages/db`)
-- ⬜ MVP Fase 1: catálogo, editor ChordPro, montar/compartilhar repertório
+- ✅ Catálogo com filtro por tags e curadoria pessoal
+- ✅ Editor ChordPro: transpor, esconder acordes e modo visualização
+- ✅ Montar repertório por momento litúrgico e compartilhar por link
+- ✅ Importação em lote (colar várias cifras de uma vez)
+- ✅ Grupos, convites e comunidade com moderação
+- ✅ Identidade visual, navegação e onboarding
+
+**Próximos passos**
+
+- ⬜ Integrações litúrgicas: dia litúrgico, tempo e leituras, com sugestão de música por momento
+- ⬜ App no celular/tablet, com uso offline na hora da celebração
 
 Arquitetura e decisões de design: veja [docs/DESIGN.md](./docs/DESIGN.md). O roadmap por
 fases está lá também.
