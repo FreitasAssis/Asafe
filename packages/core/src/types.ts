@@ -26,7 +26,7 @@ export type RepertoireType =
   | "Adoracao"
   | "Terco"
   | "GrupoDeOracao"
-  | "Sarau";
+  | "Livre";
 
 /** Override pessoal de tag em música global (§5). */
 export type TagOverrideAction = "add" | "remove";

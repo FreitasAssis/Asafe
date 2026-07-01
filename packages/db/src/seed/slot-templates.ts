@@ -9,7 +9,7 @@ export interface SlotDef {
 }
 
 interface SlotTemplateSeed {
-  type: "Missa" | "Casamento" | "Adoracao" | "Terco" | "GrupoDeOracao" | "Sarau";
+  type: "Missa" | "Casamento" | "Adoracao" | "Terco" | "GrupoDeOracao" | "Livre";
   slots: SlotDef[];
   reorderable: boolean;
   allowCustomSlots: boolean;
@@ -29,7 +29,7 @@ const s = (key: string, label: string, optional = false): SlotDef => ({
  *
  * - Missa: estrutura canônica (reorderable=false) — a ordem é a forma do rito. O que
  *   varia é condicional (Glória/Ação de graças opcionais; Salmo é próprio do dia).
- * - Grupo de oração / Sarau / Adoração / Terço / Casamento: estrutura sugerida
+ * - Grupo de oração / Livre / Adoração / Terço / Casamento: estrutura sugerida
  *   (reorderable=true) — semeia uma sequência típica, mas a equipe ajusta à vontade.
  */
 export const SLOT_TEMPLATES: SlotTemplateSeed[] = [
@@ -45,9 +45,10 @@ export const SLOT_TEMPLATES: SlotTemplateSeed[] = [
       s("aclamacao", "Aclamação ao Evangelho"),
       s("ofertorio", "Ofertório"),
       s("santo", "Santo"),
-      s("cordeiro", "Cordeiro"),
+      s("cordeiro", "Cordeiro", true),
       s("comunhao", "Comunhão"),
       s("acao_de_gracas", "Ação de Graças", true),
+      s("passeio", "Passeio do Santíssimo", true),
       s("final", "Final"),
     ],
   },
@@ -65,6 +66,8 @@ export const SLOT_TEMPLATES: SlotTemplateSeed[] = [
       s("comunhao", "Comunhão"),
       s("assinaturas", "Assinaturas"),
       s("saida", "Saída"),
+      s("entrada_imagem", "Entrada da Imagem", true),
+      s("beijo", "Música para o Beijo", true),
     ],
   },
   {
@@ -76,7 +79,8 @@ export const SLOT_TEMPLATES: SlotTemplateSeed[] = [
       s("louvor", "Louvor"),
       s("adoracao", "Adoração"),
       s("ministracao", "Ministração", true),
-      s("envio", "Envio"),
+      s("envio", "Envio", true),
+      s("final", "Final"),
     ],
   },
   {
@@ -87,6 +91,7 @@ export const SLOT_TEMPLATES: SlotTemplateSeed[] = [
       s("exposicao", "Exposição do Santíssimo"),
       s("adoracao", "Adoração"),
       s("bencao", "Bênção do Santíssimo"),
+      s("recolhimento", "Recolhimento do Santíssimo"),
     ],
   },
   {
@@ -100,7 +105,7 @@ export const SLOT_TEMPLATES: SlotTemplateSeed[] = [
     ],
   },
   {
-    type: "Sarau",
+    type: "Livre",
     reorderable: true,
     allowCustomSlots: true,
     slots: [],

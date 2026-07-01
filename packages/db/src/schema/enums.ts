@@ -27,7 +27,7 @@ export const repertoireType = pgEnum("repertoire_type", [
   "Adoracao",
   "Terco",
   "GrupoDeOracao",
-  "Sarau",
+  "Livre",
 ]);
 
 export const tagOverrideAction = pgEnum("tag_override_action", [
