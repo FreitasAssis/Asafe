@@ -1,8 +1,5 @@
-import {
-  ChordProFormatter,
-  ChordProParser,
-  ChordsOverWordsParser,
-} from "chordsheetjs";
+import { ChordProFormatter, ChordProParser } from "chordsheetjs";
+import { chordsOverWordsToChordPro } from "./chords-over-words";
 import { detectFormat, type InputFormat } from "./detect-format";
 
 /**
@@ -20,10 +17,12 @@ export function toChordPro(
   // arriscar reinterpretar a letra como acordes.
   if (format === "lyrics-only") return input;
 
-  const song =
-    format === "chordpro"
-      ? new ChordProParser().parse(input)
-      : new ChordsOverWordsParser().parse(input);
+  // Acordes sobre a letra: conversor próprio, que preserva a notação exata do
+  // usuário (F°7, G7+, C#m7b5) — o ChordsOverWordsParser do ChordSheetJS descartava
+  // acordes alterados e sumia com cifras inteiras.
+  if (format === "chords-over-lyrics") return chordsOverWordsToChordPro(input);
 
+  // ChordPro já existente: normaliza via round-trip do ChordSheetJS.
+  const song = new ChordProParser().parse(input);
   return new ChordProFormatter().format(song);
 }

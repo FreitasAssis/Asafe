@@ -6,15 +6,16 @@ const CHORD_BRACKET = /\[[^\]\n]+\]/;
 
 /**
  * Acorde isolado: raiz MAIÚSCULA A–G (+ acidente), sufixos conhecidos (m, maj, sus,
- * add, dim, aug, números...) e baixo opcional (`/G`). Estrutural de propósito: o
- * `Chord.parse` do ChordSheetJS é leniente e aceitaria "casa" como acorde — aqui
- * "casa"/"sol" (minúsculo ou sufixo de letra arbitrária) são rejeitados.
+ * add, dim, aug, números, alterações b/# como em C#m7b5...) e baixo opcional (`/G`).
+ * Estrutural de propósito: o `Chord.parse` do ChordSheetJS é leniente e aceitaria
+ * "casa" como acorde — aqui "casa"/"sol" (minúsculo ou sufixo de letra arbitrária)
+ * são rejeitados.
  */
 const CHORD =
-  /^[A-G][#b]?(?:maj|min|dim|aug|sus|add|[mM°ø+\d-])*(?:\/[A-G][#b]?)?$/;
+  /^[A-G][#b]?(?:maj|min|dim|aug|sus|add|[mM°ø+#b\d-])*(?:\/[A-G][#b]?)?$/;
 
 /** Uma linha é "de acordes" se todos os seus tokens são acordes (e há ao menos um). */
-function isChordLine(line: string): boolean {
+export function isChordLine(line: string): boolean {
   const tokens = line.trim().split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return false;
   return tokens.every((t) => CHORD.test(t));
