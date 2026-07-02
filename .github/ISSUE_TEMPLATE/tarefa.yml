@@ -1,0 +1,35 @@
+name: "Tarefa / melhoria"
+description: "Uma fatia de trabalho (feature, refino) — vira 1 PR."
+labels: []
+body:
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto
+      description: "Por que isto existe. Linke a seção do docs/DESIGN.md quando fizer sentido."
+    validations:
+      required: true
+  - type: textarea
+    id: escopo
+    attributes:
+      label: Escopo
+      description: "As tarefas desta fatia, em checklist."
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: aceite
+    attributes:
+      label: Critérios de aceite
+      description: "Como saber que está pronto (comportamento observável, testes verdes)."
+    validations:
+      required: true
+  - type: input
+    id: dependencias
+    attributes:
+      label: Dependências
+      description: "Outras issues/decisões que bloqueiam esta (ou 'nenhuma')."
+    validations:
+      required: false
