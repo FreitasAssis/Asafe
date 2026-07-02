@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgPolicy, pgTable, primaryKey, uuid } from "drizzle-orm/pg-core";
+import { index, pgPolicy, pgTable, primaryKey, uuid } from "drizzle-orm/pg-core";
 import { authenticatedRole } from "drizzle-orm/supabase";
 import { song } from "./song";
 import { tag } from "./tag";
@@ -28,6 +28,8 @@ export const songTag = pgTable(
   },
   (t) => [
     primaryKey({ columns: [t.songId, t.tagId] }),
+    // A PK cobre song_id (prefixo); tag_id não — indexado à parte para a leitura por tag.
+    index("song_tag_tag_id_idx").on(t.tagId),
     pgPolicy("song_tag_select", {
       for: "select",
       to: authenticatedRole,
