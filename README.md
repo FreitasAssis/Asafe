@@ -38,6 +38,7 @@ Senhor (autor de uma dúzia de salmos). O app leva o nome e a missão.
 - ✅ Importação em lote (colar várias cifras de uma vez)
 - ✅ Grupos, convites e comunidade com moderação
 - ✅ Identidade visual, navegação e onboarding
+- ✅ Deploy de referência na Cloudflare Workers (OpenNext)
 
 **Próximos passos**
 
@@ -60,31 +61,72 @@ Monorepo TypeScript (Turborepo + Yarn workspaces).
 | `packages/db`       | Schema Drizzle, migrations e políticas RLS (Supabase)        |
 
 Backend: **Supabase** (Postgres + Auth + RLS + Storage + Realtime).
-Hospedagem do front: **Cloudflare Pages**.
+Hospedagem do front: **Cloudflare Workers** (via [OpenNext](https://opennext.js.org/cloudflare)).
 
 ## Desenvolvimento
 
-Requer **Node >= 22** (veja `.nvmrc`), **Yarn 4** (via corepack) e **Docker** (para o
+Requer **Node >= 22** (`.nvmrc`), **Yarn 4** (via corepack) e **Docker** (para o
 Supabase local).
 
-```bash
-corepack enable          # garante o Yarn 4 (já fixado em package.json)
-yarn install
-yarn typecheck
-yarn dev                 # roda os apps em modo dev (turbo)
-```
+1. Instale as dependências:
 
-Banco de dados local (Supabase) — necessário para os testes de `packages/db`:
+   ```bash
+   corepack enable      # garante o Yarn 4 (já fixado em package.json)
+   yarn install
+   ```
 
-```bash
-yarn dlx supabase start  # sobe Postgres + Auth local (Docker)
-yarn workspace @asafe/db db:migrate
-yarn workspace @asafe/db db:seed
-yarn test                # testes de unidade + integração (RLS)
-```
+2. Suba o Supabase local (Postgres + Auth via Docker). Ao terminar, ele imprime a
+   **API URL**, a **anon key**, o **service_role** e a **DB URL**:
 
-Copie `packages/db/.env.example` para `packages/db/.env` com as credenciais que o
-`supabase start` imprime. **Nunca** comite o `.env`.
+   ```bash
+   yarn dlx supabase start
+   ```
+
+3. Crie os dois arquivos de ambiente (ambos git-ignored) com esses valores:
+
+   ```bash
+   cp packages/db/.env.example packages/db/.env     # migrations, seed e testes
+   cp apps/web/.env.example    apps/web/.env.local   # o app web (NEXT_PUBLIC_*)
+   ```
+
+4. Aplique o schema e semeie o que é livre (tags litúrgicas + slot templates):
+
+   ```bash
+   yarn workspace @asafe/db db:migrate
+   yarn workspace @asafe/db db:seed
+   ```
+
+5. Rode:
+
+   ```bash
+   yarn dev        # todos os apps em dev (ou: yarn workspace @asafe/web dev)
+   yarn test       # unidade + integração (RLS) — exige o Supabase local no ar
+   yarn typecheck
+   ```
+
+O catálogo começa **vazio** de propósito: músicas não são versionadas nem semeadas
+(direito autoral, DESIGN §11) — crie as suas pelo app. Para popular usuários de teste
+(`ana`/`bruno`/`celia`), rode o seed com `ASAFE_SEED_DEMO=1` (**só em local**). **Nunca**
+comite `.env` / `.env.local`.
+
+### Solução de problemas
+
+- **`supabase start` falha:** confirme que o **Docker está rodando**. Em conflito de
+  porta, rode `yarn dlx supabase stop` e tente de novo. `yarn dlx supabase status`
+  mostra as URLs e chaves locais a qualquer momento.
+- **`db:migrate` reclama de `DATABASE_URL`:** falta o `packages/db/.env` (passo 3).
+- **O app web abre mas não loga / não carrega dados:** falta o `apps/web/.env.local`
+  (passo 3), ou o Supabase local não está no ar.
+
+## Contribuindo
+
+- **Commits**: [Conventional Commits](https://www.conventionalcommits.org)
+  (`feat:`, `fix:`, `docs:`…), com escopo quando ajudar (`feat(core): …`).
+- **TDD** na lógica pura (`packages/core`, `packages/chordpro`): escreva o teste,
+  veja falhar, implemente. Regras de negócio e RLS têm testes.
+- **PRs** contra a `main` com o **CI verde** (typecheck + testes). Uma fatia por PR.
+- **Não versione conteúdo protegido** (cifras/letras de terceiros, textos litúrgicos
+  da CNBB) — nem em seed, teste ou fixture.
 
 ## Licença
 
