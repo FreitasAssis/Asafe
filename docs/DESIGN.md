@@ -39,8 +39,9 @@ Monorepo TypeScript (Turborepo + Yarn workspaces):
 - **Dados:** **Supabase** — Postgres + Auth + **RLS** + Storage + **Realtime**. O RLS
   expressa nativamente o modelo "vê o global + o seu + o compartilhado com o grupo"; o
   Realtime cobre navegação sincronizada sem servidor próprio.
-- **Hospedagem do front:** **Cloudflare Pages** (evita a restrição de uso comercial do
-  Vercel Hobby; CDN grátis para os links públicos).
+- **Hospedagem do front:** **Cloudflare Workers** (via [OpenNext](https://opennext.js.org/cloudflare))
+  — evita a restrição de uso comercial do Vercel Hobby; CDN grátis para os links públicos.
+  O deploy de referência roda em `*.workers.dev`.
 - **Cifras:** **ChordSheetJS** (parse/render/transposição).
 - **API/lógica:** **tRPC** onde precisa de lógica custom type-safe; onde o RLS resolve,
   `supabase-js` direto. **Drizzle** para o schema e queries tipadas.
@@ -133,8 +134,20 @@ histórico entre celebrações — ataca diretamente a repetição semana a sema
 - **Exibição:** cifra+letra / só letra / esconder cifra (toggle por usuário); **modo palco**
   (tema escuro, fonte grande, autoscroll, capo); **modo projeção** (letra grande para telão).
 - **Navegação sincronizada (Fase 3):** modo palco espelhado em tempo real entre os aparelhos
-  via **Supabase Realtime** (sem servidor always-on). Um mestre por vez, transferível por
-  toque; seguir é o padrão, mas olhar adiante não tira ninguém da sincronia.
+  da equipe via **Supabase Realtime** (sem servidor always-on; **não** Socket.IO, que exigiria
+  máquina paga). Regras:
+  - **Opcional**, por repertório/sessão. Desligado, cada um navega sozinho (comportamento atual).
+  - **Um mestre por vez, transferível por toque.** Quem abre a sessão é o mestre; um botão
+    "assumir comando" passa o bastão. Só o mestre empurra a tela dos outros → elimina a
+    "guerra de scroll".
+  - **Seguir é o padrão; olhar adiante não é punido.** O seguidor acompanha o mestre
+    (música + scroll + tom) enquanto não mexe; ao arrastar a própria tela ele se solta
+    (leitura livre) **sem afetar ninguém**, com aviso discreto e botão "voltar a seguir".
+  - **Caso de uso forte:** um operador que não está tocando conduz as telas de toda a equipe
+    (scroll incluído), mãos livres, sem pedaleira.
+  - **Estado mínimo compartilhado:** quem é o mestre + música/posição atual dele. Cada aparelho
+    decide localmente se segue (tolerante a wifi ruim; ao reconectar, relê o estado). Tratar
+    conflito de mestre.
 
 ## 8. Partes fixas da Missa (Ordinário)
 
@@ -156,7 +169,7 @@ histórico entre celebrações — ataca diretamente a repetição semana a sema
   Supabase comportam um acervo muito maior que uma diocese produz. Áudio é **link** (sem
   upload); PDF é gerado sob demanda (não guardado); liturgia em cache; Cloudflare CDN na
   frente dos links. Um ping diário (GitHub Actions) evita a pausa do Supabase. Único custo
-  quase certo: domínio (~R$ 40/ano), e mesmo assim opcional (`*.pages.dev` grátis).
+  quase certo: domínio (~R$ 40/ano), e mesmo assim opcional (`*.workers.dev` grátis).
 
 ## 10. Identidade e onboarding
 
@@ -176,7 +189,13 @@ A adoção é uma fatia própria — a passada de UI pré-launch.
 - Direitos de cifras/letras no catálogo **global** (curar; não comitar material protegido).
 - Completude do calendário nacional do Brasil na LitCal.
 - Escolha da API de liturgia diária + fragilidade de scraping.
-- Domínio: rodar grátis em `*.pages.dev` ou registrar `asafe.com.br` / `asafe.app`.
+- Domínio: rodar grátis em `*.workers.dev` ou registrar `asafe.com.br` / `asafe.app`.
+- **O que "aprovar um repertório" publica.** Aprovar um repertório da comunidade torna
+  legíveis as **cifras** das músicas dele (o `song_select` expõe músicas de repertórios
+  aprovados) — inclusive músicas que eram *pessoais* do autor, e por `id`, não só dentro do
+  repertório.
+  Escopar a leitura ao repertório via função `security definer` (como `get_shared_repertoire_full`
+  já faz no link público), tirando a cláusula "in approved repertoire" do `song_select`.
 
 ## 12. Roadmap por fases
 
@@ -198,5 +217,7 @@ caminho).
 
 ---
 
-**Status atual:** fundação do monorepo + schema/RLS do MVP prontos (`packages/db`). Próximo:
-construir o MVP Fase 1, começando pelo catálogo + editor ChordPro.
+**Status atual:** Fase 1 (MVP) entregue e **no ar** (Cloudflare Workers + Supabase de produção);
+comunidade com moderação, importação em lote e identidade visual também prontas. Próximo bloco
+grande: a **camada litúrgica** (§6) e os **modos de apresentação** (§7). O status vivo por
+funcionalidade fica no [`README.md`](../README.md).
