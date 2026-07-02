@@ -29,6 +29,15 @@ jobs:
       - name: Instalar deps
         run: yarn install --immutable
 
+      # Migra o banco de PRODUÇÃO ANTES do deploy (fail-fast: se falhar, o app novo
+      # não sobe → prod fica app-antigo + schema-antigo, consistente). Alvo é a
+      # DATABASE_URL do secret; migrations devem ser retrocompatíveis (expand→contract).
+      - name: Migrar produção
+        working-directory: packages/db
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+        run: yarn db:migrate:remote
+
       # Build (OpenNext) + deploy. As NEXT_PUBLIC_* são embutidas no build; o wrangler
       # deploy autentica pelas CLOUDFLARE_*. Tudo vem de secrets do repositório.
       - name: Build + deploy
