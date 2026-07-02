@@ -3,6 +3,8 @@
 > Organize e compartilhe repertórios de música litúrgica católica — num lugar só,
 > no lugar das folhas soltas e dos PDFs perdidos no WhatsApp.
 
+**Ao vivo:** <https://asafe.repertorio.workers.dev> · em construção (veja o [Status](#status)).
+
 **Asafe** ajuda ministérios de música a montar repertórios de Missas, grupos de oração,
 casamentos e adorações: escolha cantos de um catálogo vivo com cifra e letra, transponha
 para o tom da sua voz, esconda os acordes para quem só canta, e acompanhe no celular ou
