@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": ".open-next/worker.js",
+  "name": "asafe",
+  "compatibility_date": "2024-12-30",
+  // nodejs_compat: APIs de Node no workerd (o app usa @supabase/ssr com cookies).
+  // global_fetch_strictly_public: fetch() vai à internet pública (recomendado p/ OpenNext).
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  }
+}

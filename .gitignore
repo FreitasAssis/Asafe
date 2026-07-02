@@ -17,6 +17,11 @@ out/
 .expo/
 *.tsbuildinfo
 
+# Cloudflare / OpenNext (build e tipos gerados)
+.open-next/
+.wrangler/
+cloudflare-env.d.ts
+
 # Env / secrets (código separado de configuração — §3)
 .env
 .env.*
