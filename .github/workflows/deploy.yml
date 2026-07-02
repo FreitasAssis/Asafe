@@ -1,0 +1,41 @@
+name: Deploy
+
+# Publica o app (apps/web) na Cloudflare Workers via OpenNext a cada push na main.
+on:
+  push:
+    branches: [main]
+
+# Um deploy por vez; não cancela um deploy em andamento (deixa terminar).
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: build + deploy (Cloudflare)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Corepack ANTES do setup-node (mesmo motivo do ci.yml).
+      - name: Habilitar Corepack (Yarn 4)
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Instalar deps
+        run: yarn install --immutable
+
+      # Build (OpenNext) + deploy. As NEXT_PUBLIC_* são embutidas no build; o wrangler
+      # deploy autentica pelas CLOUDFLARE_*. Tudo vem de secrets do repositório.
+      - name: Build + deploy
+        working-directory: apps/web
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: yarn deploy
