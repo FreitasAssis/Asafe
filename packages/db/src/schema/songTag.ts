@@ -5,7 +5,7 @@ import { song } from "./song";
 import { tag } from "./tag";
 
 /**
- * Vínculo tag <-> música do catálogo global (ver PLANNING.md §5/§6).
+ * Vínculo tag <-> música do catálogo global (ver DESIGN.md §4/§5).
  * PK composta (songId, tagId).
  *
  * RLS:

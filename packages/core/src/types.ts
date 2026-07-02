@@ -1,5 +1,5 @@
 /**
- * Vocabulário de domínio do Asafe (ver PLANNING.md §5).
+ * Vocabulário de domínio do Asafe (ver DESIGN.md §4).
  * Uniões de literais estáveis usadas em todo o monorepo — code é fonte de verdade
  * dos nomes; os valores casam com as colunas do Postgres.
  */

@@ -7,7 +7,7 @@ export interface TagOverride {
 }
 
 /**
- * Tags efetivas que um usuário vê numa música global (PLANNING.md §5):
+ * Tags efetivas que um usuário vê numa música global (DESIGN.md §4):
  *
  *   tags_efetivas = tags_globais − {removes do user} ∪ {adds do user}
  *

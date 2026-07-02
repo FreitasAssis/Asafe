@@ -4,7 +4,7 @@ import { authenticatedRole } from "drizzle-orm/supabase";
 import { repertoireType } from "./enums";
 
 /**
- * Template de slots (ver PLANNING.md §5/§6).
+ * Template de slots (ver DESIGN.md §4/§5).
  * Dado de REFERÊNCIA: semeia a sequência de momentos por tipo de repertório.
  * PK = type (um template por tipo).
  *

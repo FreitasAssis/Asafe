@@ -1,5 +1,5 @@
 /**
- * Schema Drizzle do Asafe (ver PLANNING.md §5).
+ * Schema Drizzle do Asafe (ver DESIGN.md §4).
  *
  * ETAPA 2: traduz as tabelas do §5 e as políticas RLS do §6 para Drizzle.
  */

@@ -4,7 +4,7 @@ import { authenticatedRole, authUsers } from "drizzle-orm/supabase";
 import { userRole } from "./enums";
 
 /**
- * Perfil do usuário (espelho de auth.users), ver PLANNING.md §5/§6.
+ * Perfil do usuário (espelho de auth.users), ver DESIGN.md §4/§5.
  * `id` referencia auth.users(id) com cascade; o perfil é populado por trigger
  * no signup (ver migration: public.handle_new_user / on_auth_user_created).
  */

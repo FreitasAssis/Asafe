@@ -6,7 +6,7 @@ import { group } from "./group";
 import { user } from "./user";
 
 /**
- * Vínculo usuário <-> grupo (ver PLANNING.md §5/§6).
+ * Vínculo usuário <-> grupo (ver DESIGN.md §4/§5).
  * PK composta (userId, groupId).
  *
  * RLS:

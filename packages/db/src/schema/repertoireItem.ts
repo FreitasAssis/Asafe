@@ -5,7 +5,7 @@ import { repertoire } from "./repertoire";
 import { song } from "./song";
 
 /**
- * Item de repertório (ver PLANNING.md §5/§6).
+ * Item de repertório (ver DESIGN.md §4/§5).
  * A sequência REAL do repertório mora aqui (uma linha por música/momento).
  *
  * RLS:

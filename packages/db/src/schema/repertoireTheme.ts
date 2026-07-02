@@ -5,7 +5,7 @@ import { repertoire } from "./repertoire";
 import { tag } from "./tag";
 
 /**
- * Tema do repertório (ver PLANNING.md §5/§6).
+ * Tema do repertório (ver DESIGN.md §4/§5).
  * Âncora por tema (tag) para tipos não-litúrgicos.
  * PK composta (repertoireId, tagId).
  *

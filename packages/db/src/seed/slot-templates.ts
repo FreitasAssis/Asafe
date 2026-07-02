@@ -1,7 +1,7 @@
 import { slotTemplate } from "../schema/slotTemplate";
 import type { db as Db } from "../client";
 
-/** Um momento dentro de um template de slots (PLANNING.md §7). */
+/** Um momento dentro de um template de slots (DESIGN.md §4). */
 export interface SlotDef {
   key: string;
   label: string;
@@ -22,7 +22,7 @@ const s = (key: string, label: string, optional = false): SlotDef => ({
 });
 
 /**
- * Sementes de slot_template por tipo (PLANNING.md §7).
+ * Sementes de slot_template por tipo (DESIGN.md §4).
  *
  * O template SEMEIA a sequência; a sequência final mora no repertoire_item. Mudar o
  * template depois NÃO reescreve repertórios antigos.
