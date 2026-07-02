@@ -11,6 +11,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Detecta se o PR mexeu em packages/db — o job pesado (Supabase) só roda se sim.
+  # Job pulado por `if` conta como sucesso no check obrigatório (não trava o PR).
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      db: ${{ steps.filter.outputs.db }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            db:
+              - 'packages/db/**'
+
   build:
     name: typecheck + testes
     runs-on: ubuntu-latest
@@ -33,7 +48,48 @@ jobs:
       - name: Typecheck (5 packages)
         run: yarn typecheck
 
-      # Testes que não dependem de infra externa. Os de @asafe/db exigem um Postgres
-      # do Supabase e entram depois, com um service container dedicado.
+      # Testes que não dependem de infra externa.
       - name: Testes (core + chordpro)
         run: yarn turbo run test --filter=@asafe/core --filter=@asafe/chordpro
+
+  db:
+    name: db (migrations + RLS)
+    needs: changes
+    if: needs.changes.outputs.db == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Habilitar Corepack (Yarn 4)
+        run: corepack enable
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Instalar deps
+        run: yarn install --immutable
+
+      # Sobe o stack local do Supabase (Postgres + Auth) via Docker no runner.
+      - name: Subir Supabase local
+        run: yarn dlx supabase start
+
+      # Exporta o env do stack local com os nomes que o @asafe/db lê.
+      - name: Env do Supabase local
+        run: |
+          yarn dlx supabase status -o env > sb.env
+          {
+            echo "SUPABASE_URL=$(grep '^API_URL=' sb.env | cut -d= -f2- | tr -d '\"')"
+            echo "SUPABASE_ANON_KEY=$(grep '^ANON_KEY=' sb.env | cut -d= -f2- | tr -d '\"')"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$(grep '^SERVICE_ROLE_KEY=' sb.env | cut -d= -f2- | tr -d '\"')"
+            echo "DATABASE_URL=$(grep '^DB_URL=' sb.env | cut -d= -f2- | tr -d '\"')"
+          } >> "$GITHUB_ENV"
+
+      # Aplica TODAS as migrations (pega migration que não aplica / quebra o schema).
+      - name: Migrar (local)
+        run: yarn workspace @asafe/db db:migrate
+
+      # Suíte de RLS/políticas (pega migration que quebra alguma policy).
+      - name: Testes de RLS (@asafe/db)
+        run: yarn workspace @asafe/db test
