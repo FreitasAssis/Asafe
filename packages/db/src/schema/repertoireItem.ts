@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { integer, pgPolicy, pgTable, text, uuid } from "drizzle-orm/pg-core";
+import { index, integer, pgPolicy, pgTable, text, uuid } from "drizzle-orm/pg-core";
 import { authenticatedRole } from "drizzle-orm/supabase";
 import { repertoire } from "./repertoire";
 import { song } from "./song";
@@ -29,6 +29,9 @@ export const repertoireItem = pgTable(
     notes: text("notes"),
   },
   (t) => [
+    // Índices das FKs usadas pelas subconsultas de RLS (evita seq scan por linha).
+    index("repertoire_item_repertoire_id_idx").on(t.repertoireId),
+    index("repertoire_item_song_id_idx").on(t.songId),
     pgPolicy("repertoire_item_select", {
       for: "select",
       to: authenticatedRole,

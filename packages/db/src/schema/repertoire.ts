@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   date,
+  index,
   pgPolicy,
   pgTable,
   text,
@@ -41,6 +42,13 @@ export const repertoire = pgTable(
       .defaultNow(),
   },
   (t) => [
+    // Índices das FKs usadas pelas subconsultas de RLS; o parcial serve às listas
+    // de moderação (só linhas que estão na comunidade).
+    index("repertoire_owner_id_idx").on(t.ownerId),
+    index("repertoire_group_id_idx").on(t.groupId),
+    index("repertoire_community_status_idx")
+      .on(t.communityStatus)
+      .where(sql`${t.communityStatus} <> 'none'`),
     pgPolicy("repertoire_select", {
       for: "select",
       to: authenticatedRole,

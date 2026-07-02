@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgPolicy, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { index, pgPolicy, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { authenticatedRole } from "drizzle-orm/supabase";
 import { communityStatus, visibility } from "./enums";
 import { user } from "./user";
@@ -35,6 +35,8 @@ export const song = pgTable(
       .defaultNow(),
   },
   (t) => [
+    // Índice da FK usada nas subconsultas de RLS.
+    index("song_owner_id_idx").on(t.ownerId),
     // Global = seed (owner nulo), própria, aprovada direto, ou dentro de um repertório aprovado.
     pgPolicy("song_select", {
       for: "select",
