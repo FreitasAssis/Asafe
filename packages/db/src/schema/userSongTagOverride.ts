@@ -7,7 +7,7 @@ import { tagOverrideAction } from "./enums";
 import { user } from "./user";
 
 /**
- * Override pessoal de tag por música (ver PLANNING.md §5/§6).
+ * Override pessoal de tag por música (ver DESIGN.md §4/§5).
  * Permite ao usuário adicionar/remover, no seu contexto, uma tag global de uma
  * música global — armazenando apenas a diferença em relação ao catálogo.
  * PK composta (userId, songId, tagId).

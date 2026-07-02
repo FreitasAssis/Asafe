@@ -5,7 +5,7 @@ import { tagCategory } from "./enums";
 import { user } from "./user";
 
 /**
- * Tag (ver PLANNING.md §5/§6).
+ * Tag (ver DESIGN.md §4/§5).
  *
  * Conceito de catálogo (§5):
  *  - owner_id NULL  => tag de catálogo global (visível a todos os logados).

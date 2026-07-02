@@ -4,7 +4,7 @@ import { authenticatedRole } from "drizzle-orm/supabase";
 import { user } from "./user";
 
 /**
- * Grupo (ver PLANNING.md §5/§6). "group" é palavra reservada no SQL,
+ * Grupo (ver DESIGN.md §4/§5). "group" é palavra reservada no SQL,
  * por isso a tabela é sempre referenciada com aspas ("group").
  *
  * RLS:

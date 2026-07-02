@@ -1,7 +1,7 @@
 import { pgEnum } from "drizzle-orm/pg-core";
 
 /**
- * Enums de domínio do Asafe (ver PLANNING.md §5).
+ * Enums de domínio do Asafe (ver DESIGN.md §4).
  * Os valores casam 1:1 com as uniões de literais em @asafe/core (types.ts).
  */
 export const userRole = pgEnum("user_role", ["user", "moderator", "admin"]);

@@ -13,7 +13,7 @@ import { group } from "./group";
 import { user } from "./user";
 
 /**
- * Repertório (ver PLANNING.md §5/§6).
+ * Repertório (ver DESIGN.md §4/§5).
  *
  * MVP (Fase 1): SEM colunas litúrgicas (liturgical_key/liturgical_snapshot),
  * que entram aditivas na Fase 2.

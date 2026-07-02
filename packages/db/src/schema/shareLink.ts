@@ -4,7 +4,7 @@ import { authenticatedRole } from "drizzle-orm/supabase";
 import { repertoire } from "./repertoire";
 
 /**
- * Link público de compartilhamento (ver PLANNING.md §5/§6/§8).
+ * Link público de compartilhamento (ver DESIGN.md §4/§5).
  *
  * Um repertório pode ser aberto por um link público com token, SEM login.
  * O acesso público NÃO é mediado por RLS desta tabela: o visitante `anon`

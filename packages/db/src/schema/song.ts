@@ -5,7 +5,7 @@ import { communityStatus, visibility } from "./enums";
 import { user } from "./user";
 
 /**
- * Música (ver PLANNING.md §5/§6).
+ * Música (ver DESIGN.md §4/§5).
  *
  * Conceito de catálogo (§5):
  *  - owner_id NULL  => item de catálogo global semeado (visível a todos os logados).
