@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Design e decisões
+    url: https://github.com/FreitasAssis/Asafe/blob/main/docs/DESIGN.md
+    about: "O porquê das decisões técnicas e o roadmap por fases."
