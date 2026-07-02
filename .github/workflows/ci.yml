@@ -11,6 +11,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Detecta se o PR mexeu em packages/db — o job pesado (Supabase) só roda se sim.
+  # Job pulado por `if` conta como sucesso no check obrigatório (não trava o PR).
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      db: ${{ steps.filter.outputs.db }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            db:
+              - 'packages/db/**'
+
   build:
     name: typecheck + testes
     runs-on: ubuntu-latest
@@ -39,6 +54,8 @@ jobs:
 
   db:
     name: db (migrations + RLS)
+    needs: changes
+    if: needs.changes.outputs.db == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
