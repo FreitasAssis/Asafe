@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { index, pgPolicy, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { authenticatedRole } from "drizzle-orm/supabase";
-import { communityStatus, visibility } from "./enums";
+import { communityStatus, copyrightStatus, visibility } from "./enums";
 import { user } from "./user";
 
 /**
@@ -30,6 +30,10 @@ export const song = pgTable(
     ownerId: uuid("owner_id").references(() => user.id),
     visibility: visibility("visibility").notNull().default("private"),
     communityStatus: communityStatus("community_status").notNull().default("none"),
+    // Direitos: decidido só no gate de promoção ao global (default assume protegida).
+    // `copyright_evidence` = ponteiro/nota da prova (link da licença/permissão), não a prova.
+    copyrightStatus: copyrightStatus("copyright_status").notNull().default("desconhecida"),
+    copyrightEvidence: text("copyright_evidence"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
