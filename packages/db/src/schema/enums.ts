@@ -44,3 +44,15 @@ export const communityStatus = pgEnum("community_status", [
   "approved",
   "rejected",
 ]);
+
+/**
+ * Status de copyright de uma música — decidido só no gate de promoção ao global.
+ * Por padrão `desconhecida` (assume-se protegida). Ver DIREITOS-AUTORAIS (política).
+ */
+export const copyrightStatus = pgEnum("copyright_status", [
+  "dominio_publico",
+  "licenca_aberta",
+  "permissao",
+  "protegida",
+  "desconhecida",
+]);

@@ -37,6 +37,14 @@ export type PericopeType = "evangelho" | "1a_leitura" | "2a_leitura" | "salmo";
 /** Visibilidade de músicas/repertórios. */
 export type Visibility = "private" | "group" | "public";
 
+/** Status de copyright de uma música (decidido no gate de promoção ao global). */
+export type CopyrightStatus =
+  | "dominio_publico"
+  | "licenca_aberta"
+  | "permissao"
+  | "protegida"
+  | "desconhecida";
+
 /** Tipos de contribuição à curadoria comunitária (§5, §10). */
 export type ContributionType =
   | "nova_musica_global"
