@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { browserClient } from "@/lib/supabase/client";
 import { requestPublish, withdrawPublish, type CommunityStatus } from "@/lib/repertoires";
 import { requestPublishSong, withdrawPublishSong } from "@/lib/songs";
+import { PublishGate } from "./publish-gate";
 
-/** Seção "Comunidade" (só dono): sugerir à comunidade / retirar / reenviar. Repertório ou música. */
+/** Seção "Comunidade" (só dono): sugerir à comunidade / retirar / reenviar. Repertório ou música.
+ * Para MÚSICA, sugerir abre o gate de direitos (declarar autoria) antes de propor. */
 export function CommunitySection({
   id,
   status,
@@ -18,6 +20,7 @@ export function CommunitySection({
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [gate, setGate] = useState(false);
   const noun = kind === "song" ? "esta música" : "este repertório";
   const request = kind === "song" ? requestPublishSong : requestPublish;
   const withdraw = kind === "song" ? withdrawPublishSong : withdrawPublish;
@@ -32,6 +35,18 @@ export function CommunitySection({
     }
   }
 
+  // Música passa pelo gate (declarar direitos); repertório propõe direto.
+  function startSuggest() {
+    if (kind === "song") setGate(true);
+    else void act(request);
+  }
+
+  const suggestBtn = (label: string) => (
+    <button type="button" className="btn btn-primary" disabled={busy} onClick={startSuggest}>
+      {label}
+    </button>
+  );
+
   return (
     <section className="card mt-4">
       <div className="flex flex-wrap items-center gap-3">
@@ -41,9 +56,7 @@ export function CommunitySection({
             <span className="flex-1 text-sm text-muted">
               Compartilhe {noun} com todos — passa por moderação antes de aparecer.
             </span>
-            <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void act(request)}>
-              Sugerir à comunidade
-            </button>
+            {suggestBtn("Sugerir à comunidade")}
           </>
         )}
         {status === "pending" && (
@@ -67,12 +80,18 @@ export function CommunitySection({
         {status === "rejected" && (
           <>
             <span className="flex-1 text-sm text-muted">Não aprovado pela moderação.</span>
-            <button type="button" className="btn" disabled={busy} onClick={() => void act(request)}>
-              Sugerir de novo
-            </button>
+            {suggestBtn("Sugerir de novo")}
+          </>
+        )}
+        {status === "returned" && (
+          <>
+            <span className="flex-1 text-sm text-muted">Devolvido para ajuste — corrija e reenvie.</span>
+            {suggestBtn("Reenviar")}
           </>
         )}
       </div>
+
+      {gate && kind === "song" && <PublishGate songId={id} onCancel={() => setGate(false)} />}
     </section>
   );
 }

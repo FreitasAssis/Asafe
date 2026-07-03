@@ -1,5 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { ModerationDecision, ModerationReason, TagCategory } from "@asafe/core";
+import type {
+  CopyrightStatus,
+  ModerationDecision,
+  ModerationReason,
+  TagCategory,
+} from "@asafe/core";
 import type { CommunityStatus } from "./repertoires";
 
 /** Campos editáveis de uma música própria (camelCase no app; snake_case no banco). */
@@ -15,6 +20,8 @@ export interface Song extends SongInput {
   id: string;
   ownerId: string | null;
   communityStatus: CommunityStatus;
+  copyrightStatus: CopyrightStatus;
+  copyrightEvidence: string | null;
   tagIds: string[];
 }
 
@@ -58,6 +65,8 @@ interface SongRow {
   audio_links: string[];
   owner_id: string | null;
   community_status: CommunityStatus;
+  copyright_status: CopyrightStatus;
+  copyright_evidence: string | null;
   song_tag?: { tag_id: string }[];
 }
 
@@ -77,6 +86,8 @@ function rowToSong(row: SongRow): Song {
     audioLinks: row.audio_links ?? [],
     ownerId: row.owner_id,
     communityStatus: row.community_status,
+    copyrightStatus: row.copyright_status,
+    copyrightEvidence: row.copyright_evidence,
     tagIds: (row.song_tag ?? []).map((st) => st.tag_id),
   };
 }
@@ -92,7 +103,7 @@ function inputToRow(input: SongInput) {
 }
 
 const SONG_COLS =
-  "id, title, composer, default_key, song_content(chordpro_body), audio_links, owner_id, community_status, song_tag(tag_id)";
+  "id, title, composer, default_key, song_content(chordpro_body), audio_links, owner_id, community_status, copyright_status, copyright_evidence, song_tag(tag_id)";
 
 /** Carrega uma música por id, com suas tags. */
 export async function getSong(supabase: SupabaseClient, id: string): Promise<Song | null> {
@@ -109,6 +120,20 @@ export async function requestPublishSong(
   const { data, error } = await supabase.rpc("request_publish_song", { p_song_id: id });
   if (error) throw error;
   return (data as CommunityStatus | null) ?? null;
+}
+
+/** Classifica os direitos da música no gate de promoção (só o dono; RLS song_write_own). */
+export async function classifySong(
+  supabase: SupabaseClient,
+  id: string,
+  copyrightStatus: CopyrightStatus,
+  evidence?: string | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from("song")
+    .update({ copyright_status: copyrightStatus, copyright_evidence: evidence?.trim() || null })
+    .eq("id", id);
+  if (error) throw error;
 }
 
 /** Dono retira a música da comunidade (→ none). */
