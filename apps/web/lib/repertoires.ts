@@ -1,5 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { RepertoireType, SlotDef } from "@asafe/core";
+import type {
+  ModerationDecision,
+  ModerationReason,
+  RepertoireType,
+  SlotDef,
+} from "@asafe/core";
 import type { SharedPackage } from "@/components/public-repertoire";
 
 /** Estado de publicação na comunidade (moderado). */
@@ -164,9 +169,16 @@ export async function withdrawPublish(
 export async function moderateRepertoire(
   supabase: SupabaseClient,
   id: string,
-  decision: "approve" | "reject" | "revoke",
+  decision: ModerationDecision,
+  reason?: ModerationReason,
+  note?: string,
 ): Promise<void> {
-  const { error } = await supabase.rpc("moderate_repertoire", { p_rep_id: id, p_decision: decision });
+  const { error } = await supabase.rpc("moderate_repertoire", {
+    p_rep_id: id,
+    p_decision: decision,
+    p_reason: reason ?? null,
+    p_note: note?.trim() ? note.trim() : null,
+  });
   if (error) throw error;
 }
 

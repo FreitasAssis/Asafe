@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { TagCategory } from "@asafe/core";
+import type { ModerationDecision, ModerationReason, TagCategory } from "@asafe/core";
 import type { CommunityStatus } from "./repertoires";
 
 /** Campos editáveis de uma música própria (camelCase no app; snake_case no banco). */
@@ -125,9 +125,16 @@ export async function withdrawPublishSong(
 export async function moderateSong(
   supabase: SupabaseClient,
   id: string,
-  decision: "approve" | "reject" | "revoke",
+  decision: ModerationDecision,
+  reason?: ModerationReason,
+  note?: string,
 ): Promise<void> {
-  const { error } = await supabase.rpc("moderate_song", { p_song_id: id, p_decision: decision });
+  const { error } = await supabase.rpc("moderate_song", {
+    p_song_id: id,
+    p_decision: decision,
+    p_reason: reason ?? null,
+    p_note: note?.trim() ? note.trim() : null,
+  });
   if (error) throw error;
 }
 
