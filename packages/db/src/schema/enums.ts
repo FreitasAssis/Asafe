@@ -55,6 +55,9 @@ export const moderationReason = pgEnum("moderation_reason", [
   "outro",
 ]);
 
+/** Licença escolhida pelo autor ao publicar obra própria (consentimento — não cessão). */
+export const licenseKind = pgEnum("license_kind", ["cc_by", "cc_by_sa", "permissao_asafe"]);
+
 /**
  * Status de copyright de uma música — decidido só no gate de promoção ao global.
  * Por padrão `desconhecida` (assume-se protegida). Ver DIREITOS-AUTORAIS (política).

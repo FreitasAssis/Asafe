@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   CopyrightStatus,
+  LicenseKind,
   ModerationDecision,
   ModerationReason,
   TagCategory,
@@ -133,6 +134,21 @@ export async function classifySong(
     .from("song")
     .update({ copyright_status: copyrightStatus, copyright_evidence: evidence?.trim() || null })
     .eq("id", id);
+  if (error) throw error;
+}
+
+/** Registra o consentimento de obra própria (§7). O horário e o autor vêm do servidor. */
+export async function recordOwnWorkConsent(
+  supabase: SupabaseClient,
+  id: string,
+  license: LicenseKind,
+  consentVersion: string,
+): Promise<void> {
+  const { error } = await supabase.rpc("record_own_work_consent", {
+    p_song_id: id,
+    p_license: license,
+    p_consent_version: consentVersion,
+  });
   if (error) throw error;
 }
 

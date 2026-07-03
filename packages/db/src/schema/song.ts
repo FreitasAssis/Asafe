@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { index, pgPolicy, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { authenticatedRole } from "drizzle-orm/supabase";
-import { communityStatus, copyrightStatus, visibility } from "./enums";
+import { communityStatus, copyrightStatus, licenseKind, visibility } from "./enums";
 import { user } from "./user";
 
 /**
@@ -35,6 +35,12 @@ export const song = pgTable(
     // `copyright_evidence` = ponteiro/nota da prova (link da licença/permissão), não a prova.
     copyrightStatus: copyrightStatus("copyright_status").notNull().default("desconhecida"),
     copyrightEvidence: text("copyright_evidence"),
+    // Consentimento de obra PRÓPRIA (§7): licença escolhida + registro versionado do texto
+    // aceito (quem/quando). Preenchidos só via record_own_work_consent, no gate.
+    license: licenseKind("license"),
+    consentTextVersion: text("consent_text_version"),
+    consentedAt: timestamp("consented_at", { withTimezone: true }),
+    consentedBy: uuid("consented_by").references(() => user.id),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
