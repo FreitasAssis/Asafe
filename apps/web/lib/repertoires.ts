@@ -278,12 +278,13 @@ export async function getRepertoirePackage(
   const { data, error } = await supabase
     .from("repertoire")
     .select(
-      `title, type, date, repertoire_item(id, moment_slot, order, transpose, notes, song(title, chordpro_body))`,
+      `title, type, date, repertoire_item(id, moment_slot, order, transpose, notes, song(title, song_content(chordpro_body)))`,
     )
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
+  type Content = { chordpro_body: string | null };
   const row = data as unknown as {
     title: string;
     type: RepertoireType;
@@ -294,22 +295,27 @@ export async function getRepertoirePackage(
       order: number;
       transpose: number;
       notes: string | null;
-      song: { title: string; chordpro_body: string | null } | null;
+      // A cifra vem de song_content (RLS própria): fica null quando é só referência.
+      song: { title: string; song_content: Content | Content[] | null } | null;
     }[];
   };
   const { slots } = await slotTemplate(supabase, row.type);
   return {
     repertoire: { title: row.title, type: row.type, date: row.date },
     slots,
-    items: (row.repertoire_item ?? []).map((it) => ({
-      id: it.id,
-      momentSlot: it.moment_slot,
-      order: it.order,
-      transpose: it.transpose,
-      notes: it.notes,
-      title: it.song?.title ?? "(música)",
-      chordpro: it.song?.chordpro_body ?? null,
-    })),
+    items: (row.repertoire_item ?? []).map((it) => {
+      const sc = it.song?.song_content;
+      const body = (Array.isArray(sc) ? sc[0] : sc)?.chordpro_body ?? null;
+      return {
+        id: it.id,
+        momentSlot: it.moment_slot,
+        order: it.order,
+        transpose: it.transpose,
+        notes: it.notes,
+        title: it.song?.title ?? "(música)",
+        chordpro: body,
+      };
+    }),
   };
 }
 

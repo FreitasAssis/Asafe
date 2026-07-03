@@ -26,6 +26,9 @@ export function SongView({
     writePrefs({ hideChords: v });
   }
   const tagById = new Map(tags.map((t) => [t.id, t]));
+  // Sem corpo pode ser: música própria vazia, ou referência da comunidade (a RLS de
+  // song_content não liberou a cifra protegida a quem não é dono/grupo).
+  const hasBody = song.chordproBody.trim().length > 0;
   const body = hide ? stripChords(song.chordproBody) : song.chordproBody;
 
   return (
@@ -66,7 +69,23 @@ export function SongView({
       )}
 
       <div style={{ marginTop: 16 }}>
-        <ChordPreview chordpro={body} />
+        {hasBody ? (
+          <ChordPreview chordpro={body} />
+        ) : (
+          <p
+            style={{
+              color: "var(--text-muted)",
+              fontStyle: "italic",
+              padding: "1rem",
+              border: "1px dashed var(--border)",
+              borderRadius: 8,
+            }}
+          >
+            {canEdit
+              ? "Esta música ainda não tem cifra — use o lápis para adicionar."
+              : "Referência da comunidade: você ainda não tem esta cifra."}
+          </p>
+        )}
       </div>
 
       {song.audioLinks.length > 0 && (

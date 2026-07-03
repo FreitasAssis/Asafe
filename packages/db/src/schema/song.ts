@@ -22,7 +22,8 @@ export const song = pgTable(
     title: text("title").notNull(),
     composer: text("composer"),
     defaultKey: text("default_key"),
-    chordproBody: text("chordpro_body"),
+    // A cifra (chordpro_body) mora em `song_content` — separada por RLS (política de
+    // direitos): referência aqui, conteúdo lá. Ver song_content.ts.
     audioLinks: text("audio_links")
       .array()
       .notNull()
