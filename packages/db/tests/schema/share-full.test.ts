@@ -29,12 +29,15 @@ describe("get_shared_repertoire_full (acesso público por token)", () => {
     const a = await signUp();
     const sb = a.client;
 
-    // música própria com cifra
+    // música própria com cifra (corpo em song_content)
     const { data: song } = await sb
       .from("song")
-      .insert({ title: "Cordeiro de Deus", chordpro_body: "[C]Cordeiro [G]de Deus", owner_id: a.userId, visibility: "private" })
+      .insert({ title: "Cordeiro de Deus", owner_id: a.userId, visibility: "private" })
       .select("id")
       .single();
+    await sb
+      .from("song_content")
+      .insert({ song_id: (song as { id: string }).id, chordpro_body: "[C]Cordeiro [G]de Deus" });
     // repertório Missa
     const { data: rep } = await sb
       .from("repertoire")

@@ -8,6 +8,7 @@ export * from "./user";
 export * from "./group";
 export * from "./membership";
 export * from "./song";
+export * from "./songContent";
 export * from "./tag";
 export * from "./songTag";
 export * from "./userSongTagOverride";

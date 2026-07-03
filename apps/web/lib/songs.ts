@@ -49,11 +49,22 @@ interface SongRow {
   title: string;
   composer: string | null;
   default_key: string | null;
-  chordpro_body: string | null;
+  // A cifra vem embutida de song_content (política de direitos: referência aqui, conteúdo
+  // lá, com RLS própria). O PostgREST devolve como objeto ou array conforme a relação.
+  song_content:
+    | { chordpro_body: string | null }
+    | { chordpro_body: string | null }[]
+    | null;
   audio_links: string[];
   owner_id: string | null;
   community_status: CommunityStatus;
   song_tag?: { tag_id: string }[];
+}
+
+/** Extrai a cifra do embed de song_content — vazia se a RLS não liberou o corpo (referência). */
+function bodyOf(row: SongRow): string {
+  const sc = Array.isArray(row.song_content) ? row.song_content[0] : row.song_content;
+  return sc?.chordpro_body ?? "";
 }
 
 function rowToSong(row: SongRow): Song {
@@ -62,7 +73,7 @@ function rowToSong(row: SongRow): Song {
     title: row.title,
     composer: row.composer,
     defaultKey: row.default_key,
-    chordproBody: row.chordpro_body ?? "",
+    chordproBody: bodyOf(row),
     audioLinks: row.audio_links ?? [],
     ownerId: row.owner_id,
     communityStatus: row.community_status,
@@ -70,18 +81,18 @@ function rowToSong(row: SongRow): Song {
   };
 }
 
+/** Campos de referência (metadado) do `song` — a cifra é escrita à parte em song_content. */
 function inputToRow(input: SongInput) {
   return {
     title: input.title,
     composer: input.composer,
     default_key: input.defaultKey,
-    chordpro_body: input.chordproBody,
     audio_links: input.audioLinks,
   };
 }
 
 const SONG_COLS =
-  "id, title, composer, default_key, chordpro_body, audio_links, owner_id, community_status, song_tag(tag_id)";
+  "id, title, composer, default_key, song_content(chordpro_body), audio_links, owner_id, community_status, song_tag(tag_id)";
 
 /** Carrega uma música por id, com suas tags. */
 export async function getSong(supabase: SupabaseClient, id: string): Promise<Song | null> {
@@ -166,13 +177,19 @@ export async function createSong(
   ownerId: string,
   input: SongInput,
 ): Promise<Song> {
+  // Referência em `song`; a cifra vai à parte em `song_content` (RLS própria).
   const { data, error } = await supabase
     .from("song")
     .insert({ ...inputToRow(input), owner_id: ownerId, visibility: "private" })
     .select(SONG_COLS)
     .single();
   if (error) throw error;
-  return rowToSong(data as SongRow);
+  const row = data as SongRow;
+  const { error: cErr } = await supabase
+    .from("song_content")
+    .insert({ song_id: row.id, chordpro_body: input.chordproBody });
+  if (cErr) throw cErr;
+  return { ...rowToSong(row), chordproBody: input.chordproBody };
 }
 
 export async function updateSong(
@@ -182,6 +199,11 @@ export async function updateSong(
 ): Promise<void> {
   const { error } = await supabase.from("song").update(inputToRow(input)).eq("id", id);
   if (error) throw error;
+  // Upsert do corpo (a linha de song_content pode não existir para músicas antigas).
+  const { error: cErr } = await supabase
+    .from("song_content")
+    .upsert({ song_id: id, chordpro_body: input.chordproBody }, { onConflict: "song_id" });
+  if (cErr) throw cErr;
 }
 
 export async function deleteSong(supabase: SupabaseClient, id: string): Promise<void> {

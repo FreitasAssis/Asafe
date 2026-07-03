@@ -28,10 +28,13 @@ async function makeModerator(userId: string) {
 async function makeSong(a: { client: SupabaseClient; userId: string }, title: string) {
   const { data } = await a.client
     .from("song")
-    .insert({ title, owner_id: a.userId, chordpro_body: "[C]Paz", visibility: "private" })
+    .insert({ title, owner_id: a.userId, visibility: "private" })
     .select("id")
     .single();
-  return (data as { id: string }).id;
+  const id = (data as { id: string }).id;
+  // A cifra agora mora em song_content (separada por RLS).
+  await a.client.from("song_content").insert({ song_id: id, chordpro_body: "[C]Paz" });
+  return id;
 }
 async function seedRepertoire(a: { client: SupabaseClient; userId: string }) {
   const songId = await makeSong(a, `Canto ${uniq()}`);
