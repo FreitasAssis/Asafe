@@ -127,6 +127,13 @@
       "when": 1783106319515,
       "tag": "0017_moderation_functions",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1783111984604,
+      "tag": "0018_own_work_consent",
+      "breakpoints": true
     }
   ]
 }

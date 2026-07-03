@@ -106,3 +106,35 @@ export function attributionWarning(
   }
   return null;
 }
+
+/** Licença que o autor escolhe ao publicar obra própria (casa com o enum `license_kind`). */
+export type LicenseKind = "cc_by" | "cc_by_sa" | "permissao_asafe";
+
+export const LICENSE_CHOICES: readonly LicenseKind[] = ["cc_by", "cc_by_sa", "permissao_asafe"];
+
+export const LICENSE_LABELS: Record<LicenseKind, string> = {
+  cc_by: "Creative Commons BY (atribuição)",
+  cc_by_sa: "Creative Commons BY-SA (atribuição + compartilha igual)",
+  permissao_asafe: "Permissão ao Asafe (licença não-exclusiva para a plataforma)",
+};
+
+export const LICENSE_HINTS: Record<LicenseKind, string> = {
+  cc_by: "Qualquer um pode usar, inclusive fora do Asafe, desde que te credite.",
+  cc_by_sa: "Como a CC BY, mas as obras derivadas mantêm a mesma licença.",
+  permissao_asafe: "Você autoriza o uso na plataforma; mantém todos os seus direitos.",
+};
+
+/** Versão do texto de consentimento. **IMUTÁVEL por versão** — texto novo = versão nova. */
+export const CONSENT_TEXT_VERSION = "obra-propria-v1";
+
+/**
+ * Texto do consentimento de obra própria (§7). **PLACEHOLDER — a confirmar juridicamente
+ * (§11).** Não altere o texto desta versão; para mudar, crie uma versão nova (o registro
+ * aponta a versão aceita, com valor probatório).
+ */
+export const CONSENT_TEXT =
+  "Declaro que esta obra é de minha autoria e que tenho os direitos necessários para " +
+  "licenciá-la. Concedo ao Asafe uma licença não-exclusiva, mundial e gratuita para exibir, " +
+  "distribuir e adaptar (transpor) esta obra na plataforma e por quem a comunidade compartilhar, " +
+  "conforme a licença que eu escolher. Continuo sendo o autor e titular — isto é uma licença, " +
+  "não uma cessão. Posso retirar a obra quando quiser (a retirada não desfaz usos já feitos de boa-fé).";
