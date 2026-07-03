@@ -327,7 +327,7 @@ export function SongEditor({
       </div>
 
       {editing && song && song.ownerId === userId && (
-        <CommunitySection id={song.id} status={song.communityStatus} kind="song" />
+        <CommunitySection id={song.id} status={song.communityStatus} kind="song" composer={song.composer} />
       )}
     </main>
   );

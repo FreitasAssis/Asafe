@@ -13,10 +13,12 @@ export function CommunitySection({
   id,
   status,
   kind,
+  composer = null,
 }: {
   readonly id: string;
   readonly status: CommunityStatus;
   readonly kind: "repertoire" | "song";
+  readonly composer?: string | null;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -91,7 +93,9 @@ export function CommunitySection({
         )}
       </div>
 
-      {gate && kind === "song" && <PublishGate songId={id} onCancel={() => setGate(false)} />}
+      {gate && kind === "song" && (
+        <PublishGate songId={id} composer={composer} onCancel={() => setGate(false)} />
+      )}
     </section>
   );
 }

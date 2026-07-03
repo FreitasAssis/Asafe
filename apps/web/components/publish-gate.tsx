@@ -7,6 +7,8 @@ import {
   ATTRIBUTION_HINTS,
   ATTRIBUTION_LABELS,
   ATTRIBUTION_TO_STATUS,
+  attributionWarning,
+  suggestAttribution,
   type AttributionChoice,
 } from "@asafe/core";
 import { browserClient } from "@/lib/supabase/client";
@@ -18,14 +20,19 @@ import { classifySong, requestPublishSong } from "@/lib/songs";
  */
 export function PublishGate({
   songId,
+  composer,
   onCancel,
 }: {
   readonly songId: string;
+  readonly composer: string | null;
   readonly onCancel: () => void;
 }) {
   const router = useRouter();
   const [choice, setChoice] = useState<AttributionChoice | null>(null);
   const [busy, setBusy] = useState(false);
+  // Heurística (C6): sugere pela ficha de compositor e avisa contradições — não bloqueia.
+  const suggestion = suggestAttribution(composer);
+  const warning = choice ? attributionWarning(choice, composer) : null;
 
   async function confirm() {
     if (!choice) return;
@@ -47,6 +54,12 @@ export function PublishGate({
         ajuda a comunidade a encontrar o que já existe. A <strong>cifra completa</strong> só aparece
         para os outros quando a música é <strong>livre</strong>. Por isso pedimos que complete algumas informações:
       </p>
+      {suggestion && (
+        <p className="mt-2 text-xs text-muted">
+          Pela ficha de compositor{composer ? ` (${composer})` : ""}, o provável é{" "}
+          <strong>{ATTRIBUTION_LABELS[suggestion]}</strong>.
+        </p>
+      )}
       <div className="mt-3 flex flex-col gap-2">
         {ATTRIBUTION_CHOICES.map((c) => (
           <label
@@ -61,6 +74,14 @@ export function PublishGate({
           </label>
         ))}
       </div>
+      {warning && (
+        <p
+          className="mt-3 rounded p-2 text-sm"
+          style={{ color: "#92400e", background: "#fef3c7", border: "1px solid #fcd34d" }}
+        >
+          ⚠ {warning}
+        </p>
+      )}
       <div className="mt-3 flex gap-2">
         <button
           type="button"
