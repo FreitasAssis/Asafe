@@ -25,6 +25,7 @@ export async function teardown() {
     `delete from public.repertoire_theme where repertoire_id in ${TR};`,
     `delete from public.share_link where repertoire_id in ${TR};`,
     `delete from public.song_tag where song_id in ${TS};`,
+    `delete from public.moderation_event where moderator_id in ${TU} or target_id in ${TS} or target_id in ${TR};`,
     `delete from public.user_song_tag_override where user_id in ${TU} or song_id in ${TS};`,
     `delete from public.membership where user_id in ${TU} or group_id in ${TG};`,
     `delete from public.group_invite where group_id in ${TG};`,

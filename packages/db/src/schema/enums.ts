@@ -37,12 +37,22 @@ export const tagOverrideAction = pgEnum("tag_override_action", [
 
 export const visibility = pgEnum("visibility", ["private", "group", "public"]);
 
-/** Estado de publicação de um repertório na comunidade (moderado). */
+/** Estado de publicação na comunidade (moderado). `returned` = devolvida para ajuste. */
 export const communityStatus = pgEnum("community_status", [
   "none",
   "pending",
   "approved",
   "rejected",
+  "returned",
+]);
+
+/** Motivo estruturado da decisão de moderação (vira dado; alimenta a devolutiva). */
+export const moderationReason = pgEnum("moderation_reason", [
+  "autoria_status_incorreto",
+  "protegida_sem_permissao",
+  "duplicada",
+  "qualidade_cifra",
+  "outro",
 ]);
 
 /**
