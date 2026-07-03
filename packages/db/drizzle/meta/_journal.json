@@ -113,6 +113,20 @@
       "when": 1783103419033,
       "tag": "0015_song_content_split",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1783106271376,
+      "tag": "0016_moderation_event",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1783106319515,
+      "tag": "0017_moderation_functions",
+      "breakpoints": true
     }
   ]
 }

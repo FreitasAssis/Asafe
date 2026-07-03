@@ -3,7 +3,7 @@ import type { RepertoireType, SlotDef } from "@asafe/core";
 import type { SharedPackage } from "@/components/public-repertoire";
 
 /** Estado de publicação na comunidade (moderado). */
-export type CommunityStatus = "none" | "pending" | "approved" | "rejected";
+export type CommunityStatus = "none" | "pending" | "approved" | "rejected" | "returned";
 
 export interface RepertoireListItem {
   id: string;
