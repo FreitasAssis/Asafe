@@ -12,6 +12,7 @@ import { browserClient } from "@/lib/supabase/client";
 import { deleteSong, type SongListItem, type Tag } from "@/lib/songs";
 import { Fab } from "@/components/fab";
 import { RowActions } from "@/components/row-actions";
+import { StatusBadge } from "@/components/status-badge";
 import { FreshnessTag } from "./freshness-tag";
 
 const CATEGORIES: TagCategory[] = [
@@ -183,6 +184,12 @@ export function Catalog({
                   </a>
                   {s.composer && <span style={{ color: "var(--text-muted)" }}> — {s.composer}</span>}{" "}
                   <FreshnessTag lastUsed={s.lastUsed} />
+                  {s.ownerId === userId && (
+                    <>
+                      {" "}
+                      <StatusBadge status={s.communityStatus} />
+                    </>
+                  )}
                 </div>
                 {s.ownerId === userId && (
                   <RowActions
