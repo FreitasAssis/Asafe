@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ATTRIBUTION_CHOICES,
@@ -22,6 +22,7 @@ import {
 } from "@asafe/core";
 import { browserClient } from "@/lib/supabase/client";
 import { classifySong, recordOwnWorkConsent, requestPublishSong } from "@/lib/songs";
+import { findAuthorizedSource, type AuthorizedSource } from "@/lib/authorized-sources";
 
 /**
  * Gate de promoção de uma MÚSICA ao global: antes de propor, o dono declara a autoria
@@ -45,6 +46,21 @@ export function PublishGate({
   // Permissão por obra (C11): autorização declarada + evidência → 'permissao'.
   const [hasPermission, setHasPermission] = useState(false);
   const [evidence, setEvidence] = useState("");
+  // Fonte autorizada (C10): se o compositor consta, pré-preenche a trilha de permissão.
+  const [authorizedSrc, setAuthorizedSrc] = useState<AuthorizedSource | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void findAuthorizedSource(browserClient(), composer).then((src) => {
+      if (!alive || !src) return;
+      setAuthorizedSrc(src);
+      setChoice("autor_nomeado");
+      setHasPermission(true);
+      setEvidence(src.evidence);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [composer]);
   // Heurística (C6): sugere pela ficha de compositor e avisa contradições — não bloqueia.
   const suggestion = suggestAttribution(composer);
   const warning = choice ? attributionWarning(choice, composer) : null;
@@ -83,7 +99,17 @@ export function PublishGate({
         ajuda a comunidade a encontrar o que já existe. A <strong>cifra completa</strong> só aparece
         para os outros quando a música é <strong>livre</strong>. Por isso pedimos que complete algumas informações:
       </p>
-      {suggestion && (
+      {authorizedSrc && (
+        <p
+          className="mt-2 rounded p-2 text-sm"
+          style={{ color: "#166534", background: "#dcfce7", border: "1px solid #bbf7d0" }}
+        >
+          ✓ <strong>{composer}</strong> consta como <strong>fonte autorizada</strong> (permissão em
+          bloco). Já marcamos a permissão e preenchemos a evidência — confira e confirme. A moderação
+          revisa antes de publicar.
+        </p>
+      )}
+      {suggestion && !authorizedSrc && (
         <p className="mt-2 text-xs text-muted">
           Pela ficha de compositor{composer ? ` (${composer})` : ""}, o provável é{" "}
           <strong>{ATTRIBUTION_LABELS[suggestion]}</strong>.
