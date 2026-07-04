@@ -18,3 +18,4 @@ export * from "./repertoireTheme";
 export * from "./slotTemplate";
 export * from "./shareLink";
 export * from "./moderationEvent";
+export * from "./authorizedSource";

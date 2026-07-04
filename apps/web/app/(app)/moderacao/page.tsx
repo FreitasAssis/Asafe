@@ -3,7 +3,9 @@ import { REPERTOIRE_TYPE_LABELS } from "@asafe/core";
 import { serverClient } from "@/lib/supabase/server";
 import { isModerator, listPendingRequests } from "@/lib/repertoires";
 import { listPendingSongs } from "@/lib/songs";
+import { listAuthorizedSources } from "@/lib/authorized-sources";
 import { ModerationList } from "@/components/moderation-list";
+import { AuthorizedSources } from "@/components/authorized-sources";
 
 export const metadata = { title: "Moderação — Asafe" };
 
@@ -15,9 +17,10 @@ export default async function Moderacao() {
   if (!user) redirect("/login");
   if (!(await isModerator(supabase))) notFound();
 
-  const [reps, songs] = await Promise.all([
+  const [reps, songs, sources] = await Promise.all([
     listPendingRequests(supabase),
     listPendingSongs(supabase),
+    listAuthorizedSources(supabase),
   ]);
 
   return (
@@ -50,6 +53,11 @@ export default async function Moderacao() {
             subtitle: `por ${s.ownerName ?? s.ownerEmail}`,
           }))}
         />
+      </section>
+
+      <section className="mt-10">
+        <h2 className="font-serif text-lg font-semibold">Fontes autorizadas</h2>
+        <AuthorizedSources initial={sources} userId={user.id} />
       </section>
     </main>
   );

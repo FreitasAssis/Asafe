@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { audioProvider, COPYRIGHT_STATUS_LABELS, referenceExplanation } from "@asafe/core";
 import { stripChords } from "@asafe/chordpro";
 import type { Song, Tag } from "@/lib/songs";
+import type { AuthorizedSource } from "@/lib/authorized-sources";
 import { readPrefs, writePrefs } from "@/lib/preferences";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { EditPencil } from "@/components/edit-pencil";
@@ -15,10 +16,13 @@ export function SongView({
   tags,
   canEdit,
   origin = { label: "Catálogo", href: "/musicas" },
+  authorizedSource = null,
 }: {
   readonly song: Song;
   readonly tags: Tag[];
   readonly canEdit: boolean;
+  /** Fonte autorizada do compositor (C10), se houver — sinaliza permissão em bloco. */
+  readonly authorizedSource?: AuthorizedSource | null;
   /** De onde o usuário veio (ajusta o breadcrumb — ex.: fila de moderação). */
   readonly origin?: { label: string; href: string };
 }) {
@@ -69,6 +73,25 @@ export function SongView({
                 <span>evidência: {song.copyrightEvidence}</span>
               )}
             </>
+          )}
+        </div>
+      )}
+
+      {authorizedSource && (
+        <div
+          className="mt-2 rounded p-2 text-sm"
+          style={{ color: "#166534", background: "#dcfce7", border: "1px solid #bbf7d0" }}
+        >
+          ✓ Autor em <strong>fonte autorizada</strong> (permissão em bloco)
+          {authorizedSource.publisher ? ` · ${authorizedSource.publisher}` : ""}
+          {authorizedSource.scope ? ` · ${authorizedSource.scope}` : ""}
+          {" · "}
+          {/^https?:\/\//.test(authorizedSource.evidence) ? (
+            <a href={authorizedSource.evidence} target="_blank" rel="noreferrer">
+              evidência ↗
+            </a>
+          ) : (
+            <span>evidência: {authorizedSource.evidence}</span>
           )}
         </div>
       )}
