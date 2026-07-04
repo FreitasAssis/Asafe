@@ -34,7 +34,9 @@ export function ModerationList({
   const [reason, setReason] = useState<ModerationReason>(MODERATION_REASONS[0]!);
   const [note, setNote] = useState("");
   const moderate = kind === "song" ? moderateSong : moderateRepertoire;
-  const viewHref = (id: string) => (kind === "song" ? `/musicas/${id}` : `/repertorios/${id}`);
+  // Leva o contexto "vim da moderação" para a tela de revisão ajustar o breadcrumb.
+  const viewHref = (id: string) =>
+    (kind === "song" ? `/musicas/${id}` : `/repertorios/${id}`) + "?from=moderacao";
 
   async function decide(id: string, decision: ModerationDecision, r?: ModerationReason, n?: string) {
     setBusy(id);

@@ -11,3 +11,4 @@ export * from "./tag-similarity";
 export * from "./moderation";
 export * from "./copyright";
 export * from "./community";
+export * from "./song-identity";

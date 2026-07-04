@@ -7,6 +7,7 @@ import { browserClient } from "@/lib/supabase/client";
 import type { SongListItem, Tag } from "@/lib/songs";
 import {
   addItem,
+  adoptReferenceSong,
   deleteRepertoire,
   removeItem,
   setItemNotes,
@@ -32,6 +33,7 @@ export function RepertoireBuilder({
   tags,
   shareLinks,
   isOwner,
+  userId,
   groups,
 }: {
   readonly repertoire: Repertoire;
@@ -40,6 +42,7 @@ export function RepertoireBuilder({
   readonly tags: Tag[];
   readonly shareLinks: ShareLink[];
   readonly isOwner: boolean;
+  readonly userId: string;
   readonly groups: Group[];
 }) {
   const router = useRouter();
@@ -81,6 +84,16 @@ export function RepertoireBuilder({
       setItems((prev) => prev.filter((i) => i.id !== itemId));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro ao remover.");
+    }
+  }
+
+  /** "Digitar uma vez": música-referência vira minha (vazia) e abro o editor para digitar a cifra. */
+  async function adopt(item: RepertoireItemFull) {
+    try {
+      const newSongId = await adoptReferenceSong(browserClient(), item.id, item.songId, userId);
+      router.push(`/musicas/${newSongId}/editar`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro ao digitar a música.");
     }
   }
 
@@ -191,6 +204,19 @@ export function RepertoireBuilder({
               <a href={`/musicas/${it.songId}`} style={{ minWidth: 120 }}>
                 {it.songTitle}
               </a>
+              {!it.hasContent && it.songOwnerId !== userId && (
+                <span style={{ display: "inline-flex", gap: 6, alignItems: "center", fontSize: 12 }}>
+                  <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>(referência)</span>
+                  <button
+                    type="button"
+                    onClick={() => void adopt(it)}
+                    title="Referência da comunidade — crie a sua versão e digite a cifra uma vez"
+                    style={{ color: "var(--primary)" }}
+                  >
+                    ✎ digitar uma vez
+                  </button>
+                </span>
+              )}
               <span style={{ display: "inline-flex", gap: 4, alignItems: "center", fontSize: 12 }}>
                 <button type="button" onClick={() => void changeTranspose(it, -1)}>
                   −

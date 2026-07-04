@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
   arrangeRepertoire,
+  audioProvider,
   REPERTOIRE_TYPE_LABELS,
   type RepertoireType,
   type SlotDef,
@@ -18,6 +19,9 @@ export interface PublicItem {
   notes: string | null;
   title: string;
   chordpro: string | null;
+  // Metadado da música (opcional: o pacote via link público pode não trazer).
+  composer?: string | null;
+  audioLinks?: string[];
 }
 
 export interface SharedPackage {
@@ -28,6 +32,7 @@ export interface SharedPackage {
 
 function ItemView({ item, hide }: { item: PublicItem; hide: boolean }) {
   let cifra = item.chordpro ?? "";
+  const isReference = !cifra.trim();
   if (cifra.trim() && item.transpose) cifra = transpose(cifra, item.transpose);
   if (hide) cifra = stripChords(cifra);
   const html = cifra.trim() ? toHtml(cifra) : "";
@@ -52,6 +57,25 @@ function ItemView({ item, hide }: { item: PublicItem; hide: boolean }) {
           style={{ marginTop: 4 }}
           dangerouslySetInnerHTML={{ __html: html }}
         />
+      )}
+      {isReference && (
+        <div style={{ marginTop: 4, color: "var(--text-muted)", fontSize: 13 }}>
+          {item.composer && <div>{item.composer}</div>}
+          <div style={{ fontStyle: "italic" }}>— cifra não disponível (referência)</div>
+          {item.audioLinks && item.audioLinks.length > 0 && (
+            <div style={{ marginTop: 2 }}>
+              Ouça:{" "}
+              {item.audioLinks.map((url, i) => (
+                <span key={url}>
+                  {i > 0 ? " · " : ""}
+                  <a href={url} target="_blank" rel="noreferrer">
+                    {audioProvider(url) ?? "link"} ↗
+                  </a>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { songIdentityKey } from "@asafe/core";
 import type {
   ModerationDecision,
   ModerationReason,
@@ -43,6 +44,11 @@ export interface RepertoireItemFull {
   id: string;
   songId: string;
   songTitle: string;
+  songComposer: string | null;
+  /** Dono da música do item (null = catálogo global). Serve para saber se é minha. */
+  songOwnerId: string | null;
+  /** A cifra está visível a mim? false = referência (RLS escondeu ou ainda vazia). */
+  hasContent: boolean;
   momentSlot: string | null;
   order: number;
   transpose: number;
@@ -219,6 +225,7 @@ export async function pendingModerationCount(supabase: SupabaseClient): Promise<
   return Number(data ?? 0);
 }
 
+type Content = { chordpro_body: string | null };
 interface ItemRow {
   id: string;
   song_id: string;
@@ -226,14 +233,24 @@ interface ItemRow {
   order: number;
   transpose: number;
   notes: string | null;
-  song: { title: string } | null;
+  song: {
+    title: string;
+    composer: string | null;
+    owner_id: string | null;
+    song_content: Content | Content[] | null;
+  } | null;
 }
 
 function rowToItem(it: ItemRow): RepertoireItemFull {
+  const sc = it.song?.song_content;
+  const body = (Array.isArray(sc) ? sc[0] : sc)?.chordpro_body ?? null;
   return {
     id: it.id,
     songId: it.song_id,
     songTitle: it.song?.title ?? "(música)",
+    songComposer: it.song?.composer ?? null,
+    songOwnerId: it.song?.owner_id ?? null,
+    hasContent: Boolean(body && body.trim()),
     momentSlot: it.moment_slot,
     order: it.order,
     transpose: it.transpose,
@@ -241,7 +258,8 @@ function rowToItem(it: ItemRow): RepertoireItemFull {
   };
 }
 
-const ITEM_COLS = "id, song_id, moment_slot, order, transpose, notes, song(title)";
+const ITEM_COLS =
+  "id, song_id, moment_slot, order, transpose, notes, song(title, composer, owner_id, song_content(chordpro_body))";
 
 /** Repertório com seus itens (cada um com o título da música). */
 export async function getRepertoire(
@@ -279,6 +297,110 @@ export async function getRepertoire(
 }
 
 /**
+ * "Pegar" um repertório da comunidade (C8): clona o ARRANJO para os meus repertórios. Não copia
+ * cifra — reusa músicas globais/livres e casa por identidade (título+compositor) com as minhas;
+ * o que sobra mantém a referência da origem (vira alvo do "digitar uma vez"). Só operações que a
+ * RLS já permite (leio o aprovado, escrevo no meu). Retorna o id do novo repertório; se os itens
+ * falharem, apaga o repertório recém-criado (rollback best-effort).
+ */
+export async function cloneCommunityRepertoire(
+  supabase: SupabaseClient,
+  sourceId: string,
+  userId: string,
+): Promise<string> {
+  const source = await getRepertoire(supabase, sourceId);
+  if (!source) throw new Error("Repertório não encontrado.");
+
+  // Minhas músicas por identidade — para usar a MINHA versão quando eu já tenho a música.
+  const { data: mineData, error: mineErr } = await supabase
+    .from("song")
+    .select("id, title, composer")
+    .eq("owner_id", userId);
+  if (mineErr) throw mineErr;
+  const mineByKey = new Map(
+    (mineData as { id: string; title: string; composer: string | null }[]).map((s) => [
+      songIdentityKey(s.title, s.composer),
+      s.id,
+    ]),
+  );
+
+  const { data: created, error: cErr } = await supabase
+    .from("repertoire")
+    .insert({ title: `${source.title} (cópia)`, type: source.type, owner_id: userId, visibility: "private" })
+    .select("id")
+    .single();
+  if (cErr) throw cErr;
+  const newId = (created as { id: string }).id;
+
+  try {
+    const rows = source.items.map((it) => ({
+      repertoire_id: newId,
+      song_id: mineByKey.get(songIdentityKey(it.songTitle, it.songComposer)) ?? it.songId,
+      moment_slot: it.momentSlot,
+      order: it.order,
+      transpose: it.transpose,
+      notes: it.notes,
+    }));
+    if (rows.length > 0) {
+      const { error: iErr } = await supabase.from("repertoire_item").insert(rows);
+      if (iErr) throw iErr;
+    }
+  } catch (e) {
+    await supabase.from("repertoire").delete().eq("id", newId);
+    throw e;
+  }
+  return newId;
+}
+
+/**
+ * "Digitar uma vez" (C8): transforma uma música-REFERÊNCIA de outra pessoa numa música pessoal
+ * minha, **vazia**, herdando título/compositor/áudios, e aponta o item do meu repertório para
+ * ela. Não copia a cifra alheia (a RLS nem me entrega) — o editor abre para eu digitar a minha,
+ * de uso privado. Retorna o id da nova música.
+ */
+export async function adoptReferenceSong(
+  supabase: SupabaseClient,
+  itemId: string,
+  sourceSongId: string,
+  userId: string,
+): Promise<string> {
+  const { data: src, error: sErr } = await supabase
+    .from("song")
+    .select("title, composer, audio_links")
+    .eq("id", sourceSongId)
+    .single();
+  if (sErr) throw sErr;
+  const meta = src as { title: string; composer: string | null; audio_links: string[] | null };
+
+  const { data: song, error: nErr } = await supabase
+    .from("song")
+    .insert({
+      title: meta.title,
+      composer: meta.composer,
+      audio_links: meta.audio_links ?? [],
+      owner_id: userId,
+      visibility: "private",
+    })
+    .select("id")
+    .single();
+  if (nErr) throw nErr;
+  const newSongId = (song as { id: string }).id;
+
+  const { error: scErr } = await supabase
+    .from("song_content")
+    .insert({ song_id: newSongId, chordpro_body: "" });
+  if (scErr) throw scErr;
+
+  const { error: uErr } = await supabase
+    .from("repertoire_item")
+    .update({ song_id: newSongId })
+    .eq("id", itemId);
+  if (uErr) throw uErr;
+
+  return newSongId;
+}
+
+/**
  * Pacote de leitura do repertório (mesma forma do link público), porém via RLS
  * autenticado. Lê a cifra de cada música — permitido ao dono ou a membros do grupo
  * (política `song_select_group`). Retorna null se o repertório não for visível.
@@ -290,7 +412,7 @@ export async function getRepertoirePackage(
   const { data, error } = await supabase
     .from("repertoire")
     .select(
-      `title, type, date, repertoire_item(id, moment_slot, order, transpose, notes, song(title, song_content(chordpro_body)))`,
+      `title, type, date, repertoire_item(id, moment_slot, order, transpose, notes, song(title, composer, audio_links, song_content(chordpro_body)))`,
     )
     .eq("id", id)
     .maybeSingle();
@@ -308,7 +430,13 @@ export async function getRepertoirePackage(
       transpose: number;
       notes: string | null;
       // A cifra vem de song_content (RLS própria): fica null quando é só referência.
-      song: { title: string; song_content: Content | Content[] | null } | null;
+      // Autor e áudios são metadado do song (legíveis) — úteis mesmo quando é referência.
+      song: {
+        title: string;
+        composer: string | null;
+        audio_links: string[] | null;
+        song_content: Content | Content[] | null;
+      } | null;
     }[];
   };
   const { slots } = await slotTemplate(supabase, row.type);
@@ -325,6 +453,8 @@ export async function getRepertoirePackage(
         transpose: it.transpose,
         notes: it.notes,
         title: it.song?.title ?? "(música)",
+        composer: it.song?.composer ?? null,
+        audioLinks: it.song?.audio_links ?? [],
         chordpro: body,
       };
     }),
