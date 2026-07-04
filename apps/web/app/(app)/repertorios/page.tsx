@@ -47,7 +47,7 @@ export default async function Repertorios({
           <ul className="mt-2 list-none p-0">
             {comm.map((r) => (
               <li key={r.id} className="border-b border-border py-2">
-                <a href={`/repertorios/${r.id}`} className="font-semibold">
+                <a href={`/repertorios/${r.id}?from=comunidade`} className="font-semibold">
                   {r.title}
                 </a>
                 <span className="text-muted">

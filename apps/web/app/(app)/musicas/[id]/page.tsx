@@ -23,9 +23,9 @@ export default async function VerMusica({
 
   // Só o dono edita a música (RLS song_write_own).
   const canEdit = song.ownerId === user.id;
-  const origin =
-    from === "moderacao"
-      ? { label: "Moderação", href: "/moderacao" }
-      : { label: "Catálogo", href: "/musicas" };
+  // Breadcrumb reflete de onde vim (fila de moderação, aba comunidade, ou o catálogo padrão).
+  let origin = { label: "Catálogo", href: "/musicas" };
+  if (from === "moderacao") origin = { label: "Moderação", href: "/moderacao" };
+  else if (from === "comunidade") origin = { label: "Comunidade", href: "/musicas?aba=comunidade" };
   return <SongView song={song} tags={tags} canEdit={canEdit} origin={origin} />;
 }

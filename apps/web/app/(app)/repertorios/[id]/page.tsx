@@ -36,19 +36,16 @@ export default async function VerRepertorio({
   const canEdit = isOwner || role === "editor";
   // Repertório da comunidade que não é meu → posso "pegar" (clonar) para os meus.
   const canTake = !isOwner && repertoire.communityStatus === "approved";
+  // Breadcrumb reflete de onde vim (fila de moderação, aba comunidade, ou a lista padrão).
+  let originCrumb = { label: "Repertórios", href: "/repertorios" };
+  if (from === "moderacao") originCrumb = { label: "Moderação", href: "/moderacao" };
+  else if (from === "comunidade") originCrumb = { label: "Comunidade", href: "/repertorios?aba=comunidade" };
 
   const header = (
     <div
       style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}
     >
-      <Breadcrumb
-        items={[
-          from === "moderacao"
-            ? { label: "Moderação", href: "/moderacao" }
-            : { label: "Repertórios", href: "/repertorios" },
-          { label: pkg.repertoire.title },
-        ]}
-      />
+      <Breadcrumb items={[originCrumb, { label: pkg.repertoire.title }]} />
       {canEdit && <EditPencil href={`/repertorios/${id}/editar`} />}
       {canTake && <TakeRepertoireButton sourceId={id} userId={user.id} />}
     </div>

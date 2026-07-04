@@ -49,15 +49,17 @@ export function Catalog({
   songs,
   tags,
   userId,
+  initialTab = "meus",
 }: {
   readonly songs: SongListItem[];
   readonly tags: Tag[];
   readonly userId: string;
+  readonly initialTab?: "meus" | "comunidade";
 }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [tab, setTab] = useState<"meus" | "comunidade">("meus");
+  const [tab, setTab] = useState<"meus" | "comunidade">(initialTab);
 
   const tagById = useMemo(() => new Map(tags.map((t) => [t.id, t])), [tags]);
 
@@ -179,7 +181,10 @@ export function Catalog({
             >
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <div style={{ flex: 1 }}>
-                  <a href={`/musicas/${s.id}`} style={{ fontSize: 17, fontWeight: 600 }}>
+                  <a
+                    href={tab === "comunidade" ? `/musicas/${s.id}?from=comunidade` : `/musicas/${s.id}`}
+                    style={{ fontSize: 17, fontWeight: 600 }}
+                  >
                     {s.title}
                   </a>
                   {s.composer && <span style={{ color: "var(--text-muted)" }}> — {s.composer}</span>}{" "}
