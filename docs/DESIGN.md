@@ -61,11 +61,20 @@ e auto-hospedar (o Supabase é open source), ao custo de manutenção própria.
   `tags_globais − {removes do user} ∪ {adds do user}`. A discordância pessoal ("para mim
   isto é Final") é **override por diferença** (`add`/`remove`), porque o universo é discreto
   e o diff some quando o global muda. A lógica pura está em `@asafe/core` (`effectiveTags`).
-- **Tag vs. cifra — dois mecanismos.** Tag é override por diferença; **cifra é
-  arranjo/versão completa** (`song_arrangement`), não diff: texto estruturado contínuo, um
-  diff seria frágil. Vários arranjos por usuário ("simplificada", "com baixo"); escolhe-se o
-  arranjo no item do repertório. **Transposição é separada** (por ocorrência, no item) — não
-  se cria arranjo só para mudar de tom.
+- **Tag vs. cifra — dois mecanismos.** Tag é override por diferença; **cifra é versão
+  completa**, texto estruturado contínuo (um diff seria frágil). A cifra (ChordPro) mora
+  **à parte da música**, em `song_content` — tabela com **RLS própria** (ver "Direitos
+  autorais" abaixo e §5). **Transposição é separada** (por ocorrência, no item) — não se
+  cria versão nova só para mudar de tom. *Múltiplos arranjos por usuário ("simplificada",
+  "com baixo") são uma evolução (Fase 2).*
+- **Direitos autorais no modelo — regra de ouro: _estrutura é livre, conteúdo é restrito_.**
+  A **referência** de uma música (título, compositor, tags) vive em `song`; a **cifra** vive
+  em `song_content`, à parte. Assim uma obra protegida aparece a todos como **referência**
+  (metadado, com atribuição), e a **cifra só é liberada** quando a música é livre — domínio
+  público, licença aberta ou **permissão** — ou para o dono/grupo. O `song.copyright_status`
+  não tem default permissivo: é **decidido no gate de promoção ao global** (ver §9), com a
+  evidência guardada em `copyright_evidence`. Obra própria carrega um **consentimento
+  versionado** (licença escolhida + quem/quando). Fonte da verdade no código: `packages/db`.
 - **Sequência mora no item.** A ordem real de um repertório vive em `repertoire_item`
   (`moment_slot` + `order`), não no template. Os `slot_template` apenas **semeiam**; mudar um
   template depois **não** reescreve repertórios antigos (registro congelado).
@@ -81,8 +90,17 @@ Expressas em **RLS no Postgres** (ver as políticas em `packages/db`). Modelo ce
   compartilhados com o seu **grupo**.
 - **Co-edição:** membros com papel `editor` co-editam os *itens* e o *tema* dos repertórios
   compartilhados com o grupo; o repertório em si e os links permanecem do dono.
+- **Referência × conteúdo.** A cifra (`song_content`) tem RLS **separada** da música
+  (`song`): expor o metadado nunca implica expor a cifra. A não-donos a cifra só é liberada
+  quando a obra é **livre/autorizada** (`copyright_status` em domínio público, licença aberta
+  ou permissão) **e** aprovada na comunidade — ou via grupo. É o que sustenta a "regra de
+  ouro" (§4/§9).
 - **Link público** = leitura via `token` (validade opcional), sem auth, mediada por função
-  `security definer` — o visitante anônimo nunca varre as tabelas, só acessa via token.
+  `security definer` — o visitante anônimo nunca varre as tabelas, só acessa via token. A
+  **atribuição (autor) acompanha** a obra em toda superfície pública (direito moral).
+- **Moderação.** `moderator` aprova / recusa / **devolve para ajuste** as contribuições;
+  cada decisão vira um evento em `moderation_event` (devolutiva ao proponente + trilha de
+  auditoria). O registro de **fontes autorizadas** (permissão em bloco) também é do moderador.
 - **Papéis globais:** `user` (usa), `moderator` (aprova contribuições), `admin` (gerencia
   papéis). Papel não é auto-atribuível.
 
@@ -161,10 +179,34 @@ histórico entre celebrações — ataca diretamente a repetição semana a sema
 
 ## 9. Comunidade e custo
 
-- **Contribuições:** canal explícito (checkbox "sugerir para o catálogo global" ao criar
-  tag/música/arranjo/vínculo) + canal implícito (sinal agregado dos overrides). Fila de
-  revisão no painel do admin, ordenável por força do consenso; opcional digest semanal por
-  Resend. Botão "reportar" em cada música cai na mesma fila.
+- **Contribuições:** canal explícito ("sugerir à comunidade" numa música ou repertório) +
+  canal implícito (sinal agregado dos overrides). Fila de revisão do moderador; opcional
+  digest semanal por Resend. Botão "reportar" (futuro) cai na mesma fila.
+
+**Direitos autorais — do gate à publicação.** Resumo do implementado (fonte de verdade no
+código: `packages/db` + `@asafe/core`):
+
+- **Gate de promoção.** Antes de ir ao global, o proponente **declara a autoria**: obra
+  própria · domínio público · de outro autor · não sei. Isso define o `copyright_status`.
+  Uma heurística sugere pela ficha do compositor e **avisa** contradições (não bloqueia).
+- **Obra própria → consentimento.** O autor escolhe a **licença** e aceita um **consentimento
+  versionado** (registro probatório: licença + quem/quando). Vira `licenca_aberta`.
+- **De outro autor → protegida, salvo permissão.** Sem permissão, fica `protegida` e entra
+  só como **referência**. Com **"tenho autorização"** + **evidência** (link/nota), vira
+  `permissao` e a cifra pode ir ao global. O moderador **revisa a evidência** antes de aprovar.
+- **Fonte autorizada (permissão em bloco).** Um compositor/editora autorizado é registrado
+  pelo moderador (`authorized_source`); aí o gate **pré-preenche** a permissão para as obras
+  desse autor. **Humano no loop** — sugere, não auto-classifica. (Formalização jurídica dos
+  critérios: aberto, §11.)
+- **Atribuição sempre visível.** O autor acompanha a obra em toda superfície pública — link,
+  comunidade, global (direito moral).
+- **Consumo respeita referência × conteúdo.** "Pegar" um repertório da comunidade **clona o
+  arranjo** sem duplicar conteúdo: músicas livres/que já tenho vêm cheias; as protegidas
+  entram como **referência** com **"digitar uma vez"** (minha cópia privada) ou link. A cifra
+  protegida de outra pessoa **nunca é redistribuída**.
+- **Acompanhamento.** "Meus envios" mostra o status de cada submissão (pendente / publicado /
+  devolvido / recusado) + o motivo/nota da moderação.
+
 - **Custo ~zero.** Dado é quase todo texto (~1–3 KB por música); os limites gratuitos do
   Supabase comportam um acervo muito maior que uma diocese produz. Áudio é **link** (sem
   upload); PDF é gerado sob demanda (não guardado); liturgia em cache; Cloudflare CDN na
@@ -185,17 +227,21 @@ A adoção é uma fatia própria — a passada de UI pré-launch.
 
 ## 11. Decisões em aberto / riscos
 
+- **Formalização jurídica dos direitos (§11-legal).** O **mecanismo** está pronto — gate de
+  autoria, `copyright_status`, consentimento de obra própria, permissão por obra e **fonte
+  autorizada** (permissão em bloco). Falta a camada **legal**: o texto do termo de licença
+  (o `CONSENT_TEXT` é **placeholder**) e os critérios do que conta como permissão válida.
+  Enquanto isso, a postura é **conservadora** (humano no loop; nada é auto-classificado).
+  Evolução possível com base legal: **anexar** o comprovante de permissão (hoje a evidência
+  é link/nota).
 - Licenciamento CNBB para textos oficiais (§8).
-- Direitos de cifras/letras no catálogo **global** (curar; não comitar material protegido).
 - Completude do calendário nacional do Brasil na LitCal.
 - Escolha da API de liturgia diária + fragilidade de scraping.
 - Domínio: rodar grátis em `*.workers.dev` ou registrar `asafe.com.br` / `asafe.app`.
-- **O que "aprovar um repertório" publica.** Aprovar um repertório da comunidade torna
-  legíveis as **cifras** das músicas dele (o `song_select` expõe músicas de repertórios
-  aprovados) — inclusive músicas que eram *pessoais* do autor, e por `id`, não só dentro do
-  repertório.
-  Escopar a leitura ao repertório via função `security definer` (como `get_shared_repertoire_full`
-  já faz no link público), tirando a cláusula "in approved repertoire" do `song_select`.
+- ~~**O que "aprovar um repertório" publica.**~~ **Resolvido** (referência × conteúdo): a
+  cifra saiu de `song` para `song_content`, com RLS própria; aprovar um repertório torna
+  legível o **metadado** das músicas, mas a **cifra** só quando a obra é livre/autorizada.
+  Expor a referência deixou de expor o conteúdo.
 
 ## 12. Roadmap por fases
 
@@ -218,6 +264,7 @@ caminho).
 ---
 
 **Status atual:** Fase 1 (MVP) entregue e **no ar** (Cloudflare Workers + Supabase de produção);
-comunidade com moderação, importação em lote e identidade visual também prontas. Próximo bloco
-grande: a **camada litúrgica** (§6) e os **modos de apresentação** (§7). O status vivo por
-funcionalidade fica no [`README.md`](../README.md).
+comunidade com moderação, importação em lote e identidade visual também prontas. O épico de
+**direitos autorais** (referência × conteúdo, gate de promoção, consentimento, permissão por
+obra e fonte autorizada, atribuição sempre visível) está implementado. Próximo bloco grande: a **camada litúrgica** (§6) e os
+**modos de apresentação** (§7). O status vivo por funcionalidade fica no [`README.md`](../README.md).

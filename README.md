@@ -39,6 +39,8 @@ Senhor (autor de uma dúzia de salmos). O app leva o nome e a missão.
 - ✅ Montar repertório por momento litúrgico e compartilhar por link
 - ✅ Importação em lote (colar várias cifras de uma vez)
 - ✅ Grupos, convites e comunidade com moderação
+- ✅ Direitos autorais: referência × conteúdo, gate de promoção, consentimento de obra
+  própria, permissão (por obra e fonte autorizada) e atribuição sempre visível
 - ✅ Identidade visual, navegação e onboarding
 - ✅ Deploy de referência na Cloudflare Workers (OpenNext)
 
@@ -107,7 +109,7 @@ Supabase local).
    ```
 
 O catálogo começa **vazio** de propósito: músicas não são versionadas nem semeadas
-(direito autoral, DESIGN §11) — crie as suas pelo app. Para popular usuários de teste
+(direito autoral, DESIGN §9) — crie as suas pelo app. Para popular usuários de teste
 (`ana`/`bruno`/`celia`), rode o seed com `ASAFE_SEED_DEMO=1` (**só em local**). **Nunca**
 comite `.env` / `.env.local`.
 
@@ -128,7 +130,9 @@ comite `.env` / `.env.local`.
   veja falhar, implemente. Regras de negócio e RLS têm testes.
 - **PRs** contra a `main` com o **CI verde** (typecheck + testes). Uma fatia por PR.
 - **Não versione conteúdo protegido** (cifras/letras de terceiros, textos litúrgicos
-  da CNBB) — nem em seed, teste ou fixture.
+  da CNBB) — nem em seed, teste ou fixture. Na comunidade, obra protegida entra só como
+  **referência** (título + autor); a cifra é liberada apenas quando a obra é livre ou
+  autorizada — ver [DESIGN §9](./docs/DESIGN.md).
 
 ## Licença
 
