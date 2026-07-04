@@ -134,6 +134,13 @@
       "when": 1783111984604,
       "tag": "0018_own_work_consent",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1783174735955,
+      "tag": "0019_share_full_composer",
+      "breakpoints": true
     }
   ]
 }
