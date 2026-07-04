@@ -107,6 +107,30 @@ export function attributionWarning(
   return null;
 }
 
+/** Rótulos legíveis do status de copyright (exibir na música / revisão da moderação). */
+export const COPYRIGHT_STATUS_LABELS: Record<CopyrightStatus, string> = {
+  dominio_publico: "Domínio público",
+  licenca_aberta: "Licença aberta",
+  permissao: "Permissão do autor/editora",
+  protegida: "Protegida por direitos autorais",
+  desconhecida: "Autoria desconhecida",
+};
+
+/**
+ * Resolve o status quando o proponente marca "de outro autor" (C11): com autorização
+ * declarada **E** evidência (link/nota) → `permissao` (a cifra pode ir ao global, C2);
+ * sem evidência → `protegida`. Ver DIREITOS-AUTORAIS §4.
+ */
+export function authorizedStatus(hasPermission: boolean, evidence: string): CopyrightStatus {
+  return hasPermission && evidence.trim() ? "permissao" : "protegida";
+}
+
+/** Texto do check e da dica de evidência no gate (C11). */
+export const PERMISSION_CHECKBOX_LABEL =
+  "Tenho autorização do autor/editora para publicar a cifra no catálogo global";
+export const PERMISSION_EVIDENCE_HINT =
+  "Cole o link ou descreva a permissão (e-mail, contrato, autorização pública do autor). O moderador confere antes de aprovar.";
+
 /**
  * Explica ao leitor **por que** a cifra desta música não aparece (ela entrou como
  * *referência*). Fundamental para não parecer bug: deixa claro que é por direitos autorais
