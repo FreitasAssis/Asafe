@@ -32,7 +32,7 @@ describe("get_shared_repertoire_full (acesso público por token)", () => {
     // música própria com cifra (corpo em song_content)
     const { data: song } = await sb
       .from("song")
-      .insert({ title: "Cordeiro de Deus", owner_id: a.userId, visibility: "private" })
+      .insert({ title: "Cordeiro de Deus", composer: "Pe. Zezinho", owner_id: a.userId, visibility: "private" })
       .select("id")
       .single();
     await sb
@@ -73,6 +73,7 @@ describe("get_shared_repertoire_full (acesso público por token)", () => {
     expect(pkg.slots.length).toBeGreaterThan(0); // rótulos do template
     expect(pkg.items).toHaveLength(1);
     expect(pkg.items[0].chordpro).toContain("[C]Cordeiro");
+    expect(pkg.items[0].composer).toBe("Pe. Zezinho"); // atribuição (C12) no link público
     expect(pkg.items[0].transpose).toBe(2);
     expect(pkg.items[0].notes).toBe("começar no refrão");
 

@@ -48,6 +48,10 @@ function ItemView({ item, hide }: { item: PublicItem; hide: boolean }) {
           </span>
         ) : null}
       </div>
+      {/* Atribuição (direito moral, §5/§10): o autor aparece sempre que a obra é exibida. */}
+      {item.composer && (
+        <div style={{ color: "var(--text-muted)", fontSize: 13 }}>{item.composer}</div>
+      )}
       {item.notes && (
         <div style={{ color: "#a60", fontSize: 13, fontStyle: "italic" }}>{item.notes}</div>
       )}
@@ -60,7 +64,6 @@ function ItemView({ item, hide }: { item: PublicItem; hide: boolean }) {
       )}
       {isReference && (
         <div style={{ marginTop: 4, color: "var(--text-muted)", fontSize: 13 }}>
-          {item.composer && <div>{item.composer}</div>}
           <div style={{ fontStyle: "italic" }}>— cifra não disponível (referência)</div>
           {item.audioLinks && item.audioLinks.length > 0 && (
             <div style={{ marginTop: 2 }}>
