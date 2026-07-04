@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/musicas", label: "Catálogo" },
   { href: "/repertorios", label: "Repertórios" },
   { href: "/grupos", label: "Grupos" },
+  { href: "/meus-envios", label: "Meus envios" },
 ] as const;
 
 /** Sidebar das páginas logadas: fixa no desktop, gaveta com ☰ no mobile. */

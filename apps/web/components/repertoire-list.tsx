@@ -5,6 +5,7 @@ import { REPERTOIRE_TYPE_LABELS } from "@asafe/core";
 import { browserClient } from "@/lib/supabase/client";
 import { deleteRepertoire, type RepertoireListItem } from "@/lib/repertoires";
 import { RowActions } from "@/components/row-actions";
+import { StatusBadge } from "@/components/status-badge";
 
 /** Lista de repertórios com ações por linha (lápis/lixeira só para o dono). */
 export function RepertoireList({
@@ -43,6 +44,12 @@ export function RepertoireList({
               {r.date ? ` · ${r.date}` : ""}
               {r.groupName ? ` · 👥 ${r.groupName}` : ""}
             </span>
+            {r.ownerId === userId && (
+              <>
+                {" "}
+                <StatusBadge status={r.communityStatus} />
+              </>
+            )}
           </div>
           {r.ownerId === userId && (
             <RowActions

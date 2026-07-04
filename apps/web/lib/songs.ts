@@ -47,6 +47,7 @@ export interface SongListItem {
   title: string;
   composer: string | null;
   ownerId: string | null;
+  communityStatus: CommunityStatus;
   tagIds: string[];
   /** Última data efetiva de uso (YYYY-MM-DD) entre meus repertórios, ou null. */
   lastUsed: string | null;
@@ -191,7 +192,10 @@ export async function listPendingSongs(supabase: SupabaseClient): Promise<Pendin
 /** Lista as minhas músicas (com tags e frescor) para o catálogo, ordenadas por título. */
 export async function listSongs(supabase: SupabaseClient): Promise<SongListItem[]> {
   const [songsRes, usageRes] = await Promise.all([
-    supabase.from("song").select("id, title, composer, owner_id, song_tag(tag_id)").order("title"),
+    supabase
+      .from("song")
+      .select("id, title, composer, owner_id, community_status, song_tag(tag_id)")
+      .order("title"),
     supabase.from("repertoire_item").select("song_id, repertoire(date, created_at)"),
   ]);
   if (songsRes.error) throw songsRes.error;
@@ -215,6 +219,7 @@ export async function listSongs(supabase: SupabaseClient): Promise<SongListItem[
     title: r.title,
     composer: r.composer,
     ownerId: r.owner_id,
+    communityStatus: r.community_status,
     tagIds: (r.song_tag ?? []).map((st) => st.tag_id),
     lastUsed: lastUsed.get(r.id) ?? null,
   }));
