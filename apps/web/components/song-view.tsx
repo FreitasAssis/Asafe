@@ -14,10 +14,13 @@ export function SongView({
   song,
   tags,
   canEdit,
+  origin = { label: "Catálogo", href: "/musicas" },
 }: {
   readonly song: Song;
   readonly tags: Tag[];
   readonly canEdit: boolean;
+  /** De onde o usuário veio (ajusta o breadcrumb — ex.: fila de moderação). */
+  readonly origin?: { label: string; href: string };
 }) {
   const [hide, setHide] = useState(false);
   useEffect(() => setHide(Boolean(readPrefs().hideChords)), []);
@@ -33,7 +36,7 @@ export function SongView({
 
   return (
     <main style={{ maxWidth: 760, margin: "1.5rem auto", padding: "0 1rem", fontFamily: "system-ui" }}>
-      <Breadcrumb items={[{ label: "Catálogo", href: "/musicas" }, { label: song.title }]} />
+      <Breadcrumb items={[origin, { label: song.title }]} />
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
         <div>

@@ -412,7 +412,7 @@ export async function getRepertoirePackage(
   const { data, error } = await supabase
     .from("repertoire")
     .select(
-      `title, type, date, repertoire_item(id, moment_slot, order, transpose, notes, song(title, song_content(chordpro_body)))`,
+      `title, type, date, repertoire_item(id, moment_slot, order, transpose, notes, song(title, composer, audio_links, song_content(chordpro_body)))`,
     )
     .eq("id", id)
     .maybeSingle();
@@ -430,7 +430,13 @@ export async function getRepertoirePackage(
       transpose: number;
       notes: string | null;
       // A cifra vem de song_content (RLS própria): fica null quando é só referência.
-      song: { title: string; song_content: Content | Content[] | null } | null;
+      // Autor e áudios são metadado do song (legíveis) — úteis mesmo quando é referência.
+      song: {
+        title: string;
+        composer: string | null;
+        audio_links: string[] | null;
+        song_content: Content | Content[] | null;
+      } | null;
     }[];
   };
   const { slots } = await slotTemplate(supabase, row.type);
@@ -447,6 +453,8 @@ export async function getRepertoirePackage(
         transpose: it.transpose,
         notes: it.notes,
         title: it.song?.title ?? "(música)",
+        composer: it.song?.composer ?? null,
+        audioLinks: it.song?.audio_links ?? [],
         chordpro: body,
       };
     }),
