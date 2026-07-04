@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { audioProvider } from "@asafe/core";
+import { audioProvider, referenceExplanation } from "@asafe/core";
 import { stripChords } from "@asafe/chordpro";
 import type { Song, Tag } from "@/lib/songs";
 import { readPrefs, writePrefs } from "@/lib/preferences";
@@ -83,7 +83,7 @@ export function SongView({
           >
             {canEdit
               ? "Esta música ainda não tem cifra — use o lápis para adicionar."
-              : "Referência da comunidade: você ainda não tem esta cifra."}
+              : referenceExplanation(song.copyrightStatus)}
           </p>
         )}
       </div>

@@ -28,6 +28,7 @@ export interface SharedPackage {
 
 function ItemView({ item, hide }: { item: PublicItem; hide: boolean }) {
   let cifra = item.chordpro ?? "";
+  const isReference = !cifra.trim();
   if (cifra.trim() && item.transpose) cifra = transpose(cifra, item.transpose);
   if (hide) cifra = stripChords(cifra);
   const html = cifra.trim() ? toHtml(cifra) : "";
@@ -52,6 +53,11 @@ function ItemView({ item, hide }: { item: PublicItem; hide: boolean }) {
           style={{ marginTop: 4 }}
           dangerouslySetInnerHTML={{ __html: html }}
         />
+      )}
+      {isReference && (
+        <div style={{ marginTop: 4, color: "var(--text-muted)", fontSize: 13, fontStyle: "italic" }}>
+          — cifra não disponível (referência)
+        </div>
       )}
     </div>
   );

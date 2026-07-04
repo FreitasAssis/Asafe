@@ -107,6 +107,23 @@ export function attributionWarning(
   return null;
 }
 
+/**
+ * Explica ao leitor **por que** a cifra desta música não aparece (ela entrou como
+ * *referência*). Fundamental para não parecer bug: deixa claro que é por direitos autorais
+ * e contrasta com as que ele vê por inteiro (domínio público / licença aberta / suas). Ver
+ * DIREITOS-AUTORAIS (referência×conteúdo, C2/C8).
+ */
+export function referenceExplanation(copyright: CopyrightStatus): string {
+  if (copyright === "protegida" || copyright === "desconhecida") {
+    return (
+      "Esta música é protegida por direitos autorais — no acervo compartilhado ela aparece " +
+      "só como referência (título e dados), sem a cifra. As que você vê por inteiro são de " +
+      "domínio público, de licença aberta, ou suas."
+    );
+  }
+  return "A cifra desta música ainda não está disponível aqui.";
+}
+
 /** Licença que o autor escolhe ao publicar obra própria (casa com o enum `license_kind`). */
 export type LicenseKind = "cc_by" | "cc_by_sa" | "permissao_asafe";
 

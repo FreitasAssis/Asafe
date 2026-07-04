@@ -5,6 +5,7 @@ import { myMembershipRole } from "@/lib/groups";
 import { PublicRepertoire } from "@/components/public-repertoire";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { EditPencil } from "@/components/edit-pencil";
+import { TakeRepertoireButton } from "@/components/take-repertoire-button";
 
 export default async function VerRepertorio({
   params,
@@ -30,6 +31,8 @@ export default async function VerRepertorio({
     ? await myMembershipRole(supabase, repertoire.groupId, user.id)
     : null;
   const canEdit = isOwner || role === "editor";
+  // Repertório da comunidade que não é meu → posso "pegar" (clonar) para os meus.
+  const canTake = !isOwner && repertoire.communityStatus === "approved";
 
   const header = (
     <div
@@ -39,6 +42,7 @@ export default async function VerRepertorio({
         items={[{ label: "Repertórios", href: "/repertorios" }, { label: pkg.repertoire.title }]}
       />
       {canEdit && <EditPencil href={`/repertorios/${id}/editar`} />}
+      {canTake && <TakeRepertoireButton sourceId={id} userId={user.id} />}
     </div>
   );
 

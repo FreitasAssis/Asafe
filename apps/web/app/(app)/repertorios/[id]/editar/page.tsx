@@ -38,6 +38,7 @@ export default async function MontarRepertorio({
       tags={tags}
       shareLinks={shareLinks}
       isOwner={isOwner}
+      userId={user.id}
       groups={groups}
     />
   );
