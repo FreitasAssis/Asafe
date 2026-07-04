@@ -8,11 +8,14 @@ import {
   ATTRIBUTION_LABELS,
   ATTRIBUTION_TO_STATUS,
   attributionWarning,
+  authorizedStatus,
   CONSENT_TEXT,
   CONSENT_TEXT_VERSION,
   LICENSE_CHOICES,
   LICENSE_HINTS,
   LICENSE_LABELS,
+  PERMISSION_CHECKBOX_LABEL,
+  PERMISSION_EVIDENCE_HINT,
   suggestAttribution,
   type AttributionChoice,
   type LicenseKind,
@@ -39,11 +42,17 @@ export function PublishGate({
   // Obra própria (C4): licença escolhida + ação afirmativa (consentimento).
   const [license, setLicense] = useState<LicenseKind>(LICENSE_CHOICES[0]!);
   const [agreed, setAgreed] = useState(false);
+  // Permissão por obra (C11): autorização declarada + evidência → 'permissao'.
+  const [hasPermission, setHasPermission] = useState(false);
+  const [evidence, setEvidence] = useState("");
   // Heurística (C6): sugere pela ficha de compositor e avisa contradições — não bloqueia.
   const suggestion = suggestAttribution(composer);
   const warning = choice ? attributionWarning(choice, composer) : null;
   const isOwn = choice === "propria";
-  const canConfirm = Boolean(choice) && (!isOwn || agreed) && !busy;
+  const isNamed = choice === "autor_nomeado";
+  // Se declarou permissão, a evidência é obrigatória (senão fica 'protegida').
+  const missingEvidence = isNamed && hasPermission && !evidence.trim();
+  const canConfirm = Boolean(choice) && (!isOwn || agreed) && !missingEvidence && !busy;
 
   async function confirm() {
     if (!choice) return;
@@ -53,6 +62,10 @@ export function PublishGate({
       if (isOwn) {
         // Consentimento versionado + licença — server grava now()/auth.uid().
         await recordOwnWorkConsent(sb, songId, license, CONSENT_TEXT_VERSION);
+      } else if (isNamed) {
+        // De outro autor: com permissão + evidência vira 'permissao'; senão 'protegida'.
+        const status = authorizedStatus(hasPermission, evidence);
+        await classifySong(sb, songId, status, status === "permissao" ? evidence : null);
       } else {
         await classifySong(sb, songId, ATTRIBUTION_TO_STATUS[choice]);
       }
@@ -119,6 +132,35 @@ export function PublishGate({
               Li e <strong>autorizo</strong> nos termos acima.
             </span>
           </label>
+        </div>
+      )}
+      {isNamed && (
+        <div className="mt-3 rounded border border-border p-3">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={hasPermission}
+              onChange={(e) => setHasPermission(e.target.checked)}
+            />
+            <span>{PERMISSION_CHECKBOX_LABEL}</span>
+          </label>
+          {hasPermission && (
+            <div className="mt-2">
+              <input
+                type="text"
+                value={evidence}
+                onChange={(e) => setEvidence(e.target.value)}
+                placeholder="Link ou descrição da permissão"
+                className="input w-full text-sm"
+              />
+              <p className="mt-1 text-xs text-muted">{PERMISSION_EVIDENCE_HINT}</p>
+              {missingEvidence && (
+                <p className="mt-1 text-xs" style={{ color: "var(--danger)" }}>
+                  Informe a evidência da permissão — sem ela, a música entra como protegida.
+                </p>
+              )}
+            </div>
+          )}
         </div>
       )}
       {warning && (

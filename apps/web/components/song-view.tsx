@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { audioProvider, referenceExplanation } from "@asafe/core";
+import { audioProvider, COPYRIGHT_STATUS_LABELS, referenceExplanation } from "@asafe/core";
 import { stripChords } from "@asafe/chordpro";
 import type { Song, Tag } from "@/lib/songs";
 import { readPrefs, writePrefs } from "@/lib/preferences";
@@ -54,6 +54,24 @@ export function SongView({
           {canEdit && <EditPencil href={`/musicas/${song.id}/editar`} />}
         </div>
       </div>
+
+      {song.copyrightStatus !== "desconhecida" && (
+        <div style={{ marginTop: 8, fontSize: 13, color: "var(--text-muted)" }}>
+          Direitos: {COPYRIGHT_STATUS_LABELS[song.copyrightStatus]}
+          {song.copyrightEvidence && (
+            <>
+              {" · "}
+              {/^https?:\/\//.test(song.copyrightEvidence) ? (
+                <a href={song.copyrightEvidence} target="_blank" rel="noreferrer">
+                  evidência ↗
+                </a>
+              ) : (
+                <span>evidência: {song.copyrightEvidence}</span>
+              )}
+            </>
+          )}
+        </div>
+      )}
 
       {song.tagIds.length > 0 && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
