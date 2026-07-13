@@ -1,0 +1,30 @@
+name: keepalive
+
+# Supabase no plano free pausa o projeto após ~7 dias sem atividade. Este cron toca o banco
+# de produção uma vez por dia (margem folgada mesmo se algum agendamento do GitHub atrasar),
+# mantendo o projeto ativo. Só uma consulta trivial — nenhum dado é lido/alterado.
+on:
+  schedule:
+    - cron: "17 6 * * *" # ~06:17 UTC, minuto "quebrado" (o topo da hora sofre atraso no GitHub)
+  workflow_dispatch: {}
+  push:
+    branches: [keepalive-cron] # TEMPORÁRIO: valida o ping nesta branch antes do merge
+
+# Sem permissões de escrita no repo — o job só faz uma conexão externa.
+permissions:
+  contents: read
+
+concurrency:
+  group: keepalive
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase (mantém o projeto ativo)
+        env:
+          DB_URL: ${{ secrets.PROD_DATABASE_URL }}
+          PGSSLMODE: require
+          PGCONNECT_TIMEOUT: "15"
+        run: psql "$DB_URL" -Atc "select 'keepalive ok ' || now();"
