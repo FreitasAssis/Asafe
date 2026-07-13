@@ -29,6 +29,7 @@ export const GLOBAL_TAGS: {
       "Bênção da água",
       "Bênção do fogo",
       "Unção com óleo",
+      "Homenagens",
       "Final",
     ],
   },
