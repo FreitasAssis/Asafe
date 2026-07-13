@@ -468,7 +468,10 @@
 .projection-stage {
   flex: 1;
   display: flex;
+  /* `safe center`: centraliza quando cabe, mas alinha ao topo quando a letra é maior que a
+     tela — senão a centralização "engole" o começo da música (fica acima e sem rolar até lá). */
   align-items: center;
+  align-items: safe center;
   justify-content: center;
   overflow-y: auto;
   padding: 24px;

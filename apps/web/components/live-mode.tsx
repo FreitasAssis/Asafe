@@ -35,12 +35,26 @@ export function LiveMode({ pkg, backHref }: { readonly pkg: SharedPackage; reado
 
   useWakeLock(); // mantém a tela acesa durante a celebração
 
-  // Autoscroll: rola o conteúdo enquanto ligado; a velocidade escala px/frame.
+  // Autoscroll: rola por TEMPO (px/s) com acumulador sub-pixel — assim velocidades bem baixas
+  // rolam suave. Escala: speed 1 = 8px/s (bem lento, p/ músicas lentas) … 10 = 80px/s.
   useEffect(() => {
     if (!scrolling) return;
+    const el = contentRef.current;
+    if (!el) return;
+    const pxPerSec = speed * 8;
     let raf = 0;
-    const step = () => {
-      contentRef.current?.scrollBy(0, speed * 0.4);
+    let last = 0;
+    let acc = 0;
+    const step = (t: number) => {
+      if (last) {
+        acc += (pxPerSec * (t - last)) / 1000;
+        const whole = Math.floor(acc);
+        if (whole > 0) {
+          el.scrollTop += whole;
+          acc -= whole;
+        }
+      }
+      last = t;
       raf = requestAnimationFrame(step);
     };
     raf = requestAnimationFrame(step);
@@ -118,7 +132,7 @@ export function LiveMode({ pkg, backHref }: { readonly pkg: SharedPackage; reado
         <input
           type="range"
           min={1}
-          max={8}
+          max={10}
           value={speed}
           onChange={(e) => setSpeed(Number(e.target.value))}
           aria-label="Velocidade do autoscroll"
