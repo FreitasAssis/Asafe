@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { cookies } from "next/headers";
 import { Fraunces, Inter } from "next/font/google";
 import { PREFS_COOKIE, parsePrefs } from "@/lib/preferences";
+import { PwaRegister } from "@/components/pwa-register";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
@@ -11,6 +12,14 @@ const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", dis
 export const metadata: Metadata = {
   title: "Asafe",
   description: "Organize e compartilhe repertórios de música litúrgica católica.",
+  appleWebApp: { capable: true, title: "Asafe", statusBarStyle: "default" },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f4eee1" },
+    { media: "(prefers-color-scheme: dark)", color: "#1e1c1a" },
+  ],
 };
 
 // Sem cookie de tema (1º acesso), aplica a preferência do sistema antes do paint.
@@ -29,7 +38,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: NO_FLASH }} />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <PwaRegister />
+      </body>
     </html>
   );
 }

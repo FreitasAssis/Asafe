@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sem conexão — Asafe</title>
+    <style>
+      html {
+        color-scheme: light dark;
+      }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 24px;
+        text-align: center;
+        font-family: system-ui, sans-serif;
+        background: #f4eee1;
+        color: #1e1c1a;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #1e1c1a;
+          color: #f4eee1;
+        }
+      }
+      h1 {
+        font-size: 1.4rem;
+        margin: 8px 0 0;
+      }
+      p {
+        margin: 0;
+        max-width: 32ch;
+        opacity: 0.8;
+        line-height: 1.5;
+      }
+      button {
+        margin-top: 8px;
+        padding: 8px 18px;
+        border-radius: 8px;
+        border: 1px solid #2f3a5e;
+        background: #2f3a5e;
+        color: #f4eee1;
+        font-size: 15px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <svg width="72" height="72" viewBox="0 0 56 56" role="img" aria-label="Asafe">
+      <rect width="56" height="56" rx="12" fill="#f4eee1" />
+      <path d="M16 47 L28 11 L40 47" fill="none" stroke="#2f3a5e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+      <line x1="21.5" y1="33" x2="34.5" y2="33" stroke="#2f3a5e" stroke-width="2.6" stroke-linecap="round" />
+      <line x1="25" y1="33" x2="25" y2="45" stroke="#b0894a" stroke-width="1.8" stroke-linecap="round" />
+      <line x1="28" y1="33" x2="28" y2="45" stroke="#b0894a" stroke-width="1.8" stroke-linecap="round" />
+      <line x1="31" y1="33" x2="31" y2="45" stroke="#b0894a" stroke-width="1.8" stroke-linecap="round" />
+    </svg>
+    <h1>Você está offline</h1>
+    <p>Não foi possível carregar esta página sem internet. Verifique a conexão e tente de novo.</p>
+    <button type="button" onclick="location.reload()">Tentar de novo</button>
+  </body>
+</html>
