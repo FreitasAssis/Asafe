@@ -50,6 +50,9 @@ export default async function VerRepertorio({
         <a href={`/repertorios/${id}/ao-vivo`} className="btn">
           Ao vivo
         </a>
+        <a href={`/repertorios/${id}/projecao`} className="btn">
+          Projeção
+        </a>
         {canEdit && <EditPencil href={`/repertorios/${id}/editar`} />}
         {canTake && <TakeRepertoireButton sourceId={id} userId={user.id} />}
       </span>
