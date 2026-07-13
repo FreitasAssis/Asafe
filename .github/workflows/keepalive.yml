@@ -5,10 +5,8 @@ name: keepalive
 # mantendo o projeto ativo. Só uma consulta trivial — nenhum dado é lido/alterado.
 on:
   schedule:
-    - cron: "17 6 * * *" # ~06:17 UTC, minuto "quebrado" (o topo da hora sofre atraso no GitHub)
+    - cron: "0 5 * * *" # 05:00 UTC = 02:00 da madrugada (BRT, UTC−3)
   workflow_dispatch: {}
-  push:
-    branches: [keepalive-cron] # TEMPORÁRIO: valida o ping nesta branch antes do merge
 
 # Sem permissões de escrita no repo — o job só faz uma conexão externa.
 permissions:
