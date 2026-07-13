@@ -31,7 +31,7 @@
 |------|-----|-------|
 | Índigo vésperas | `#2F3A5E` | Cor-âncora da marca. Azul de crepúsculo, contemplativo, sacro sem ser de uma estação só. |
 | Pergaminho | `#F4EEE1` | Fundo do modo claro. Papel quente. |
-| Tinta | `#1E1C1A` | Texto no claro; **fundo do modo palco**. Quase-preto quente. |
+| Tinta | `#1E1C1A` | Texto no claro; **fundo do modo ao vivo**. Quase-preto quente. |
 | Latão | `#B0894A` | Acento (luz de vela, cordas da lira). **Sempre mínimo** — gota, não banho. |
 | Cinza pedra | `#8C8578` | Neutro de bordas e texto secundário **grande**. Para texto secundário pequeno, usar o pedra escuro `#6E685C` (ver tokens) — o `#8C8578` não passa AA em corpo pequeno. |
 
@@ -108,7 +108,7 @@ Duas espessuras bastam (regular e medium); evitar pesos muito pesados.
 
 ---
 
-## 6. Modo palco (onde o app vive ao vivo)
+## 6. Modo ao vivo (onde o app é tocado)
 
 - Fundo **tinta** (`#1E1C1A`), texto **pergaminho** (`#F4EEE1`), acordes em **latão/dourado**.
 - Alto contraste, fonte grande, sem distrações; autoscroll e capo já previstos no app.
