@@ -3,10 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { arrangeRepertoire } from "@asafe/core";
 import { stripChords, toHtml, transpose } from "@asafe/chordpro";
+import { useWakeLock } from "@/lib/use-wake-lock";
 import type { SharedPackage } from "./public-repertoire";
-
-type WakeLock = { release: () => Promise<void> };
-type WakeNavigator = Navigator & { wakeLock?: { request: (t: "screen") => Promise<WakeLock> } };
 
 /**
  * Modo "Ao vivo" (B1): tela cheia escura para o músico tocar o repertório música a música.
@@ -35,27 +33,7 @@ export function LiveMode({ pkg, backHref }: { readonly pkg: SharedPackage; reado
   if (hide) body = stripChords(body);
   const html = body.trim() ? toHtml(body) : "";
 
-  // Wake lock: pede ao entrar e ao voltar o foco; solta ao sair.
-  useEffect(() => {
-    const nav = navigator as WakeNavigator;
-    let lock: WakeLock | null = null;
-    const request = async () => {
-      try {
-        lock = (await nav.wakeLock?.request("screen")) ?? null;
-      } catch {
-        /* sem wake lock (navegador/permite): tudo bem, segue sem */
-      }
-    };
-    void request();
-    const onVisible = () => {
-      if (document.visibilityState === "visible") void request();
-    };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => {
-      document.removeEventListener("visibilitychange", onVisible);
-      void lock?.release().catch(() => {});
-    };
-  }, []);
+  useWakeLock(); // mantém a tela acesa durante a celebração
 
   // Autoscroll: rola o conteúdo enquanto ligado; a velocidade escala px/frame.
   useEffect(() => {
