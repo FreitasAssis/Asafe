@@ -149,9 +149,10 @@ histórico entre celebrações — ataca diretamente a repetição semana a sema
   **não precisa** conhecer ChordPro.
 - **Entrada:** campo com **preview ao vivo**, aceitando "acordes sobre a letra" (o formato
   que o músico já usa), ChordPro direto (detectado pela presença de `[ ]`), ou **só letra**.
-- **Exibição:** cifra+letra / só letra / esconder cifra (toggle por usuário); **modo palco**
-  (tema escuro, fonte grande, autoscroll, capo); **modo projeção** (letra grande para telão).
-- **Navegação sincronizada (Fase 3):** modo palco espelhado em tempo real entre os aparelhos
+- **Exibição:** cifra+letra / só letra / esconder cifra (toggle por usuário); **modo ao vivo**
+  (tela cheia escura, fonte grande, autoscroll, capo, wake lock — o músico toca o repertório
+  música a música); **modo projeção** (letra grande para telão).
+- **Navegação sincronizada (Fase 3):** modo ao vivo espelhado em tempo real entre os aparelhos
   da equipe via **Supabase Realtime** (sem servidor always-on; **não** Socket.IO, que exigiria
   máquina paga). Regras:
   - **Opcional**, por repertório/sessão. Desligado, cada um navega sozinho (comportamento atual).
@@ -222,7 +223,7 @@ convite, não aula, e tudo desligável. Aparece do mais leve ao mais explícito:
 liturgia do dia (aproveitando o eixo de perícope) — o nome vira um fio que reaparece de leve.
 
 **Identidade visual** (paleta "papel e tinta", acento litúrgico dinâmico, monograma da lira,
-tipografia, modo palco e tokens CSS): ver [`docs/identidade-visual.md`](identidade-visual.md).
+tipografia, modo ao vivo e tokens CSS): ver [`docs/identidade-visual.md`](identidade-visual.md).
 A adoção é uma fatia própria — a passada de UI pré-launch.
 
 ## 11. Decisões em aberto / riscos

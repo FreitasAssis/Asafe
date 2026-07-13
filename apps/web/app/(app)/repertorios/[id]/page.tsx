@@ -46,8 +46,13 @@ export default async function VerRepertorio({
       style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}
     >
       <Breadcrumb items={[originCrumb, { label: pkg.repertoire.title }]} />
-      {canEdit && <EditPencil href={`/repertorios/${id}/editar`} />}
-      {canTake && <TakeRepertoireButton sourceId={id} userId={user.id} />}
+      <span className="flex items-center gap-2">
+        <a href={`/repertorios/${id}/ao-vivo`} className="btn">
+          Ao vivo
+        </a>
+        {canEdit && <EditPencil href={`/repertorios/${id}/editar`} />}
+        {canTake && <TakeRepertoireButton sourceId={id} userId={user.id} />}
+      </span>
     </div>
   );
 
