@@ -52,5 +52,7 @@ export const config = {
   // Roda em tudo, menos assets estáticos do Next. DEVE ser um literal estático —
   // o Next extrai este matcher em build; uma expressão (ex.: String.raw) faz o Next
   // rodar o middleware em TODAS as rotas, inclusive os chunks JS (que viram redirect).
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|offline.html|apple-icon.png|icons/).*)",
+  ],
 };
