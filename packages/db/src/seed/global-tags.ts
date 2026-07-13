@@ -3,24 +3,32 @@ import { tag } from "../schema/tag";
 import type { db as Db } from "../client";
 
 /**
- * Tags GLOBAIS (owner_id nulo) das categorias mais "fechadas" — vocabulário
- * padronizado que todos veem (DESIGN/fatia C2). As categorias abertas (tema, ocasiao,
- * salmo, fonte) ficam para tags pessoais.
+ * Tags GLOBAIS (owner_id nulo): vocabulário base que todos veem. `momento` e
+ * `tempo_liturgico` são fechados (padronizados); `tema` e `ocasiao` trazem um núcleo comum
+ * global + cada usuário adiciona os seus. `salmo` e `fonte` seguem só pessoais.
  */
-export const GLOBAL_TAGS: { category: "momento" | "tempo_liturgico"; names: string[] }[] = [
+export const GLOBAL_TAGS: {
+  category: "momento" | "tempo_liturgico" | "tema" | "ocasiao";
+  names: string[];
+}[] = [
   {
     category: "momento",
     names: [
       "Entrada",
       "Ato Penitencial",
+      "Aspersão",
       "Glória",
       "Salmo",
       "Aclamação",
+      "Ladainha",
       "Ofertório",
       "Santo",
       "Cordeiro",
       "Comunhão",
       "Ação de Graças",
+      "Bênção da água",
+      "Bênção do fogo",
+      "Unção com óleo",
       "Final",
     ],
   },
@@ -35,6 +43,14 @@ export const GLOBAL_TAGS: { category: "momento" | "tempo_liturgico"; names: stri
       "Páscoa",
       "Pentecostes",
     ],
+  },
+  {
+    category: "tema",
+    names: ["Adoração", "Mártires", "Maria", "São José", "Espírito Santo", "Padroeiro(a)"],
+  },
+  {
+    category: "ocasiao",
+    names: ["Casamento", "Batizado", "Finados", "Corpus Christi"],
   },
 ];
 
