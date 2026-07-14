@@ -127,8 +127,17 @@ export function PublicRepertoire({
       )}
 
       {slotsWithItems.map((s) => (
-        <section key={s.key} style={{ marginTop: 16 }}>
-          <h2 style={{ fontSize: 16, borderBottom: "2px solid var(--border)", paddingBottom: 2 }}>
+        <section key={s.key} style={{ marginTop: 34 }}>
+          <h2
+            style={{
+              fontSize: 18,
+              fontWeight: 600,
+              color: "var(--primary)",
+              borderBottom: "2px solid var(--border)",
+              paddingBottom: 6,
+              marginBottom: 12,
+            }}
+          >
             {s.label}
           </h2>
           {s.items.map((it) => (
