@@ -208,6 +208,34 @@ export async function removeMember(
   if (error) throw error;
 }
 
+/** Muda o papel de um membro (só o dono — RLS membership_write_owner). */
+export async function setMemberRole(
+  supabase: SupabaseClient,
+  groupId: string,
+  userId: string,
+  role: "editor" | "viewer",
+): Promise<void> {
+  const { error } = await supabase
+    .from("membership")
+    .update({ role })
+    .eq("group_id", groupId)
+    .eq("user_id", userId);
+  if (error) throw error;
+}
+
+/** Passa a titularidade para outro membro (só o dono — função transfer_group). */
+export async function transferGroup(
+  supabase: SupabaseClient,
+  groupId: string,
+  newOwnerId: string,
+): Promise<void> {
+  const { error } = await supabase.rpc("transfer_group", {
+    p_group_id: groupId,
+    p_new_owner: newOwnerId,
+  });
+  if (error) throw error;
+}
+
 /** Membro sai do grupo (apaga a própria membership). */
 export async function leaveGroup(
   supabase: SupabaseClient,

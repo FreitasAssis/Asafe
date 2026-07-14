@@ -14,6 +14,8 @@ import {
   removeMember,
   renameGroup,
   revokeInvite,
+  setMemberRole,
+  transferGroup,
   type Group,
   type GroupInvite,
   type GroupMember,
@@ -122,6 +124,32 @@ export function GroupDetail({
     }
   }
 
+  async function changeRole(userId: string, newRole: "editor" | "viewer") {
+    try {
+      await setMemberRole(browserClient(), group.id, userId, newRole);
+      setMemberList((prev) => prev.map((m) => (m.userId === userId ? { ...m, role: newRole } : m)));
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Erro ao mudar o papel.");
+    }
+  }
+
+  async function promote(m: GroupMember) {
+    if (
+      !confirm(
+        `Passar a titularidade para ${m.name ?? m.email}? Você deixa de ser o dono e passa a editor. Não dá para desfazer sozinho.`,
+      )
+    )
+      return;
+    setBusy(true);
+    try {
+      await transferGroup(browserClient(), group.id, m.userId);
+      router.refresh();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Erro ao passar a titularidade.");
+      setBusy(false);
+    }
+  }
+
   async function leave() {
     setBusy(true);
     try {
@@ -201,13 +229,29 @@ export function GroupDetail({
               style={{ display: "flex", gap: 8, alignItems: "center", padding: "6px 0", fontSize: 14 }}
             >
               <span style={{ flex: 1 }}>
-                {m.name ?? m.email} · {ROLE_LABELS[m.role]}
+                {m.name ?? m.email}
+                {!(isOwner && m.role !== "owner") && ` · ${ROLE_LABELS[m.role]}`}
                 {m.name && <span style={{ color: "var(--text-muted)", fontSize: 12 }}> ({m.email})</span>}
               </span>
               {isOwner && m.role !== "owner" && (
-                <button type="button" onClick={() => void remove(m.userId)} style={{ color: "var(--danger)" }}>
-                  remover
-                </button>
+                <>
+                  <select
+                    value={m.role}
+                    aria-label={`Papel de ${m.name ?? m.email}`}
+                    onChange={(e) => void changeRole(m.userId, e.target.value as "editor" | "viewer")}
+                    disabled={busy}
+                    style={{ fontSize: 12 }}
+                  >
+                    <option value="viewer">leitor</option>
+                    <option value="editor">editor</option>
+                  </select>
+                  <button type="button" onClick={() => void promote(m)} disabled={busy}>
+                    tornar dono
+                  </button>
+                  <button type="button" onClick={() => void remove(m.userId)} style={{ color: "var(--danger)" }}>
+                    remover
+                  </button>
+                </>
               )}
             </li>
           ))}
