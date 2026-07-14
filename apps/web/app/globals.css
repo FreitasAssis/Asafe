@@ -110,6 +110,7 @@
     color: var(--text);
     cursor: pointer;
     text-decoration: none;
+    white-space: nowrap;
   }
   .btn:hover {
     background: color-mix(in srgb, var(--text) 6%, var(--surface));
@@ -334,6 +335,14 @@
 .chord-preview .lyrics {
   white-space: pre;
 }
+/* Refrão marcado ({start_of_chorus}/{end_of_chorus}) — realce sutil à esquerda. */
+.chord-preview .chorus {
+  border-left: 3px solid var(--accent);
+  padding-left: 10px;
+}
+.live-cifra .chord-preview .chorus {
+  border-left-color: #c2a14e;
+}
 
 /* Modo "Ao vivo" (B1): tela cheia escura para tocar — cobre a barra lateral. */
 .live-mode {
@@ -377,7 +386,7 @@
   align-items: baseline;
   gap: 10px;
 }
-.live-capo {
+.live-tom {
   font-size: 0.8rem;
   color: #1e1c1a;
   background: #c2a14e;
@@ -404,18 +413,27 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 8px 10px;
   padding: 10px 14px;
   border-top: 1px solid #3a352f;
 }
 .live-controls button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  height: 38px;
+  padding: 0 12px;
   background: #2a2520;
   color: #f4eee1;
   border: 1px solid #3a352f;
   border-radius: 8px;
-  padding: 6px 12px;
   font-size: 16px;
   cursor: pointer;
+}
+.live-controls input[type="range"] {
+  width: 120px;
 }
 .live-controls button:disabled {
   opacity: 0.4;

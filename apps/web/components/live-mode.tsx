@@ -2,14 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { arrangeRepertoire } from "@asafe/core";
-import { stripChords, toHtml, transpose } from "@asafe/chordpro";
+import { hasChorus, stripChords, toHtml, transpose } from "@asafe/chordpro";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import type { SharedPackage } from "./public-repertoire";
 
 /**
  * Modo "Ao vivo" (B1): tela cheia escura para o músico tocar o repertório música a música.
- * Fonte grande, alto contraste; autoscroll com velocidade, capo (formas transpostas, separado
- * do tom por ocorrência), esconder cifra, e wake lock para a tela não apagar. Ver DESIGN §7.
+ * Fonte grande, alto contraste; navegação (+ ir ao refrão / voltar ao início), autoscroll com
+ * velocidade, transpor o tom da sessão, esconder cifra, e wake lock. Ver DESIGN §7.
  */
 export function LiveMode({ pkg, backHref }: { readonly pkg: SharedPackage; readonly backHref: string }) {
   // Ordem de execução = ordem do arranjo (mesma da leitura), achatada em lista linear.
@@ -17,19 +17,21 @@ export function LiveMode({ pkg, backHref }: { readonly pkg: SharedPackage; reado
   const items = [...arranged.slots.flatMap((s) => s.items), ...arranged.unslotted];
 
   const [idx, setIdx] = useState(0);
-  const [capo, setCapo] = useState(0);
+  const [tom, setTom] = useState(0); // transposição da sessão (semitons; + sobe, − desce)
   const [hide, setHide] = useState(false);
   const [scrolling, setScrolling] = useState(false);
   const [speed, setSpeed] = useState(3);
   const [font, setFont] = useState(1.6);
+  // Refrão (C10 de apresentação): posição p/ onde voltar após pular pro refrão (null = não pulou).
+  const [chorusReturn, setChorusReturn] = useState<number | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const item = items[idx];
+  const songHasChorus = hasChorus(item?.chordpro ?? "");
 
-  // Cifra exibida: tom soante (transpose do item) e, se houver capo, as FORMAS descem `capo`
-  // semitons (o violonista toca mais fácil); "esconder cifra" cai no stripChords.
+  // Cifra exibida: tom do item + a transposição da sessão (`tom`); "esconder cifra" → stripChords.
   let body = item?.chordpro ?? "";
-  if (body.trim()) body = transpose(body, (item?.transpose ?? 0) - capo);
+  if (body.trim()) body = transpose(body, (item?.transpose ?? 0) + tom);
   if (hide) body = stripChords(body);
   const html = body.trim() ? toHtml(body) : "";
 
@@ -61,11 +63,35 @@ export function LiveMode({ pkg, backHref }: { readonly pkg: SharedPackage; reado
     return () => cancelAnimationFrame(raf);
   }, [scrolling, speed]);
 
-  // Trocar de música: volta ao topo e pausa o autoscroll.
+  // Trocar de música: volta ao topo, pausa o autoscroll e zera tom/refrão da sessão.
   function go(delta: number) {
     setIdx((i) => Math.min(items.length - 1, Math.max(0, i + delta)));
     setScrolling(false);
+    setChorusReturn(null);
+    setTom(0);
     contentRef.current?.scrollTo(0, 0);
+  }
+
+  // Voltar ao começo da música.
+  function toStart() {
+    setChorusReturn(null);
+    contentRef.current?.scrollTo({ top: 0 });
+  }
+
+  // Pula pro refrão (guardando de onde veio); no toque seguinte, volta pra lá.
+  function toggleChorus() {
+    const el = contentRef.current;
+    if (!el) return;
+    if (chorusReturn !== null) {
+      el.scrollTop = chorusReturn;
+      setChorusReturn(null);
+      return;
+    }
+    const chorus = el.querySelector<HTMLElement>(".chorus");
+    if (!chorus) return;
+    setScrolling(false); // não brigar com o autoscroll
+    setChorusReturn(el.scrollTop);
+    el.scrollTop += chorus.getBoundingClientRect().top - el.getBoundingClientRect().top - 12;
   }
 
   // Setas do teclado navegam (útil no tablet com teclado / operador).
@@ -103,7 +129,7 @@ export function LiveMode({ pkg, backHref }: { readonly pkg: SharedPackage; reado
       <div ref={contentRef} className="live-content">
         <h2 className="live-title">
           {item?.title}
-          {capo > 0 && <span className="live-capo">Capo {capo}</span>}
+          {tom !== 0 && <span className="live-tom">tom {tom > 0 ? `+${tom}` : tom}</span>}
         </h2>
         {item?.composer && <div className="live-composer">{item.composer}</div>}
         {html ? (
@@ -118,25 +144,33 @@ export function LiveMode({ pkg, backHref }: { readonly pkg: SharedPackage; reado
       <div className="live-controls">
         <button type="button" onClick={() => go(-1)} disabled={idx === 0} aria-label="Anterior">←</button>
         <button type="button" onClick={() => go(1)} disabled={idx === items.length - 1} aria-label="Próxima">→</button>
+        {songHasChorus && (
+          <button type="button" onClick={toggleChorus} aria-label={chorusReturn !== null ? "Voltar" : "Ir ao refrão"}>
+            {chorusReturn !== null ? "↩ Voltar" : "Refrão"}
+          </button>
+        )}
+        <button type="button" onClick={toStart} aria-label="Voltar ao início">⤒ Início</button>
 
         <span className="live-group">
-          capo
-          <button type="button" onClick={() => setCapo((c) => Math.max(0, c - 1))} aria-label="Capo −">−</button>
-          <span className="live-num">{capo}</span>
-          <button type="button" onClick={() => setCapo((c) => Math.min(11, c + 1))} aria-label="Capo +">+</button>
+          tom
+          <button type="button" onClick={() => setTom((v) => Math.max(-11, v - 1))} aria-label="Tom −">−</button>
+          <span className="live-num">{tom > 0 ? `+${tom}` : tom}</span>
+          <button type="button" onClick={() => setTom((v) => Math.min(11, v + 1))} aria-label="Tom +">+</button>
         </span>
 
-        <button type="button" onClick={() => setScrolling((s) => !s)} aria-label={scrolling ? "Pausar autoscroll" : "Autoscroll"}>
-          {scrolling ? "⏸" : "⏵"}
-        </button>
-        <input
-          type="range"
-          min={1}
-          max={10}
-          value={speed}
-          onChange={(e) => setSpeed(Number(e.target.value))}
-          aria-label="Velocidade do autoscroll"
-        />
+        <span className="live-group">
+          <button type="button" onClick={() => setScrolling((s) => !s)} aria-label={scrolling ? "Pausar autoscroll" : "Autoscroll"}>
+            {scrolling ? "⏸" : "⏵"}
+          </button>
+          <input
+            type="range"
+            min={1}
+            max={10}
+            value={speed}
+            onChange={(e) => setSpeed(Number(e.target.value))}
+            aria-label="Velocidade do autoscroll"
+          />
+        </span>
 
         <span className="live-group">
           A

@@ -11,3 +11,4 @@ export * from "./to-chordpro";
 export * from "./transpose";
 export * from "./strip-chords";
 export * from "./to-html";
+export * from "./chorus";

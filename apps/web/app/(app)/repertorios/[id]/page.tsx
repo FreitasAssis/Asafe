@@ -42,11 +42,11 @@ export default async function VerRepertorio({
   else if (from === "comunidade") originCrumb = { label: "Comunidade", href: "/repertorios?aba=comunidade" };
 
   const header = (
-    <div
-      style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}
-    >
-      <Breadcrumb items={[originCrumb, { label: pkg.repertoire.title }]} />
-      <span className="flex items-center gap-2">
+    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px 12px" }}>
+      <div style={{ flex: "1 1 auto", minWidth: 0 }}>
+        <Breadcrumb items={[originCrumb, { label: pkg.repertoire.title }]} />
+      </div>
+      <span className="flex flex-wrap items-center gap-2">
         <a href={`/repertorios/${id}/ao-vivo`} className="btn">
           Ao vivo
         </a>

@@ -5,18 +5,8 @@ export function EditPencil({ href }: { readonly href: string }) {
       href={href}
       title="Editar"
       aria-label="Editar"
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 6,
-        padding: "6px 12px",
-        border: "1px solid var(--primary)",
-        borderRadius: 6,
-        color: "var(--primary)",
-        textDecoration: "none",
-        fontSize: 14,
-        whiteSpace: "nowrap",
-      }}
+      className="btn"
+      style={{ borderColor: "var(--primary)", color: "var(--primary)" }}
     >
       ✏️ Editar
     </a>
