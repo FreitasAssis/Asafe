@@ -158,17 +158,19 @@ export function LiveMode({ pkg, backHref }: { readonly pkg: SharedPackage; reado
           <button type="button" onClick={() => setTom((v) => Math.min(11, v + 1))} aria-label="Tom +">+</button>
         </span>
 
-        <button type="button" onClick={() => setScrolling((s) => !s)} aria-label={scrolling ? "Pausar autoscroll" : "Autoscroll"}>
-          {scrolling ? "⏸" : "⏵"}
-        </button>
-        <input
-          type="range"
-          min={1}
-          max={10}
-          value={speed}
-          onChange={(e) => setSpeed(Number(e.target.value))}
-          aria-label="Velocidade do autoscroll"
-        />
+        <span className="live-group">
+          <button type="button" onClick={() => setScrolling((s) => !s)} aria-label={scrolling ? "Pausar autoscroll" : "Autoscroll"}>
+            {scrolling ? "⏸" : "⏵"}
+          </button>
+          <input
+            type="range"
+            min={1}
+            max={10}
+            value={speed}
+            onChange={(e) => setSpeed(Number(e.target.value))}
+            aria-label="Velocidade do autoscroll"
+          />
+        </span>
 
         <span className="live-group">
           A

@@ -110,6 +110,7 @@
     color: var(--text);
     cursor: pointer;
     text-decoration: none;
+    white-space: nowrap;
   }
   .btn:hover {
     background: color-mix(in srgb, var(--text) 6%, var(--surface));
@@ -412,18 +413,27 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 8px 10px;
   padding: 10px 14px;
   border-top: 1px solid #3a352f;
 }
 .live-controls button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  height: 38px;
+  padding: 0 12px;
   background: #2a2520;
   color: #f4eee1;
   border: 1px solid #3a352f;
   border-radius: 8px;
-  padding: 6px 12px;
   font-size: 16px;
   cursor: pointer;
+}
+.live-controls input[type="range"] {
+  width: 120px;
 }
 .live-controls button:disabled {
   opacity: 0.4;
