@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   audioProvider,
@@ -52,6 +52,7 @@ export function SongEditor({
   const [composer, setComposer] = useState(song?.composer ?? "");
   const [defaultKey, setDefaultKey] = useState(song?.defaultKey ?? "");
   const [cifra, setCifra] = useState(song?.chordproBody ?? "");
+  const cifraRef = useRef<HTMLTextAreaElement>(null);
   const [audioLinks, setAudioLinks] = useState<string[]>(song?.audioLinks ?? []);
   const [offset, setOffset] = useState(0);
   const [hideChords, setHideChords] = useState(false);
@@ -64,6 +65,23 @@ export function SongEditor({
   const [selectedTags, setSelectedTags] = useState<Set<string>>(
     new Set(song?.tagIds ?? []),
   );
+
+  /** Envolve as linhas selecionadas (ou a linha do cursor) com {start_of_chorus}/{end_of_chorus},
+   * em parágrafo próprio. Assim o refrão fica marcado na cifra — e todo mundo do grupo o vê. */
+  function markChorus() {
+    const el = cifraRef.current;
+    if (!el) return;
+    const t = cifra;
+    const lineStart = t.lastIndexOf("\n", el.selectionStart - 1) + 1;
+    const nl = t.indexOf("\n", el.selectionEnd);
+    const lineEnd = nl === -1 ? t.length : nl;
+    const sel = t.slice(lineStart, lineEnd).trim();
+    if (!sel) return; // precisa de ao menos uma linha com conteúdo
+    const before = t.slice(0, lineStart).replace(/\n+$/, "");
+    const after = t.slice(lineEnd).replace(/^\n+/, "");
+    const block = `{start_of_chorus}\n${sel}\n{end_of_chorus}`;
+    setCifra([before, block, after].filter(Boolean).join("\n\n"));
+  }
 
   function toggleTag(id: string) {
     setSelectedTags((prev) => {
@@ -233,10 +251,21 @@ export function SongEditor({
         }}
       >
         <div>
-          <label style={{ fontSize: 13, color: "var(--text-muted)" }}>
-            Cole a cifra{detected ? ` — formato: ${FORMAT_LABEL[detected]}` : ""}
-          </label>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
+            <label style={{ fontSize: 13, color: "var(--text-muted)" }}>
+              Cole a cifra{detected ? ` — formato: ${FORMAT_LABEL[detected]}` : ""}
+            </label>
+            <button
+              type="button"
+              onClick={markChorus}
+              title="Selecione as linhas do refrão e clique — fica marcado para todos"
+              style={{ fontSize: 12 }}
+            >
+              Marcar refrão
+            </button>
+          </div>
           <textarea
+            ref={cifraRef}
             value={cifra}
             onChange={(e) => setCifra(e.target.value)}
             placeholder={"Cole aqui a cifra (acordes sobre a letra, ChordPro ou só letra)."}

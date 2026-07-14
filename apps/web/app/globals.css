@@ -334,6 +334,14 @@
 .chord-preview .lyrics {
   white-space: pre;
 }
+/* Refrão marcado ({start_of_chorus}/{end_of_chorus}) — realce sutil à esquerda. */
+.chord-preview .chorus {
+  border-left: 3px solid var(--accent);
+  padding-left: 10px;
+}
+.live-cifra .chord-preview .chorus {
+  border-left-color: #c2a14e;
+}
 
 /* Modo "Ao vivo" (B1): tela cheia escura para tocar — cobre a barra lateral. */
 .live-mode {

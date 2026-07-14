@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { arrangeRepertoire } from "@asafe/core";
-import { stripChords, toHtml, transpose } from "@asafe/chordpro";
+import { hasChorus, stripChords, toHtml, transpose } from "@asafe/chordpro";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import type { SharedPackage } from "./public-repertoire";
 
@@ -22,9 +22,12 @@ export function LiveMode({ pkg, backHref }: { readonly pkg: SharedPackage; reado
   const [scrolling, setScrolling] = useState(false);
   const [speed, setSpeed] = useState(3);
   const [font, setFont] = useState(1.6);
+  // Refrão (C10 de apresentação): posição p/ onde voltar após pular pro refrão (null = não pulou).
+  const [chorusReturn, setChorusReturn] = useState<number | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const item = items[idx];
+  const songHasChorus = hasChorus(item?.chordpro ?? "");
 
   // Cifra exibida: tom soante (transpose do item) e, se houver capo, as FORMAS descem `capo`
   // semitons (o violonista toca mais fácil); "esconder cifra" cai no stripChords.
@@ -61,11 +64,28 @@ export function LiveMode({ pkg, backHref }: { readonly pkg: SharedPackage; reado
     return () => cancelAnimationFrame(raf);
   }, [scrolling, speed]);
 
-  // Trocar de música: volta ao topo e pausa o autoscroll.
+  // Trocar de música: volta ao topo, pausa o autoscroll e zera o estado do refrão.
   function go(delta: number) {
     setIdx((i) => Math.min(items.length - 1, Math.max(0, i + delta)));
     setScrolling(false);
+    setChorusReturn(null);
     contentRef.current?.scrollTo(0, 0);
+  }
+
+  // Pula pro refrão (guardando de onde veio); no toque seguinte, volta pra lá.
+  function toggleChorus() {
+    const el = contentRef.current;
+    if (!el) return;
+    if (chorusReturn !== null) {
+      el.scrollTop = chorusReturn;
+      setChorusReturn(null);
+      return;
+    }
+    const chorus = el.querySelector<HTMLElement>(".chorus");
+    if (!chorus) return;
+    setScrolling(false); // não brigar com o autoscroll
+    setChorusReturn(el.scrollTop);
+    el.scrollTop += chorus.getBoundingClientRect().top - el.getBoundingClientRect().top - 12;
   }
 
   // Setas do teclado navegam (útil no tablet com teclado / operador).
@@ -118,6 +138,11 @@ export function LiveMode({ pkg, backHref }: { readonly pkg: SharedPackage; reado
       <div className="live-controls">
         <button type="button" onClick={() => go(-1)} disabled={idx === 0} aria-label="Anterior">←</button>
         <button type="button" onClick={() => go(1)} disabled={idx === items.length - 1} aria-label="Próxima">→</button>
+        {songHasChorus && (
+          <button type="button" onClick={toggleChorus} aria-label={chorusReturn !== null ? "Voltar" : "Ir ao refrão"}>
+            {chorusReturn !== null ? "↩ Voltar" : "Refrão"}
+          </button>
+        )}
 
         <span className="live-group">
           capo
