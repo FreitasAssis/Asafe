@@ -155,6 +155,20 @@
       "when": 1784036520737,
       "tag": "0021_invite_membership",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1784038329680,
+      "tag": "0022_delete_group",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1784038890497,
+      "tag": "0023_transfer_group",
+      "breakpoints": true
     }
   ]
 }

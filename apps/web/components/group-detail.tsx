@@ -8,10 +8,14 @@ import { Breadcrumb } from "@/components/breadcrumb";
 import {
   approveRequest,
   createInvite,
+  deleteGroup,
   leaveGroup,
   rejectRequest,
   removeMember,
+  renameGroup,
   revokeInvite,
+  setMemberRole,
+  transferGroup,
   type Group,
   type GroupInvite,
   type GroupMember,
@@ -47,6 +51,7 @@ export function GroupDetail({
   const [role, setRole] = useState<"editor" | "viewer">("viewer");
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [name, setName] = useState(group.name);
 
   const urlFor = (token: string) => `${window.location.origin}/convite/${token}`;
 
@@ -119,6 +124,32 @@ export function GroupDetail({
     }
   }
 
+  async function changeRole(userId: string, newRole: "editor" | "viewer") {
+    try {
+      await setMemberRole(browserClient(), group.id, userId, newRole);
+      setMemberList((prev) => prev.map((m) => (m.userId === userId ? { ...m, role: newRole } : m)));
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Erro ao mudar o papel.");
+    }
+  }
+
+  async function promote(m: GroupMember) {
+    if (
+      !confirm(
+        `Passar a titularidade para ${m.name ?? m.email}? Você deixa de ser o dono e passa a editor. Não dá para desfazer sozinho.`,
+      )
+    )
+      return;
+    setBusy(true);
+    try {
+      await transferGroup(browserClient(), group.id, m.userId);
+      router.refresh();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Erro ao passar a titularidade.");
+      setBusy(false);
+    }
+  }
+
   async function leave() {
     setBusy(true);
     try {
@@ -131,10 +162,63 @@ export function GroupDetail({
     }
   }
 
+  async function saveName() {
+    const trimmed = name.trim();
+    if (!trimmed || trimmed === group.name) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      await renameGroup(browserClient(), group.id, trimmed);
+      setMsg("Nome salvo ✓");
+      router.refresh();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Erro ao renomear.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function destroy() {
+    if (
+      !confirm(
+        `Excluir o grupo "${group.name}"? Os repertórios compartilhados com ele deixam de ser compartilhados. Não dá para desfazer.`,
+      )
+    )
+      return;
+    setBusy(true);
+    try {
+      await deleteGroup(browserClient(), group.id);
+      router.push("/grupos");
+      router.refresh();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Erro ao excluir o grupo.");
+      setBusy(false);
+    }
+  }
+
   return (
     <main style={{ maxWidth: 720, margin: "1.5rem auto", padding: "0 1rem", fontFamily: "system-ui" }}>
       <Breadcrumb items={[{ label: "Grupos", href: "/grupos" }, { label: group.name }]} />
-      <h1 style={{ margin: "8px 0 0" }}>{group.name}</h1>
+      {isOwner ? (
+        <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 8 }}>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            aria-label="Nome do grupo"
+            style={{ flex: 1, padding: 8, fontSize: 20, fontWeight: 600 }}
+          />
+          <button
+            type="button"
+            className="btn"
+            onClick={() => void saveName()}
+            disabled={busy || !name.trim() || name.trim() === group.name}
+          >
+            Salvar
+          </button>
+        </div>
+      ) : (
+        <h1 style={{ margin: "8px 0 0" }}>{group.name}</h1>
+      )}
 
       <section style={{ marginTop: 16 }}>
         <h2 style={{ fontSize: 16 }}>Membros</h2>
@@ -145,13 +229,29 @@ export function GroupDetail({
               style={{ display: "flex", gap: 8, alignItems: "center", padding: "6px 0", fontSize: 14 }}
             >
               <span style={{ flex: 1 }}>
-                {m.name ?? m.email} · {ROLE_LABELS[m.role]}
+                {m.name ?? m.email}
+                {!(isOwner && m.role !== "owner") && ` · ${ROLE_LABELS[m.role]}`}
                 {m.name && <span style={{ color: "var(--text-muted)", fontSize: 12 }}> ({m.email})</span>}
               </span>
               {isOwner && m.role !== "owner" && (
-                <button type="button" onClick={() => void remove(m.userId)} style={{ color: "var(--danger)" }}>
-                  remover
-                </button>
+                <>
+                  <select
+                    value={m.role}
+                    aria-label={`Papel de ${m.name ?? m.email}`}
+                    onChange={(e) => void changeRole(m.userId, e.target.value as "editor" | "viewer")}
+                    disabled={busy}
+                    style={{ fontSize: 12 }}
+                  >
+                    <option value="viewer">leitor</option>
+                    <option value="editor">editor</option>
+                  </select>
+                  <button type="button" onClick={() => void promote(m)} disabled={busy}>
+                    tornar dono
+                  </button>
+                  <button type="button" onClick={() => void remove(m.userId)} style={{ color: "var(--danger)" }}>
+                    remover
+                  </button>
+                </>
               )}
             </li>
           ))}
@@ -218,6 +318,14 @@ export function GroupDetail({
               ))}
             </ul>
           )}
+        </section>
+      )}
+
+      {isOwner && (
+        <section style={{ marginTop: 24 }}>
+          <button type="button" onClick={() => void destroy()} disabled={busy} style={{ color: "var(--danger)" }}>
+            Excluir grupo
+          </button>
         </section>
       )}
 

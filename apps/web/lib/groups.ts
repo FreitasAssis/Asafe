@@ -76,6 +76,18 @@ export async function createGroup(
   return { id: g.id, name: g.name, ownerId: g.owner_id };
 }
 
+/** Renomeia o grupo (só o dono — RLS group_modify_owner). */
+export async function renameGroup(supabase: SupabaseClient, id: string, name: string): Promise<void> {
+  const { error } = await supabase.from("group").update({ name: name.trim() }).eq("id", id);
+  if (error) throw error;
+}
+
+/** Exclui o grupo em cascata (só o dono — função delete_group). Desvincula os repertórios. */
+export async function deleteGroup(supabase: SupabaseClient, id: string): Promise<void> {
+  const { error } = await supabase.rpc("delete_group", { p_group_id: id });
+  if (error) throw error;
+}
+
 /** Membros (e-mail + papel) — via função security definer (RLS não expõe e-mail alheio). */
 export async function groupMembers(
   supabase: SupabaseClient,
@@ -193,6 +205,34 @@ export async function removeMember(
     .delete()
     .eq("group_id", groupId)
     .eq("user_id", userId);
+  if (error) throw error;
+}
+
+/** Muda o papel de um membro (só o dono — RLS membership_write_owner). */
+export async function setMemberRole(
+  supabase: SupabaseClient,
+  groupId: string,
+  userId: string,
+  role: "editor" | "viewer",
+): Promise<void> {
+  const { error } = await supabase
+    .from("membership")
+    .update({ role })
+    .eq("group_id", groupId)
+    .eq("user_id", userId);
+  if (error) throw error;
+}
+
+/** Passa a titularidade para outro membro (só o dono — função transfer_group). */
+export async function transferGroup(
+  supabase: SupabaseClient,
+  groupId: string,
+  newOwnerId: string,
+): Promise<void> {
+  const { error } = await supabase.rpc("transfer_group", {
+    p_group_id: groupId,
+    p_new_owner: newOwnerId,
+  });
   if (error) throw error;
 }
 
