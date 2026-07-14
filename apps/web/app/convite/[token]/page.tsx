@@ -12,7 +12,10 @@ export default async function Convite({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) {
+    const next = encodeURIComponent(`/convite/${token}`);
+    redirect(`/login?next=${next}`);
+  }
 
   return <JoinGroup token={token} />;
 }

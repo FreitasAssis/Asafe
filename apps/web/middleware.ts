@@ -40,8 +40,12 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
   if (!user && !isPublic) {
+    // Preserva o destino para voltar após o login/cadastro (ex.: link de convite).
+    const dest = pathname + request.nextUrl.search;
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    url.search = "";
+    url.searchParams.set("next", dest);
     return NextResponse.redirect(url);
   }
 
