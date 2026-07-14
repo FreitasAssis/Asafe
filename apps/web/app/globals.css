@@ -322,6 +322,7 @@
 .chord-preview .column {
   display: flex;
   flex-direction: column;
+  min-width: 0; /* deixa a coluna encolher e a letra quebrar em espaços (sem scroll lateral) */
 }
 .chord-preview .chord {
   font-weight: 700;
@@ -333,7 +334,7 @@
   padding-right: 10px;
 }
 .chord-preview .lyrics {
-  white-space: pre;
+  white-space: pre-wrap; /* preserva os espaços que alinham a cifra, mas quebra a linha em espaços */
 }
 /* Refrão marcado ({start_of_chorus}/{end_of_chorus}) — realce sutil à esquerda. */
 .chord-preview .chorus {
@@ -411,12 +412,25 @@
 }
 .live-controls {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid #3a352f;
+}
+/* Linhas fixas: navegação em cima, ajustes embaixo — a composição não muda entre músicas,
+   então os controles não "dançam" de posição. */
+.live-row {
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 8px 10px;
-  padding: 10px 14px;
-  border-top: 1px solid #3a352f;
+}
+/* Largura fixa: o slot do Refrão fica reservado mesmo quando a música não tem refrão
+   (visibility:hidden), e "Refrão"/"↩ Voltar" não empurram o botão Início. */
+.live-controls .live-refrao {
+  min-width: 104px;
 }
 .live-controls button {
   display: inline-flex;

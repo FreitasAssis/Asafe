@@ -142,45 +142,56 @@ export function LiveMode({ pkg, backHref }: { readonly pkg: SharedPackage; reado
       </div>
 
       <div className="live-controls">
-        <button type="button" onClick={() => go(-1)} disabled={idx === 0} aria-label="Anterior">←</button>
-        <button type="button" onClick={() => go(1)} disabled={idx === items.length - 1} aria-label="Próxima">→</button>
-        {songHasChorus && (
-          <button type="button" onClick={toggleChorus} aria-label={chorusReturn !== null ? "Voltar" : "Ir ao refrão"}>
+        <div className="live-row">
+          <button type="button" onClick={() => go(-1)} disabled={idx === 0} aria-label="Anterior">←</button>
+          <button type="button" onClick={() => go(1)} disabled={idx === items.length - 1} aria-label="Próxima">→</button>
+          {/* Slot do Refrão sempre reservado (some por visibility) p/ os controles não mudarem de lugar. */}
+          <button
+            type="button"
+            className="live-refrao"
+            onClick={toggleChorus}
+            disabled={!songHasChorus}
+            aria-hidden={!songHasChorus}
+            style={songHasChorus ? undefined : { visibility: "hidden" }}
+            aria-label={chorusReturn !== null ? "Voltar" : "Ir ao refrão"}
+          >
             {chorusReturn !== null ? "↩ Voltar" : "Refrão"}
           </button>
-        )}
-        <button type="button" onClick={toStart} aria-label="Voltar ao início">⤒ Início</button>
+          <button type="button" onClick={toStart} aria-label="Voltar ao início">⤒ Início</button>
+        </div>
 
-        <span className="live-group">
-          tom
-          <button type="button" onClick={() => setTom((v) => Math.max(-11, v - 1))} aria-label="Tom −">−</button>
-          <span className="live-num">{tom > 0 ? `+${tom}` : tom}</span>
-          <button type="button" onClick={() => setTom((v) => Math.min(11, v + 1))} aria-label="Tom +">+</button>
-        </span>
+        <div className="live-row">
+          <span className="live-group">
+            tom
+            <button type="button" onClick={() => setTom((v) => Math.max(-11, v - 1))} aria-label="Tom −">−</button>
+            <span className="live-num">{tom > 0 ? `+${tom}` : tom}</span>
+            <button type="button" onClick={() => setTom((v) => Math.min(11, v + 1))} aria-label="Tom +">+</button>
+          </span>
 
-        <span className="live-group">
-          <button type="button" onClick={() => setScrolling((s) => !s)} aria-label={scrolling ? "Pausar autoscroll" : "Autoscroll"}>
-            {scrolling ? "⏸" : "⏵"}
-          </button>
-          <input
-            type="range"
-            min={1}
-            max={10}
-            value={speed}
-            onChange={(e) => setSpeed(Number(e.target.value))}
-            aria-label="Velocidade do autoscroll"
-          />
-        </span>
+          <span className="live-group">
+            <button type="button" onClick={() => setScrolling((s) => !s)} aria-label={scrolling ? "Pausar autoscroll" : "Autoscroll"}>
+              {scrolling ? "⏸" : "⏵"}
+            </button>
+            <input
+              type="range"
+              min={1}
+              max={10}
+              value={speed}
+              onChange={(e) => setSpeed(Number(e.target.value))}
+              aria-label="Velocidade do autoscroll"
+            />
+          </span>
 
-        <span className="live-group">
-          A
-          <button type="button" onClick={() => setFont((f) => Math.max(1, +(f - 0.15).toFixed(2)))} aria-label="Fonte menor">−</button>
-          <button type="button" onClick={() => setFont((f) => Math.min(3, +(f + 0.15).toFixed(2)))} aria-label="Fonte maior">+</button>
-        </span>
+          <span className="live-group">
+            A
+            <button type="button" onClick={() => setFont((f) => Math.max(1, +(f - 0.15).toFixed(2)))} aria-label="Fonte menor">−</button>
+            <button type="button" onClick={() => setFont((f) => Math.min(3, +(f + 0.15).toFixed(2)))} aria-label="Fonte maior">+</button>
+          </span>
 
-        <label className="live-hide">
-          <input type="checkbox" checked={hide} onChange={(e) => setHide(e.target.checked)} /> esconder cifra
-        </label>
+          <label className="live-hide">
+            <input type="checkbox" checked={hide} onChange={(e) => setHide(e.target.checked)} /> esconder cifra
+          </label>
+        </div>
       </div>
     </div>
   );
