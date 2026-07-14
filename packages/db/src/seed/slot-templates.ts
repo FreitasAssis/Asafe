@@ -39,10 +39,12 @@ export const SLOT_TEMPLATES: SlotTemplateSeed[] = [
     allowCustomSlots: true,
     slots: [
       s("entrada", "Entrada"),
+      s("aspersao", "Aspersão", true),
       s("ato_penitencial", "Ato Penitencial", true),
       s("gloria", "Glória", true),
       s("salmo", "Salmo Responsorial"),
       s("aclamacao", "Aclamação ao Evangelho"),
+      s("ladainha", "Ladainha", true),
       s("ofertorio", "Ofertório"),
       s("santo", "Santo"),
       s("cordeiro", "Cordeiro", true),
