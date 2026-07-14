@@ -76,6 +76,18 @@ export async function createGroup(
   return { id: g.id, name: g.name, ownerId: g.owner_id };
 }
 
+/** Renomeia o grupo (só o dono — RLS group_modify_owner). */
+export async function renameGroup(supabase: SupabaseClient, id: string, name: string): Promise<void> {
+  const { error } = await supabase.from("group").update({ name: name.trim() }).eq("id", id);
+  if (error) throw error;
+}
+
+/** Exclui o grupo em cascata (só o dono — função delete_group). Desvincula os repertórios. */
+export async function deleteGroup(supabase: SupabaseClient, id: string): Promise<void> {
+  const { error } = await supabase.rpc("delete_group", { p_group_id: id });
+  if (error) throw error;
+}
+
 /** Membros (e-mail + papel) — via função security definer (RLS não expõe e-mail alheio). */
 export async function groupMembers(
   supabase: SupabaseClient,

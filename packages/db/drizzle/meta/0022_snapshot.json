@@ -1,0 +1,1680 @@
+{
+  "id": "02ac0919-87a8-4d90-9f2a-ea723e208227",
+  "prevId": "c4b32a9a-8a04-4900-8244-dfedbfdeedfb",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.user": {
+      "name": "user",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "user_role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'user'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_id_users_id_fk": {
+          "name": "user_id_users_id_fk",
+          "tableFrom": "user",
+          "columnsFrom": [
+            "id"
+          ],
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "user_select_self": {
+          "name": "user_select_self",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"user\".\"id\" = auth.uid()"
+        },
+        "user_update_self": {
+          "name": "user_update_self",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"user\".\"id\" = auth.uid()",
+          "withCheck": "\"user\".\"id\" = auth.uid()"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.group": {
+      "name": "group",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "group_owner_id_user_id_fk": {
+          "name": "group_owner_id_user_id_fk",
+          "tableFrom": "group",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "tableTo": "user",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "group_select_member": {
+          "name": "group_select_member",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"group\".\"owner_id\" = auth.uid() OR public.is_group_member(\"group\".\"id\")"
+        },
+        "group_insert_owner": {
+          "name": "group_insert_owner",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "\"group\".\"owner_id\" = auth.uid()"
+        },
+        "group_modify_owner": {
+          "name": "group_modify_owner",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"group\".\"owner_id\" = auth.uid()",
+          "withCheck": "\"group\".\"owner_id\" = auth.uid()"
+        },
+        "group_delete_owner": {
+          "name": "group_delete_owner",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"group\".\"owner_id\" = auth.uid()"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.membership": {
+      "name": "membership",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "group_id": {
+          "name": "group_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "membership_role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'viewer'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "membership_user_id_user_id_fk": {
+          "name": "membership_user_id_user_id_fk",
+          "tableFrom": "membership",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "tableTo": "user",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "membership_group_id_group_id_fk": {
+          "name": "membership_group_id_group_id_fk",
+          "tableFrom": "membership",
+          "columnsFrom": [
+            "group_id"
+          ],
+          "tableTo": "group",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "membership_user_id_group_id_pk": {
+          "name": "membership_user_id_group_id_pk",
+          "columns": [
+            "user_id",
+            "group_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "membership_select_member": {
+          "name": "membership_select_member",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "public.is_group_member(\"membership\".\"group_id\")"
+        },
+        "membership_write_owner": {
+          "name": "membership_write_owner",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (select 1 from \"group\" g where g.id = \"membership\".\"group_id\" and g.owner_id = auth.uid())",
+          "withCheck": "exists (select 1 from \"group\" g where g.id = \"membership\".\"group_id\" and g.owner_id = auth.uid())"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.song": {
+      "name": "song",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "composer": {
+          "name": "composer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "default_key": {
+          "name": "default_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "audio_links": {
+          "name": "audio_links",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        },
+        "community_status": {
+          "name": "community_status",
+          "type": "community_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'none'"
+        },
+        "copyright_status": {
+          "name": "copyright_status",
+          "type": "copyright_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'desconhecida'"
+        },
+        "copyright_evidence": {
+          "name": "copyright_evidence",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "license": {
+          "name": "license",
+          "type": "license_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "consent_text_version": {
+          "name": "consent_text_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "consented_at": {
+          "name": "consented_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "consented_by": {
+          "name": "consented_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "song_owner_id_idx": {
+          "name": "song_owner_id_idx",
+          "columns": [
+            {
+              "expression": "owner_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "song_owner_id_user_id_fk": {
+          "name": "song_owner_id_user_id_fk",
+          "tableFrom": "song",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "tableTo": "user",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "song_consented_by_user_id_fk": {
+          "name": "song_consented_by_user_id_fk",
+          "tableFrom": "song",
+          "columnsFrom": [
+            "consented_by"
+          ],
+          "tableTo": "user",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "song_select": {
+          "name": "song_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"song\".\"owner_id\" is null OR \"song\".\"owner_id\" = auth.uid() OR \"song\".\"community_status\" = 'approved' OR exists (select 1 from repertoire_item ri join repertoire r on r.id = ri.repertoire_id where ri.song_id = \"song\".\"id\" and r.community_status = 'approved')"
+        },
+        "song_select_group": {
+          "name": "song_select_group",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (select 1 from repertoire_item ri join repertoire r on r.id = ri.repertoire_id where ri.song_id = \"song\".\"id\" and r.group_id is not null and public.is_group_member(r.group_id))"
+        },
+        "song_select_moderation": {
+          "name": "song_select_moderation",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "public.is_moderator() and (\"song\".\"community_status\" = 'pending' or exists (select 1 from repertoire_item ri join repertoire r on r.id = ri.repertoire_id where ri.song_id = \"song\".\"id\" and r.community_status = 'pending'))"
+        },
+        "song_write_own": {
+          "name": "song_write_own",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"song\".\"owner_id\" = auth.uid()",
+          "withCheck": "\"song\".\"owner_id\" = auth.uid()"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.song_content": {
+      "name": "song_content",
+      "schema": "",
+      "columns": {
+        "song_id": {
+          "name": "song_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "chordpro_body": {
+          "name": "chordpro_body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "song_content_song_id_song_id_fk": {
+          "name": "song_content_song_id_song_id_fk",
+          "tableFrom": "song_content",
+          "columnsFrom": [
+            "song_id"
+          ],
+          "tableTo": "song",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "song_content_select": {
+          "name": "song_content_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (\n        select 1 from song s where s.id = \"song_content\".\"song_id\" and (\n          s.owner_id = auth.uid()\n          or exists (\n            select 1 from repertoire_item ri join repertoire r on r.id = ri.repertoire_id\n            where ri.song_id = s.id and r.group_id is not null and public.is_group_member(r.group_id)\n          )\n          or (\n            s.copyright_status in ('dominio_publico','licenca_aberta','permissao')\n            and (\n              s.community_status = 'approved'\n              or exists (\n                select 1 from repertoire_item ri join repertoire r on r.id = ri.repertoire_id\n                where ri.song_id = s.id and r.community_status = 'approved'\n              )\n            )\n          )\n          or (\n            public.is_moderator() and (\n              s.community_status = 'pending'\n              or exists (\n                select 1 from repertoire_item ri join repertoire r on r.id = ri.repertoire_id\n                where ri.song_id = s.id and r.community_status = 'pending'\n              )\n            )\n          )\n        )\n      )"
+        },
+        "song_content_write_own": {
+          "name": "song_content_write_own",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (select 1 from song s where s.id = \"song_content\".\"song_id\" and s.owner_id = auth.uid())",
+          "withCheck": "exists (select 1 from song s where s.id = \"song_content\".\"song_id\" and s.owner_id = auth.uid())"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.tag": {
+      "name": "tag",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "tag_category",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "tag_owner_id_user_id_fk": {
+          "name": "tag_owner_id_user_id_fk",
+          "tableFrom": "tag",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "tableTo": "user",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "tag_select": {
+          "name": "tag_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"tag\".\"owner_id\" is null OR \"tag\".\"owner_id\" = auth.uid()"
+        },
+        "tag_write_own": {
+          "name": "tag_write_own",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"tag\".\"owner_id\" = auth.uid()",
+          "withCheck": "\"tag\".\"owner_id\" = auth.uid()"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.song_tag": {
+      "name": "song_tag",
+      "schema": "",
+      "columns": {
+        "song_id": {
+          "name": "song_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tag_id": {
+          "name": "tag_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "song_tag_tag_id_idx": {
+          "name": "song_tag_tag_id_idx",
+          "columns": [
+            {
+              "expression": "tag_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "song_tag_song_id_song_id_fk": {
+          "name": "song_tag_song_id_song_id_fk",
+          "tableFrom": "song_tag",
+          "columnsFrom": [
+            "song_id"
+          ],
+          "tableTo": "song",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "song_tag_tag_id_tag_id_fk": {
+          "name": "song_tag_tag_id_tag_id_fk",
+          "tableFrom": "song_tag",
+          "columnsFrom": [
+            "tag_id"
+          ],
+          "tableTo": "tag",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "song_tag_song_id_tag_id_pk": {
+          "name": "song_tag_song_id_tag_id_pk",
+          "columns": [
+            "song_id",
+            "tag_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "song_tag_select": {
+          "name": "song_tag_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (select 1 from song s where s.id = \"song_tag\".\"song_id\")"
+        },
+        "song_tag_insert_own": {
+          "name": "song_tag_insert_own",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "exists (select 1 from song s where s.id = \"song_tag\".\"song_id\" and s.owner_id = auth.uid())"
+        },
+        "song_tag_delete_own": {
+          "name": "song_tag_delete_own",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (select 1 from song s where s.id = \"song_tag\".\"song_id\" and s.owner_id = auth.uid())"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.user_song_tag_override": {
+      "name": "user_song_tag_override",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "song_id": {
+          "name": "song_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tag_id": {
+          "name": "tag_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "action": {
+          "name": "action",
+          "type": "tag_override_action",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_song_tag_override_user_id_user_id_fk": {
+          "name": "user_song_tag_override_user_id_user_id_fk",
+          "tableFrom": "user_song_tag_override",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "tableTo": "user",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "user_song_tag_override_song_id_song_id_fk": {
+          "name": "user_song_tag_override_song_id_song_id_fk",
+          "tableFrom": "user_song_tag_override",
+          "columnsFrom": [
+            "song_id"
+          ],
+          "tableTo": "song",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "user_song_tag_override_tag_id_tag_id_fk": {
+          "name": "user_song_tag_override_tag_id_tag_id_fk",
+          "tableFrom": "user_song_tag_override",
+          "columnsFrom": [
+            "tag_id"
+          ],
+          "tableTo": "tag",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "user_song_tag_override_user_id_song_id_tag_id_pk": {
+          "name": "user_song_tag_override_user_id_song_id_tag_id_pk",
+          "columns": [
+            "user_id",
+            "song_id",
+            "tag_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "override_own": {
+          "name": "override_own",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"user_song_tag_override\".\"user_id\" = auth.uid()",
+          "withCheck": "\"user_song_tag_override\".\"user_id\" = auth.uid()"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.repertoire": {
+      "name": "repertoire",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "repertoire_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "group_id": {
+          "name": "group_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
+        },
+        "community_status": {
+          "name": "community_status",
+          "type": "community_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'none'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "repertoire_owner_id_idx": {
+          "name": "repertoire_owner_id_idx",
+          "columns": [
+            {
+              "expression": "owner_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "repertoire_group_id_idx": {
+          "name": "repertoire_group_id_idx",
+          "columns": [
+            {
+              "expression": "group_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "repertoire_community_status_idx": {
+          "name": "repertoire_community_status_idx",
+          "columns": [
+            {
+              "expression": "community_status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"repertoire\".\"community_status\" <> 'none'",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "repertoire_owner_id_user_id_fk": {
+          "name": "repertoire_owner_id_user_id_fk",
+          "tableFrom": "repertoire",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "tableTo": "user",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "repertoire_group_id_group_id_fk": {
+          "name": "repertoire_group_id_group_id_fk",
+          "tableFrom": "repertoire",
+          "columnsFrom": [
+            "group_id"
+          ],
+          "tableTo": "group",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "repertoire_select": {
+          "name": "repertoire_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"repertoire\".\"owner_id\" = auth.uid() OR (\"repertoire\".\"group_id\" is not null AND public.is_group_member(\"repertoire\".\"group_id\")) OR \"repertoire\".\"community_status\" = 'approved' OR (\"repertoire\".\"community_status\" = 'pending' AND public.is_moderator())"
+        },
+        "repertoire_insert": {
+          "name": "repertoire_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "\"repertoire\".\"owner_id\" = auth.uid()"
+        },
+        "repertoire_update": {
+          "name": "repertoire_update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"repertoire\".\"owner_id\" = auth.uid()",
+          "withCheck": "\"repertoire\".\"owner_id\" = auth.uid()"
+        },
+        "repertoire_delete": {
+          "name": "repertoire_delete",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"repertoire\".\"owner_id\" = auth.uid()"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.repertoire_item": {
+      "name": "repertoire_item",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "repertoire_id": {
+          "name": "repertoire_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "song_id": {
+          "name": "song_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "moment_slot": {
+          "name": "moment_slot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "order": {
+          "name": "order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "transpose": {
+          "name": "transpose",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "repertoire_item_repertoire_id_idx": {
+          "name": "repertoire_item_repertoire_id_idx",
+          "columns": [
+            {
+              "expression": "repertoire_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "repertoire_item_song_id_idx": {
+          "name": "repertoire_item_song_id_idx",
+          "columns": [
+            {
+              "expression": "song_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "repertoire_item_repertoire_id_repertoire_id_fk": {
+          "name": "repertoire_item_repertoire_id_repertoire_id_fk",
+          "tableFrom": "repertoire_item",
+          "columnsFrom": [
+            "repertoire_id"
+          ],
+          "tableTo": "repertoire",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "repertoire_item_song_id_song_id_fk": {
+          "name": "repertoire_item_song_id_song_id_fk",
+          "tableFrom": "repertoire_item",
+          "columnsFrom": [
+            "song_id"
+          ],
+          "tableTo": "song",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "repertoire_item_select": {
+          "name": "repertoire_item_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (select 1 from repertoire r where r.id = \"repertoire_item\".\"repertoire_id\" and (r.owner_id = auth.uid() or (r.group_id is not null and public.is_group_member(r.group_id)) or r.community_status = 'approved' or (r.community_status = 'pending' and public.is_moderator())))"
+        },
+        "repertoire_item_insert": {
+          "name": "repertoire_item_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "exists (select 1 from repertoire r where r.id = \"repertoire_item\".\"repertoire_id\" and (r.owner_id = auth.uid() or (r.group_id is not null and public.is_group_editor(r.group_id))))"
+        },
+        "repertoire_item_update": {
+          "name": "repertoire_item_update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (select 1 from repertoire r where r.id = \"repertoire_item\".\"repertoire_id\" and (r.owner_id = auth.uid() or (r.group_id is not null and public.is_group_editor(r.group_id))))",
+          "withCheck": "exists (select 1 from repertoire r where r.id = \"repertoire_item\".\"repertoire_id\" and (r.owner_id = auth.uid() or (r.group_id is not null and public.is_group_editor(r.group_id))))"
+        },
+        "repertoire_item_delete": {
+          "name": "repertoire_item_delete",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (select 1 from repertoire r where r.id = \"repertoire_item\".\"repertoire_id\" and (r.owner_id = auth.uid() or (r.group_id is not null and public.is_group_editor(r.group_id))))"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.repertoire_theme": {
+      "name": "repertoire_theme",
+      "schema": "",
+      "columns": {
+        "repertoire_id": {
+          "name": "repertoire_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tag_id": {
+          "name": "tag_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "repertoire_theme_repertoire_id_repertoire_id_fk": {
+          "name": "repertoire_theme_repertoire_id_repertoire_id_fk",
+          "tableFrom": "repertoire_theme",
+          "columnsFrom": [
+            "repertoire_id"
+          ],
+          "tableTo": "repertoire",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "repertoire_theme_tag_id_tag_id_fk": {
+          "name": "repertoire_theme_tag_id_tag_id_fk",
+          "tableFrom": "repertoire_theme",
+          "columnsFrom": [
+            "tag_id"
+          ],
+          "tableTo": "tag",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "repertoire_theme_repertoire_id_tag_id_pk": {
+          "name": "repertoire_theme_repertoire_id_tag_id_pk",
+          "columns": [
+            "repertoire_id",
+            "tag_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "repertoire_theme_select": {
+          "name": "repertoire_theme_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (select 1 from repertoire r where r.id = \"repertoire_theme\".\"repertoire_id\" and (r.owner_id = auth.uid() or (r.group_id is not null and public.is_group_member(r.group_id)) or r.community_status = 'approved' or (r.community_status = 'pending' and public.is_moderator())))"
+        },
+        "repertoire_theme_insert": {
+          "name": "repertoire_theme_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "exists (select 1 from repertoire r where r.id = \"repertoire_theme\".\"repertoire_id\" and (r.owner_id = auth.uid() or (r.group_id is not null and public.is_group_editor(r.group_id))))"
+        },
+        "repertoire_theme_update": {
+          "name": "repertoire_theme_update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (select 1 from repertoire r where r.id = \"repertoire_theme\".\"repertoire_id\" and (r.owner_id = auth.uid() or (r.group_id is not null and public.is_group_editor(r.group_id))))",
+          "withCheck": "exists (select 1 from repertoire r where r.id = \"repertoire_theme\".\"repertoire_id\" and (r.owner_id = auth.uid() or (r.group_id is not null and public.is_group_editor(r.group_id))))"
+        },
+        "repertoire_theme_delete": {
+          "name": "repertoire_theme_delete",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (select 1 from repertoire r where r.id = \"repertoire_theme\".\"repertoire_id\" and (r.owner_id = auth.uid() or (r.group_id is not null and public.is_group_editor(r.group_id))))"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.slot_template": {
+      "name": "slot_template",
+      "schema": "",
+      "columns": {
+        "type": {
+          "name": "type",
+          "type": "repertoire_type",
+          "typeSchema": "public",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "slots": {
+          "name": "slots",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reorderable": {
+          "name": "reorderable",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "allow_custom_slots": {
+          "name": "allow_custom_slots",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "slot_template_select": {
+          "name": "slot_template_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "true"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.share_link": {
+      "name": "share_link",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "repertoire_id": {
+          "name": "repertoire_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token": {
+          "name": "token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'read'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "share_link_repertoire_id_repertoire_id_fk": {
+          "name": "share_link_repertoire_id_repertoire_id_fk",
+          "tableFrom": "share_link",
+          "columnsFrom": [
+            "repertoire_id"
+          ],
+          "tableTo": "repertoire",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "share_link_token_unique": {
+          "name": "share_link_token_unique",
+          "columns": [
+            "token"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {
+        "share_link_owner": {
+          "name": "share_link_owner",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (select 1 from repertoire r where r.id = \"share_link\".\"repertoire_id\" and r.owner_id = auth.uid())",
+          "withCheck": "exists (select 1 from repertoire r where r.id = \"share_link\".\"repertoire_id\" and r.owner_id = auth.uid())"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.moderation_event": {
+      "name": "moderation_event",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "target_type": {
+          "name": "target_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_id": {
+          "name": "target_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "moderator_id": {
+          "name": "moderator_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "decision": {
+          "name": "decision",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reason": {
+          "name": "reason",
+          "type": "moderation_reason",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "moderation_event_target_idx": {
+          "name": "moderation_event_target_idx",
+          "columns": [
+            {
+              "expression": "target_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "target_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "moderation_event_moderator_id_user_id_fk": {
+          "name": "moderation_event_moderator_id_user_id_fk",
+          "tableFrom": "moderation_event",
+          "columnsFrom": [
+            "moderator_id"
+          ],
+          "tableTo": "user",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "moderation_event_select": {
+          "name": "moderation_event_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "public.is_moderator()\n        or (\"moderation_event\".\"target_type\" = 'song' and exists (select 1 from song s where s.id = \"moderation_event\".\"target_id\" and s.owner_id = auth.uid()))\n        or (\"moderation_event\".\"target_type\" = 'repertoire' and exists (select 1 from repertoire r where r.id = \"moderation_event\".\"target_id\" and r.owner_id = auth.uid()))"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.authorized_source": {
+      "name": "authorized_source",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "composer": {
+          "name": "composer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "composer_key": {
+          "name": "composer_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "publisher": {
+          "name": "publisher",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "evidence": {
+          "name": "evidence",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "authorized_source_composer_key_idx": {
+          "name": "authorized_source_composer_key_idx",
+          "columns": [
+            {
+              "expression": "composer_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "authorized_source_created_by_user_id_fk": {
+          "name": "authorized_source_created_by_user_id_fk",
+          "tableFrom": "authorized_source",
+          "columnsFrom": [
+            "created_by"
+          ],
+          "tableTo": "user",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "authorized_source_moderator": {
+          "name": "authorized_source_moderator",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "authenticated"
+          ],
+          "using": "public.is_moderator()",
+          "withCheck": "public.is_moderator()"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    }
+  },
+  "enums": {
+    "public.community_status": {
+      "name": "community_status",
+      "schema": "public",
+      "values": [
+        "none",
+        "pending",
+        "approved",
+        "rejected",
+        "returned"
+      ]
+    },
+    "public.copyright_status": {
+      "name": "copyright_status",
+      "schema": "public",
+      "values": [
+        "dominio_publico",
+        "licenca_aberta",
+        "permissao",
+        "protegida",
+        "desconhecida"
+      ]
+    },
+    "public.license_kind": {
+      "name": "license_kind",
+      "schema": "public",
+      "values": [
+        "cc_by",
+        "cc_by_sa",
+        "permissao_asafe"
+      ]
+    },
+    "public.membership_role": {
+      "name": "membership_role",
+      "schema": "public",
+      "values": [
+        "owner",
+        "editor",
+        "viewer"
+      ]
+    },
+    "public.moderation_reason": {
+      "name": "moderation_reason",
+      "schema": "public",
+      "values": [
+        "autoria_status_incorreto",
+        "protegida_sem_permissao",
+        "duplicada",
+        "qualidade_cifra",
+        "outro"
+      ]
+    },
+    "public.repertoire_type": {
+      "name": "repertoire_type",
+      "schema": "public",
+      "values": [
+        "Missa",
+        "Casamento",
+        "Adoracao",
+        "Terco",
+        "GrupoDeOracao",
+        "Livre"
+      ]
+    },
+    "public.tag_category": {
+      "name": "tag_category",
+      "schema": "public",
+      "values": [
+        "momento",
+        "tempo_liturgico",
+        "tema",
+        "ocasiao",
+        "fonte",
+        "salmo"
+      ]
+    },
+    "public.tag_override_action": {
+      "name": "tag_override_action",
+      "schema": "public",
+      "values": [
+        "add",
+        "remove"
+      ]
+    },
+    "public.user_role": {
+      "name": "user_role",
+      "schema": "public",
+      "values": [
+        "user",
+        "moderator",
+        "admin"
+      ]
+    },
+    "public.visibility": {
+      "name": "visibility",
+      "schema": "public",
+      "values": [
+        "private",
+        "group",
+        "public"
+      ]
+    }
+  },
+  "schemas": {},
+  "views": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

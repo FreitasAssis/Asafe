@@ -8,9 +8,11 @@ import { Breadcrumb } from "@/components/breadcrumb";
 import {
   approveRequest,
   createInvite,
+  deleteGroup,
   leaveGroup,
   rejectRequest,
   removeMember,
+  renameGroup,
   revokeInvite,
   type Group,
   type GroupInvite,
@@ -47,6 +49,7 @@ export function GroupDetail({
   const [role, setRole] = useState<"editor" | "viewer">("viewer");
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [name, setName] = useState(group.name);
 
   const urlFor = (token: string) => `${window.location.origin}/convite/${token}`;
 
@@ -131,10 +134,63 @@ export function GroupDetail({
     }
   }
 
+  async function saveName() {
+    const trimmed = name.trim();
+    if (!trimmed || trimmed === group.name) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      await renameGroup(browserClient(), group.id, trimmed);
+      setMsg("Nome salvo ✓");
+      router.refresh();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Erro ao renomear.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function destroy() {
+    if (
+      !confirm(
+        `Excluir o grupo "${group.name}"? Os repertórios compartilhados com ele deixam de ser compartilhados. Não dá para desfazer.`,
+      )
+    )
+      return;
+    setBusy(true);
+    try {
+      await deleteGroup(browserClient(), group.id);
+      router.push("/grupos");
+      router.refresh();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Erro ao excluir o grupo.");
+      setBusy(false);
+    }
+  }
+
   return (
     <main style={{ maxWidth: 720, margin: "1.5rem auto", padding: "0 1rem", fontFamily: "system-ui" }}>
       <Breadcrumb items={[{ label: "Grupos", href: "/grupos" }, { label: group.name }]} />
-      <h1 style={{ margin: "8px 0 0" }}>{group.name}</h1>
+      {isOwner ? (
+        <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 8 }}>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            aria-label="Nome do grupo"
+            style={{ flex: 1, padding: 8, fontSize: 20, fontWeight: 600 }}
+          />
+          <button
+            type="button"
+            className="btn"
+            onClick={() => void saveName()}
+            disabled={busy || !name.trim() || name.trim() === group.name}
+          >
+            Salvar
+          </button>
+        </div>
+      ) : (
+        <h1 style={{ margin: "8px 0 0" }}>{group.name}</h1>
+      )}
 
       <section style={{ marginTop: 16 }}>
         <h2 style={{ fontSize: 16 }}>Membros</h2>
@@ -218,6 +274,14 @@ export function GroupDetail({
               ))}
             </ul>
           )}
+        </section>
+      )}
+
+      {isOwner && (
+        <section style={{ marginTop: 24 }}>
+          <button type="button" onClick={() => void destroy()} disabled={busy} style={{ color: "var(--danger)" }}>
+            Excluir grupo
+          </button>
         </section>
       )}
 
