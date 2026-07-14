@@ -17,5 +17,10 @@ export default async function Convite({
     redirect(`/login?next=${next}`);
   }
 
+  // Já é membro? Vai direto pro grupo, sem mostrar "Pedir para entrar".
+  const { data } = await supabase.rpc("invite_membership", { p_token: token });
+  const info = data as { groupId: string; isMember: boolean } | null;
+  if (info?.isMember) redirect(`/grupos/${info.groupId}`);
+
   return <JoinGroup token={token} />;
 }
