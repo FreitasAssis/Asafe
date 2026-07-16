@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { arrangeRepertoire } from "@asafe/core";
 import { stripChords } from "@asafe/chordpro";
 import { useWakeLock } from "@/lib/use-wake-lock";
+import { useLiveSync } from "@/lib/use-live-sync";
 import type { SharedPackage } from "./public-repertoire";
 
 /** Letra limpa (sem acordes e sem diretivas `{…}`) em linhas — para o telão. */
@@ -21,9 +22,15 @@ function lyricLines(body: string): string[] {
 export function ProjectionMode({
   pkg,
   backHref,
+  repertoireId,
+  userId,
+  userName,
 }: {
   readonly pkg: SharedPackage;
   readonly backHref: string;
+  readonly repertoireId: string;
+  readonly userId: string;
+  readonly userName: string;
 }) {
   const arranged = arrangeRepertoire(pkg.slots, pkg.items);
   const items = [...arranged.slots.flatMap((s) => s.items), ...arranged.unslotted];
@@ -31,6 +38,19 @@ export function ProjectionMode({
   const [idx, setIdx] = useState(0);
   const [showUI, setShowUI] = useState(true);
   useWakeLock();
+
+  // B3: o telão é um SEGUIDOR silencioso — entra no canal e acompanha a música do mestre,
+  // sem nenhum controle de sincronia na tela. Nunca comanda; navega manual só se não houver mestre.
+  useLiveSync({
+    repertoireId,
+    enabled: true,
+    userId,
+    name: userName,
+    state: { idx },
+    onRemote: ({ idx: rIdx }) => {
+      setIdx(Math.min(items.length - 1, Math.max(0, rIdx)));
+    },
+  });
 
   const item = items[idx];
   const lines = item ? lyricLines(item.chordpro ?? "") : [];

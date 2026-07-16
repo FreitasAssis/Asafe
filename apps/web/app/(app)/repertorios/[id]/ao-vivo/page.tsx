@@ -15,5 +15,17 @@ export default async function AoVivo({ params }: { params: Promise<{ id: string 
   const pkg = await getRepertoirePackage(supabase, id);
   if (!pkg) notFound();
 
-  return <LiveMode pkg={pkg} backHref={`/repertorios/${id}`} />;
+  // Só o primeiro nome (ou o começo do e-mail) — "Seguindo Fulano" não pode ficar extenso.
+  const full = (user.user_metadata?.display_name as string | undefined) ?? user.email ?? "Anônimo";
+  const name = full.split(/[\s@]/)[0] || full;
+
+  return (
+    <LiveMode
+      pkg={pkg}
+      backHref={`/repertorios/${id}`}
+      repertoireId={id}
+      userId={user.id}
+      userName={name}
+    />
+  );
 }

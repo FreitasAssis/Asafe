@@ -471,6 +471,33 @@
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
 }
 
+/* Sincronia (B3): 👥 destacado quando ligada + status curto sob a barra. */
+.live-gear.live-sync-on {
+  color: #c2a14e;
+}
+.live-syncbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 2px 14px 8px;
+  font-size: 13px;
+  color: #cdc4b2;
+  border-bottom: 1px solid #3a352f;
+}
+.live-syncbar button {
+  background: #2a2520;
+  color: #f4eee1;
+  border: 1px solid #3a352f;
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.live-sync-panel {
+  align-items: flex-start;
+}
+
 /* Setas laterais p/ trocar de música — transparentes, não atrapalham a leitura. */
 .live-edge {
   position: absolute;
