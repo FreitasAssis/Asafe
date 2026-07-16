@@ -169,6 +169,13 @@
       "when": 1784038890497,
       "tag": "0023_transfer_group",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1784235785160,
+      "tag": "0024_realtime_live_authz",
+      "breakpoints": true
     }
   ]
 }

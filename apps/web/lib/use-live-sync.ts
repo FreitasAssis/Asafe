@@ -14,6 +14,7 @@ export interface LiveSync {
   isMaster: boolean;
   following: boolean;
   count: number;
+  peers: string[];
   masterName: string | null;
   claim: () => void;
   detach: () => void;
@@ -44,6 +45,7 @@ export function useLiveSync(params: {
   const [isMaster, setIsMaster] = useState(false);
   const [following, setFollowing] = useState(true);
   const [count, setCount] = useState(0);
+  const [peers, setPeers] = useState<string[]>([]);
   const [masterId, setMasterId] = useState<string | null>(null);
   const [masterName, setMasterName] = useState<string | null>(null);
 
@@ -67,7 +69,7 @@ export function useLiveSync(params: {
     if (!enabled) return;
     const supabase = browserClient();
     const ch = supabase.channel(`live:${repertoireId}`, {
-      config: { presence: { key: userId }, broadcast: { self: true } },
+      config: { private: true, presence: { key: userId }, broadcast: { self: true } },
     });
     chRef.current = ch;
 
@@ -88,6 +90,11 @@ export function useLiveSync(params: {
     const refresh = () => {
       const st = ch.presenceState();
       setCount(Object.keys(st).length);
+      setPeers(
+        Object.values(st)
+          .map((arr) => (arr[0] as { name?: string } | undefined)?.name)
+          .filter((n): n is string => !!n),
+      );
       // se o mestre saiu do canal, ninguém comanda até alguém reivindicar
       if (masterIdRef.current && !st[masterIdRef.current]) {
         setMasterId(null);
@@ -114,6 +121,7 @@ export function useLiveSync(params: {
       setMasterId(null);
       setMasterName(null);
       setCount(0);
+      setPeers([]);
     };
   }, [enabled, repertoireId, userId, name, sendState]);
 
@@ -148,6 +156,7 @@ export function useLiveSync(params: {
     isMaster,
     following,
     count,
+    peers,
     masterName: masterId ? masterName : null,
     claim,
     detach,

@@ -222,6 +222,9 @@ export function LiveMode({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items.length]);
 
+  const plural = live.count === 1 ? "" : "s";
+  const peersLabel = live.peers.length > 0 ? live.peers.join(", ") : `${live.count} conectado${plural}`;
+
   // Texto curto do status de sincronia (evita ternário aninhado no JSX).
   let syncStatus = "";
   if (sync) {
@@ -293,9 +296,7 @@ export function LiveMode({
           </label>
           {sync && (
             <>
-              <span className="live-num" style={{ minWidth: 0 }}>
-                {live.count} conectado{live.count === 1 ? "" : "s"}
-              </span>
+              <span className="live-num" style={{ minWidth: 0 }}>{peersLabel}</span>
               {live.isMaster ? (
                 <span className="live-num" style={{ minWidth: 0 }}>Você comanda</span>
               ) : (
