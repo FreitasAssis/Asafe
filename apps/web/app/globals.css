@@ -404,6 +404,26 @@
   color: #9a917f;
   font-style: italic;
 }
+/* Observação da música (💬): botão ao lado do título + a nota revelada (preserva quebras). */
+.live-note-btn {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 0 4px;
+  align-self: center;
+}
+.live-note {
+  white-space: pre-wrap;
+  background: #2a2520;
+  border-left: 3px solid #c2a14e;
+  color: #e8dcc0;
+  font-size: 0.95rem;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: 2px 0 14px;
+}
 .live-cifra .chord-preview .chord {
   color: #c2a14e;
 }

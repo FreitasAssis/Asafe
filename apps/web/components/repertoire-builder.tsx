@@ -228,11 +228,12 @@ export function RepertoireBuilder({
                   +
                 </button>
               </span>
-              <input
+              <textarea
                 defaultValue={it.notes ?? ""}
-                placeholder="nota…"
+                placeholder="observações…"
+                rows={2}
                 onBlur={(e) => void saveNotes(it, e.target.value)}
-                style={{ fontSize: 12, padding: "2px 6px", width: 140 }}
+                style={{ fontSize: 12, padding: "4px 6px", width: 180, resize: "vertical", fontFamily: "inherit" }}
               />
               <button type="button" onClick={() => void move(it, slotItems, "up")} style={{ fontSize: 12 }}>
                 ↑

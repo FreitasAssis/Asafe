@@ -42,6 +42,7 @@ export function LiveMode({
   // "Palco limpo": a barra inferior (dock) se auto-esconde; ajustes (tom/fonte/esconder) num painel.
   const [dock, setDock] = useState(true);
   const [settings, setSettings] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(false); // nota/observação da música (balão 💬)
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ptr = useRef({ x: 0, y: 0, t: 0 });
   // B3: navegação sincronizada (opcional). `sync` liga; `syncPanel` abre as ações do 👥.
@@ -58,6 +59,7 @@ export function LiveMode({
     setChorusReturn(null);
     setTom(0);
     setAnchor(0);
+    setNoteOpen(false);
     contentRef.current?.scrollTo(0, 0);
   }
 
@@ -148,6 +150,7 @@ export function LiveMode({
     setChorusReturn(null);
     setTom(0);
     setAnchor(0);
+    setNoteOpen(false);
     contentRef.current?.scrollTo(0, 0);
   }
 
@@ -339,9 +342,21 @@ export function LiveMode({
       >
         <h2 className="live-title">
           {item?.title}
+          {item?.notes && (
+            <button
+              type="button"
+              className="live-note-btn"
+              onClick={() => setNoteOpen((o) => !o)}
+              aria-label={noteOpen ? "Esconder observação" : "Ver observação"}
+              aria-expanded={noteOpen}
+            >
+              💬
+            </button>
+          )}
           {tom !== 0 && <span className="live-tom">tom {tom > 0 ? `+${tom}` : tom}</span>}
         </h2>
         {item?.composer && <div className="live-composer">{item.composer}</div>}
+        {noteOpen && item?.notes && <div className="live-note">{item.notes}</div>}
         {html ? (
           <div className="live-cifra" style={{ fontSize: `${font}rem` }}>
             <div className="chord-preview" dangerouslySetInnerHTML={{ __html: html }} />
