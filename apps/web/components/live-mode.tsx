@@ -47,6 +47,9 @@ export function LiveMode({
   // B3: navegação sincronizada (opcional). `sync` liga; `syncPanel` abre as ações do 👥.
   const [sync, setSync] = useState(false);
   const [syncPanel, setSyncPanel] = useState(false);
+  // B3.2: âncora de seção = índice do parágrafo no topo. O mestre transmite; o seguidor rola até lá.
+  const [anchor, setAnchor] = useState(0);
+  const lastAnchor = useRef(0);
 
   // Aplica a música que veio do mestre (sem re-transmitir nem "soltar" o seguidor).
   function applyRemoteIdx(i: number) {
@@ -54,7 +57,18 @@ export function LiveMode({
     setScrolling(false);
     setChorusReturn(null);
     setTom(0);
+    setAnchor(0);
     contentRef.current?.scrollTo(0, 0);
+  }
+
+  // Rola até o parágrafo `k` (âncora de seção). Cada aparelho resolve no próprio layout.
+  function scrollToParagraph(k: number) {
+    const el = contentRef.current;
+    if (!el) return;
+    const paras = el.querySelectorAll<HTMLElement>(".chord-preview .paragraph");
+    const target = paras[k];
+    if (!target) return;
+    el.scrollTop += target.getBoundingClientRect().top - el.getBoundingClientRect().top - 12;
   }
 
   const live = useLiveSync({
@@ -62,11 +76,31 @@ export function LiveMode({
     enabled: sync,
     userId,
     name: userName,
-    state: { idx },
-    onRemote: ({ idx: rIdx }) => {
+    state: { idx, anchor },
+    onRemote: ({ idx: rIdx, anchor: rAnchor }) => {
       if (rIdx !== idx) applyRemoteIdx(rIdx);
+      else if (rAnchor != null) scrollToParagraph(rAnchor);
     },
   });
+
+  // Mestre: ao rolar, transmite o parágrafo no topo (com throttle) — a seção que todos seguem.
+  function onScroll() {
+    if (!(sync && live.isMaster)) return;
+    const now = Date.now();
+    if (now - lastAnchor.current < 250) return;
+    lastAnchor.current = now;
+    const el = contentRef.current;
+    if (!el) return;
+    const top = el.getBoundingClientRect().top;
+    const paras = [...el.querySelectorAll<HTMLElement>(".chord-preview .paragraph")];
+    let cur = 0;
+    for (let i = 0; i < paras.length; i++) {
+      const p = paras[i];
+      if (p && p.getBoundingClientRect().top - top <= 13) cur = i;
+      else break;
+    }
+    setAnchor((a) => (a === cur ? a : cur));
+  }
 
   const item = items[idx];
   const songHasChorus = hasChorus(item?.chordpro ?? "");
@@ -113,6 +147,7 @@ export function LiveMode({
     setScrolling(false);
     setChorusReturn(null);
     setTom(0);
+    setAnchor(0);
     contentRef.current?.scrollTo(0, 0);
   }
 
@@ -299,6 +334,7 @@ export function LiveMode({
         className="live-content"
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
+        onScroll={onScroll}
       >
         <h2 className="live-title">
           {item?.title}
