@@ -410,29 +410,103 @@
 .live-cifra .chord-preview .lyrics {
   color: #f4eee1;
 }
-.live-controls {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  border-top: 1px solid #3a352f;
+/* Linha SEM nenhum acorde (muito comum: refrão/partes só cantadas, ou com a cifra escondida): a
+   linha vazia do acorde — que reservaria ~1.2em p/ alinhar — encolhe p/ um respiro pequeno, sem
+   colar os versos. Linhas COM acorde mantêm a altura cheia, senão a letra desalinha dentro da
+   própria linha. (`:has()` seleciona a linha que não tem nenhum acorde preenchido.) */
+.chord-preview .row:not(:has(.chord:not(:empty))) .chord {
+  min-height: 0.45em;
 }
-/* Linhas fixas: navegação em cima, ajustes embaixo — a composição não muda entre músicas,
-   então os controles não "dançam" de posição. */
-.live-row {
+/* "Palco limpo": barra inferior que se auto-esconde (~4s). Um toque na cifra revela/oculta. */
+.live-dock {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 8px 10px;
+  padding: 10px 14px;
+  border-top: 1px solid #3a352f;
+  background: #1e1c1a;
+  transition: opacity 0.25s ease, transform 0.25s ease;
 }
-/* Largura fixa: o slot do Refrão fica reservado mesmo quando a música não tem refrão
-   (visibility:hidden), e "Refrão"/"↩ Voltar" não empurram o botão Início. */
-.live-controls .live-refrao {
+.live-dock.hidden {
+  opacity: 0;
+  transform: translateY(100%);
+  pointer-events: none;
+}
+/* Slot do Refrão reservado (visibility:hidden quando não há refrão) p/ não deslocar o Início. */
+.live-dock .live-refrao {
   min-width: 104px;
 }
-.live-controls button {
+
+/* Painel de ajustes (⚙) no topo — feito antes de tocar: tom, fonte, esconder cifra. */
+.live-gear {
+  background: transparent;
+  border: 0;
+  color: #cdc4b2;
+  font-size: 18px;
+  line-height: 1;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+.live-gear.on {
+  color: #f4eee1;
+}
+.live-settings {
+  position: absolute;
+  top: 52px;
+  right: 10px;
+  z-index: 210;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #2a2520;
+  border: 1px solid #3a352f;
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+}
+
+/* Setas laterais p/ trocar de música — transparentes, não atrapalham a leitura. */
+.live-edge {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 52px;
+  height: 34%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  color: #f4eee1;
+  font-size: 40px;
+  line-height: 1;
+  opacity: 0.2;
+  z-index: 150;
+  cursor: pointer;
+}
+.live-edge:active {
+  opacity: 0.55;
+}
+.live-edge:disabled {
+  opacity: 0;
+  pointer-events: none;
+}
+.live-edge-left {
+  left: 0;
+}
+.live-edge-right {
+  right: 0;
+}
+
+/* Botões comuns do dock e do painel de ajustes. */
+.live-dock button,
+.live-settings button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -446,10 +520,13 @@
   font-size: 16px;
   cursor: pointer;
 }
-.live-controls input[type="range"] {
+.live-settings button {
+  background: #35302a;
+}
+.live-dock input[type="range"] {
   width: 120px;
 }
-.live-controls button:disabled {
+.live-dock button:disabled {
   opacity: 0.4;
   cursor: default;
 }
