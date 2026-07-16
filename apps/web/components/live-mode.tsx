@@ -25,6 +25,11 @@ export function LiveMode({ pkg, backHref }: { readonly pkg: SharedPackage; reado
   // Refrão (C10 de apresentação): posição p/ onde voltar após pular pro refrão (null = não pulou).
   const [chorusReturn, setChorusReturn] = useState<number | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  // "Palco limpo": a barra inferior (dock) se auto-esconde; ajustes (tom/fonte/esconder) num painel.
+  const [dock, setDock] = useState(true);
+  const [settings, setSettings] = useState(false);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const ptr = useRef({ x: 0, y: 0, t: 0 });
 
   const item = items[idx];
   const songHasChorus = hasChorus(item?.chordpro ?? "");
@@ -94,6 +99,41 @@ export function LiveMode({ pkg, backHref }: { readonly pkg: SharedPackage; reado
     el.scrollTop += chorus.getBoundingClientRect().top - el.getBoundingClientRect().top - 12;
   }
 
+  // Mostra a barra inferior e agenda o auto-esconder (~4s parado).
+  function bumpDock() {
+    setDock(true);
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    hideTimer.current = setTimeout(() => setDock(false), 4000);
+  }
+
+  // Gestos na área da cifra: arrastar p/ o lado troca de música; tocar mostra/esconde a barra.
+  function onPointerDown(e: React.PointerEvent) {
+    ptr.current = { x: e.clientX, y: e.clientY, t: e.timeStamp };
+  }
+  function onPointerUp(e: React.PointerEvent) {
+    const dx = e.clientX - ptr.current.x;
+    const dy = e.clientY - ptr.current.y;
+    const dt = e.timeStamp - ptr.current.t;
+    if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+      go(dx < 0 ? 1 : -1); // arrasta p/ esquerda = próxima; p/ direita = anterior
+      return;
+    }
+    if (Math.abs(dx) < 12 && Math.abs(dy) < 12 && dt < 350) {
+      if (settings) setSettings(false); // um toque fecha os ajustes, se abertos
+      else if (dock) setDock(false);
+      else bumpDock();
+    }
+  }
+
+  // Ao entrar e ao trocar de música, mostra a barra por alguns segundos e depois esconde.
+  useEffect(() => {
+    bumpDock();
+    return () => {
+      if (hideTimer.current) clearTimeout(hideTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idx]);
+
   // Setas do teclado navegam (útil no tablet com teclado / operador).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -123,10 +163,44 @@ export function LiveMode({ pkg, backHref }: { readonly pkg: SharedPackage; reado
       <div className="live-bar">
         <span className="flex-1 truncate">{pkg.repertoire.title}</span>
         <span className="live-pos">{idx + 1}/{items.length}</span>
+        <button
+          type="button"
+          className={`live-gear${settings ? " on" : ""}`}
+          onClick={() => setSettings((s) => !s)}
+          aria-label="Ajustes"
+          aria-expanded={settings}
+        >
+          ⚙
+        </button>
         <a href={backHref} aria-label="Sair" className="live-exit">✕</a>
       </div>
 
-      <div ref={contentRef} className="live-content">
+      {/* Ajustes feitos antes de tocar: tom, fonte e esconder cifra. Painel no topo (fixo). */}
+      {settings && (
+        <div className="live-settings">
+          <span className="live-group">
+            tom
+            <button type="button" onClick={() => setTom((v) => Math.max(-11, v - 1))} aria-label="Tom −">−</button>
+            <span className="live-num">{tom > 0 ? `+${tom}` : tom}</span>
+            <button type="button" onClick={() => setTom((v) => Math.min(11, v + 1))} aria-label="Tom +">+</button>
+          </span>
+          <span className="live-group">
+            fonte
+            <button type="button" onClick={() => setFont((f) => Math.max(1, +(f - 0.15).toFixed(2)))} aria-label="Fonte menor">A−</button>
+            <button type="button" onClick={() => setFont((f) => Math.min(3, +(f + 0.15).toFixed(2)))} aria-label="Fonte maior">A+</button>
+          </span>
+          <label className="live-hide">
+            <input type="checkbox" checked={hide} onChange={(e) => setHide(e.target.checked)} /> esconder cifra
+          </label>
+        </div>
+      )}
+
+      <div
+        ref={contentRef}
+        className="live-content"
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+      >
         <h2 className="live-title">
           {item?.title}
           {tom !== 0 && <span className="live-tom">tom {tom > 0 ? `+${tom}` : tom}</span>}
@@ -141,57 +215,53 @@ export function LiveMode({ pkg, backHref }: { readonly pkg: SharedPackage; reado
         )}
       </div>
 
-      <div className="live-controls">
-        <div className="live-row">
-          <button type="button" onClick={() => go(-1)} disabled={idx === 0} aria-label="Anterior">←</button>
-          <button type="button" onClick={() => go(1)} disabled={idx === items.length - 1} aria-label="Próxima">→</button>
-          {/* Slot do Refrão sempre reservado (some por visibility) p/ os controles não mudarem de lugar. */}
-          <button
-            type="button"
-            className="live-refrao"
-            onClick={toggleChorus}
-            disabled={!songHasChorus}
-            aria-hidden={!songHasChorus}
-            style={songHasChorus ? undefined : { visibility: "hidden" }}
-            aria-label={chorusReturn !== null ? "Voltar" : "Ir ao refrão"}
-          >
-            {chorusReturn !== null ? "↩ Voltar" : "Refrão"}
+      {/* Navegação nas laterais: transparente p/ não atrapalhar (também dá p/ arrastar a cifra). */}
+      <button
+        type="button"
+        className="live-edge live-edge-left"
+        onClick={() => go(-1)}
+        disabled={idx === 0}
+        aria-label="Anterior"
+      >
+        ‹
+      </button>
+      <button
+        type="button"
+        className="live-edge live-edge-right"
+        onClick={() => go(1)}
+        disabled={idx === items.length - 1}
+        aria-label="Próxima"
+      >
+        ›
+      </button>
+
+      {/* Barra que se auto-esconde (~4s): refrão, início e autoscroll. Toque na cifra revela. */}
+      <div className={`live-dock${dock ? "" : " hidden"}`} onPointerDown={bumpDock}>
+        <button
+          type="button"
+          className="live-refrao"
+          onClick={toggleChorus}
+          disabled={!songHasChorus}
+          aria-hidden={!songHasChorus}
+          style={songHasChorus ? undefined : { visibility: "hidden" }}
+          aria-label={chorusReturn !== null ? "Voltar" : "Ir ao refrão"}
+        >
+          {chorusReturn !== null ? "↩ Voltar" : "Refrão"}
+        </button>
+        <button type="button" onClick={toStart} aria-label="Voltar ao início">⤒ Início</button>
+        <span className="live-group">
+          <button type="button" onClick={() => setScrolling((s) => !s)} aria-label={scrolling ? "Pausar autoscroll" : "Autoscroll"}>
+            {scrolling ? "⏸" : "⏵"}
           </button>
-          <button type="button" onClick={toStart} aria-label="Voltar ao início">⤒ Início</button>
-        </div>
-
-        <div className="live-row">
-          <span className="live-group">
-            tom
-            <button type="button" onClick={() => setTom((v) => Math.max(-11, v - 1))} aria-label="Tom −">−</button>
-            <span className="live-num">{tom > 0 ? `+${tom}` : tom}</span>
-            <button type="button" onClick={() => setTom((v) => Math.min(11, v + 1))} aria-label="Tom +">+</button>
-          </span>
-
-          <span className="live-group">
-            <button type="button" onClick={() => setScrolling((s) => !s)} aria-label={scrolling ? "Pausar autoscroll" : "Autoscroll"}>
-              {scrolling ? "⏸" : "⏵"}
-            </button>
-            <input
-              type="range"
-              min={1}
-              max={10}
-              value={speed}
-              onChange={(e) => setSpeed(Number(e.target.value))}
-              aria-label="Velocidade do autoscroll"
-            />
-          </span>
-
-          <span className="live-group">
-            A
-            <button type="button" onClick={() => setFont((f) => Math.max(1, +(f - 0.15).toFixed(2)))} aria-label="Fonte menor">−</button>
-            <button type="button" onClick={() => setFont((f) => Math.min(3, +(f + 0.15).toFixed(2)))} aria-label="Fonte maior">+</button>
-          </span>
-
-          <label className="live-hide">
-            <input type="checkbox" checked={hide} onChange={(e) => setHide(e.target.checked)} /> esconder cifra
-          </label>
-        </div>
+          <input
+            type="range"
+            min={1}
+            max={10}
+            value={speed}
+            onChange={(e) => setSpeed(Number(e.target.value))}
+            aria-label="Velocidade do autoscroll"
+          />
+        </span>
       </div>
     </div>
   );
