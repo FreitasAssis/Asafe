@@ -7,6 +7,16 @@ import { useWakeLock } from "@/lib/use-wake-lock";
 import { useLiveSync } from "@/lib/use-live-sync";
 import type { SharedPackage } from "./public-repertoire";
 
+/** Persiste as preferências de exibição do Ao vivo (#85) — fonte, velocidade, esconder cifra. */
+function savePrefs(patch: { font?: number; speed?: number; hide?: boolean }) {
+  try {
+    const cur = JSON.parse(localStorage.getItem("asafe.live.prefs") ?? "{}");
+    localStorage.setItem("asafe.live.prefs", JSON.stringify({ ...cur, ...patch }));
+  } catch {
+    // storage indisponível — ignora
+  }
+}
+
 /**
  * Modo "Ao vivo" (B1): tela cheia escura para o músico tocar o repertório música a música.
  * Fonte grande, alto contraste; navegação (+ ir ao refrão / voltar ao início), autoscroll com
@@ -114,6 +124,34 @@ export function LiveMode({
   const html = body.trim() ? toHtml(body) : "";
 
   useWakeLock(); // mantém a tela acesa durante a celebração
+
+  // Preferências de exibição (#85): carrega os defaults salvos ao abrir; persiste ao mudar.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("asafe.live.prefs");
+      if (!raw) return;
+      const pref = JSON.parse(raw) as { font?: number; speed?: number; hide?: boolean };
+      if (typeof pref.font === "number") setFont(pref.font);
+      if (typeof pref.speed === "number") setSpeed(pref.speed);
+      if (typeof pref.hide === "boolean") setHide(pref.hide);
+    } catch {
+      // storage indisponível/corrompido — segue com os defaults
+    }
+  }, []);
+
+  function changeFont(delta: number) {
+    const v = Math.min(3, Math.max(1, +(font + delta).toFixed(2)));
+    setFont(v);
+    savePrefs({ font: v });
+  }
+  function changeSpeed(v: number) {
+    setSpeed(v);
+    savePrefs({ speed: v });
+  }
+  function toggleHide(v: boolean) {
+    setHide(v);
+    savePrefs({ hide: v });
+  }
 
   // Autoscroll: rola por TEMPO (px/s) com acumulador sub-pixel — assim velocidades bem baixas
   // rolam suave. Escala: speed 1 = 8px/s (bem lento, p/ músicas lentas) … 10 = 80px/s.
@@ -324,11 +362,11 @@ export function LiveMode({
           </span>
           <span className="live-group">
             fonte
-            <button type="button" onClick={() => setFont((f) => Math.max(1, +(f - 0.15).toFixed(2)))} aria-label="Fonte menor">A−</button>
-            <button type="button" onClick={() => setFont((f) => Math.min(3, +(f + 0.15).toFixed(2)))} aria-label="Fonte maior">A+</button>
+            <button type="button" onClick={() => changeFont(-0.15)} aria-label="Fonte menor">A−</button>
+            <button type="button" onClick={() => changeFont(0.15)} aria-label="Fonte maior">A+</button>
           </span>
           <label className="live-hide">
-            <input type="checkbox" checked={hide} onChange={(e) => setHide(e.target.checked)} /> esconder cifra
+            <input type="checkbox" checked={hide} onChange={(e) => toggleHide(e.target.checked)} /> esconder cifra
           </label>
         </div>
       )}
@@ -409,7 +447,7 @@ export function LiveMode({
             min={1}
             max={10}
             value={speed}
-            onChange={(e) => setSpeed(Number(e.target.value))}
+            onChange={(e) => changeSpeed(Number(e.target.value))}
             aria-label="Velocidade do autoscroll"
           />
         </span>
