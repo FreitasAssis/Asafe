@@ -637,16 +637,15 @@
   text-align: center;
 }
 .projection-lyrics {
-  max-width: 22ch;
-  line-height: 1.25;
+  /* A fonte é calculada em JS (fit-to-screen) p/ a estrofe caber inteira. Este valor é só o
+     ponto de partida antes da medição. */
+  max-width: 100%;
+  line-height: 1.2;
   font-weight: 600;
-  font-size: clamp(1.8rem, 5.5vw, 4rem);
+  font-size: 4rem;
 }
 .projection-lyrics p {
   margin: 0.1em 0;
-}
-.projection-gap {
-  height: 0.7em;
 }
 .projection-empty {
   color: #9a917f;
