@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { arrangeRepertoire } from "@asafe/core";
 import { browserClient } from "@/lib/supabase/client";
+import { formatTom } from "@/lib/tom";
 import type { SongListItem, Tag } from "@/lib/songs";
 import {
   addItem,
@@ -221,9 +222,7 @@ export function RepertoireBuilder({
                 <button type="button" onClick={() => void changeTranspose(it, -1)}>
                   −
                 </button>
-                <span style={{ minWidth: 44, textAlign: "center" }}>
-                  tom {it.transpose > 0 ? `+${it.transpose}` : it.transpose}
-                </span>
+                <span style={{ minWidth: 44, textAlign: "center" }}>tom {formatTom(it.transpose)}</span>
                 <button type="button" onClick={() => void changeTranspose(it, 1)}>
                   +
                 </button>

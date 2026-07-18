@@ -15,16 +15,5 @@ export default async function Projecao({ params }: { params: Promise<{ id: strin
   const pkg = await getRepertoirePackage(supabase, id);
   if (!pkg) notFound();
 
-  const full = (user.user_metadata?.display_name as string | undefined) ?? user.email ?? "Telão";
-  const name = full.split(/[\s@]/)[0] || full;
-
-  return (
-    <ProjectionMode
-      pkg={pkg}
-      backHref={`/repertorios/${id}`}
-      repertoireId={id}
-      userId={user.id}
-      userName={name}
-    />
-  );
+  return <ProjectionMode pkg={pkg} backHref={`/repertorios/${id}`} />;
 }

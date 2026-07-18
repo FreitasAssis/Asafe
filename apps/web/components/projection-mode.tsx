@@ -1,76 +1,96 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { arrangeRepertoire } from "@asafe/core";
-import { stripChords } from "@asafe/chordpro";
+import { lyricParagraphs } from "@asafe/chordpro";
 import { useWakeLock } from "@/lib/use-wake-lock";
-import { useLiveSync } from "@/lib/use-live-sync";
 import type { SharedPackage } from "./public-repertoire";
 
-/** Letra limpa (sem acordes e sem diretivas `{…}`) em linhas — para o telão. */
-function lyricLines(body: string): string[] {
-  return stripChords(body)
-    .split("\n")
-    .map((l) => l.replace(/\{[^}]*\}/g, "").replace(/\s+$/, ""));
+interface Slide {
+  title: string;
+  lines: string[];
 }
 
 /**
- * Modo projeção (B2): joga a LETRA num telão/TV para a assembleia acompanhar — grande,
- * limpa, sem cifra. Navega entre as músicas do repertório (setas/teclado); os controles
- * somem sozinhos para a tela ficar limpa. Ver DESIGN §7.
+ * Modo projeção (B2): a LETRA num telão/TV para a assembleia, grande e limpa (sem cifra).
+ *
+ * Apresentação em **slides**: cada slide é uma **estrofe inteira** ou o **refrão inteiro**
+ * (um parágrafo), na ordem das músicas do repertório. **Operação manual** (setas/teclado);
+ * a Projeção não entra na sincronia do Ao vivo — quem opera o telão o conduz. Ver DESIGN §7.
  */
 export function ProjectionMode({
   pkg,
   backHref,
-  repertoireId,
-  userId,
-  userName,
 }: {
   readonly pkg: SharedPackage;
   readonly backHref: string;
-  readonly repertoireId: string;
-  readonly userId: string;
-  readonly userName: string;
 }) {
-  const arranged = arrangeRepertoire(pkg.slots, pkg.items);
-  const items = [...arranged.slots.flatMap((s) => s.items), ...arranged.unslotted];
+  const slides = useMemo<Slide[]>(() => {
+    const arranged = arrangeRepertoire(pkg.slots, pkg.items);
+    const items = [...arranged.slots.flatMap((s) => s.items), ...arranged.unslotted];
+    // Cada música vira um ou mais slides (um por estrofe/refrão). Sem letra (referência) → 1 slide.
+    return items.flatMap((it) => {
+      const paras = lyricParagraphs(it.chordpro ?? "");
+      return paras.length > 0
+        ? paras.map((lines) => ({ title: it.title, lines }))
+        : [{ title: it.title, lines: [] }];
+    });
+  }, [pkg]);
 
-  const [idx, setIdx] = useState(0);
+  const [s, setS] = useState(0);
   const [showUI, setShowUI] = useState(true);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const lyricsRef = useRef<HTMLDivElement>(null);
   useWakeLock();
 
-  // B3: o telão é um SEGUIDOR silencioso — entra no canal e acompanha a música do mestre,
-  // sem nenhum controle de sincronia na tela. Nunca comanda; navega manual só se não houver mestre.
-  useLiveSync({
-    repertoireId,
-    enabled: true,
-    userId,
-    name: userName,
-    state: { idx },
-    onRemote: ({ idx: rIdx }) => {
-      setIdx(Math.min(items.length - 1, Math.max(0, rIdx)));
-    },
-  });
-
-  const item = items[idx];
-  const lines = item ? lyricLines(item.chordpro ?? "") : [];
-  const hasLyrics = lines.some((l) => l.trim());
+  const slide = slides[s];
 
   function go(delta: number) {
-    setIdx((i) => Math.min(items.length - 1, Math.max(0, i + delta)));
+    setS((i) => Math.min(slides.length - 1, Math.max(0, i + delta)));
   }
 
-  // Setas navegam; Esc sai.
+  // Fit-to-screen: acha a MAIOR fonte em que o slide (estrofe/refrão) cabe inteiro na tela —
+  // sem rolar. Re-mede ao trocar de slide e ao redimensionar. Busca binária no tamanho da fonte.
+  useLayoutEffect(() => {
+    const stage = stageRef.current;
+    const el = lyricsRef.current;
+    if (!stage || !el) return;
+    const fit = () => {
+      const cs = getComputedStyle(stage);
+      const availH =
+        stage.clientHeight - Number.parseFloat(cs.paddingTop) - Number.parseFloat(cs.paddingBottom);
+      const availW =
+        stage.clientWidth - Number.parseFloat(cs.paddingLeft) - Number.parseFloat(cs.paddingRight);
+      const fits = (px: number) => {
+        el.style.fontSize = `${px}px`;
+        return el.scrollHeight <= availH && el.scrollWidth <= availW;
+      };
+      let lo = 16;
+      let hi = 220;
+      if (fits(hi)) return;
+      while (hi - lo > 1) {
+        const mid = (lo + hi) >> 1;
+        if (fits(mid)) lo = mid;
+        else hi = mid;
+      }
+      el.style.fontSize = `${lo}px`;
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, [s, slides]);
+
+  // Setas navegam entre slides; Esc sai.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight") go(1);
-      else if (e.key === "ArrowLeft") go(-1);
+      if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") go(1);
+      else if (e.key === "ArrowLeft" || e.key === "PageUp") go(-1);
       else if (e.key === "Escape") window.location.assign(backHref);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items.length]);
+  }, [slides.length]);
 
   // Controles/legenda somem após inatividade (tela limpa para a assembleia).
   useEffect(() => {
@@ -92,7 +112,7 @@ export function ProjectionMode({
     };
   }, []);
 
-  if (items.length === 0) {
+  if (slides.length === 0) {
     return (
       <div className="projection-mode">
         <div className="projection-stage">Este repertório ainda não tem músicas.</div>
@@ -103,17 +123,17 @@ export function ProjectionMode({
   return (
     <div className={`projection-mode${showUI ? "" : " projection-idle"}`}>
       <div className="projection-bar">
-        <span className="truncate">{item?.title}</span>
-        <span className="projection-pos">{idx + 1}/{items.length}</span>
+        <span className="truncate">{slide?.title}</span>
+        <span className="projection-pos">{s + 1}/{slides.length}</span>
         <a href={backHref} aria-label="Sair" className="projection-exit">✕</a>
       </div>
 
-      <div className="projection-stage">
-        {hasLyrics ? (
-          <div className="projection-lyrics">
-            {lines.map((l, i) =>
-              l.trim() ? <p key={i}>{l}</p> : <div key={i} className="projection-gap" aria-hidden />,
-            )}
+      <div className="projection-stage" ref={stageRef}>
+        {slide && slide.lines.length > 0 ? (
+          <div className="projection-lyrics" ref={lyricsRef}>
+            {slide.lines.map((l, i) => (
+              <p key={i}>{l}</p>
+            ))}
           </div>
         ) : (
           <p className="projection-empty">— sem letra disponível</p>
@@ -121,8 +141,8 @@ export function ProjectionMode({
       </div>
 
       <div className="projection-nav">
-        <button type="button" onClick={() => go(-1)} disabled={idx === 0} aria-label="Anterior">←</button>
-        <button type="button" onClick={() => go(1)} disabled={idx === items.length - 1} aria-label="Próxima">→</button>
+        <button type="button" onClick={() => go(-1)} disabled={s === 0} aria-label="Anterior">←</button>
+        <button type="button" onClick={() => go(1)} disabled={s === slides.length - 1} aria-label="Próxima">→</button>
       </div>
     </div>
   );

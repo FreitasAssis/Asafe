@@ -4,10 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { browserClient } from "@/lib/supabase/client";
 
-/** Estado compartilhado da sessão ao vivo: música atual e (B3.2) a seção/parágrafo em foco. */
+/** Estado compartilhado da sessão ao vivo: música, seção/parágrafo (B3.2) e tom do mestre (#86). */
 export interface SyncState {
   idx: number;
   anchor?: number | null;
+  tom?: number;
 }
 
 export interface LiveSync {
@@ -125,10 +126,10 @@ export function useLiveSync(params: {
     };
   }, [enabled, repertoireId, userId, name, sendState]);
 
-  // Mestre: transmite ao mudar o estado local (música/seção).
+  // Mestre: transmite ao mudar o estado local (música/seção/tom).
   useEffect(() => {
     if (enabled && isMaster) sendState();
-  }, [enabled, isMaster, params.state.idx, params.state.anchor, sendState]);
+  }, [enabled, isMaster, params.state.idx, params.state.anchor, params.state.tom, sendState]);
 
   // Heartbeat do mestre (cobre quem entra/reconecta entre as mudanças).
   useEffect(() => {
