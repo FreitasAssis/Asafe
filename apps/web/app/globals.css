@@ -470,10 +470,10 @@
 .live-gear {
   background: transparent;
   border: 0;
-  color: #cdc4b2;
-  font-size: 18px;
+  color: #e8dcc0;
+  font-size: 22px;
   line-height: 1;
-  padding: 2px 6px;
+  padding: 2px 7px;
   cursor: pointer;
 }
 .live-gear.on {
