@@ -10,6 +10,7 @@ import {
 } from "@asafe/core";
 import { stripChords, toHtml, transpose } from "@asafe/chordpro";
 import { readPrefs, writePrefs } from "@/lib/preferences";
+import { formatTom } from "@/lib/tom";
 
 export interface PublicItem {
   id: string;
@@ -45,7 +46,7 @@ function ItemView({ item, hide }: { item: PublicItem; hide: boolean }) {
         {item.transpose ? (
           <span style={{ color: "var(--text-muted)", fontWeight: 400, fontSize: 13 }}>
             {" "}
-            (tom {item.transpose > 0 ? `+${item.transpose}` : item.transpose})
+            (tom {formatTom(item.transpose)})
           </span>
         ) : null}
         {/* Observação: escondida atrás do balão 💬, revela ao clicar (igual ao Ao vivo). */}

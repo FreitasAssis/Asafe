@@ -5,10 +5,11 @@ import { arrangeRepertoire } from "@asafe/core";
 import { hasChorus, stripChords, toHtml, transpose } from "@asafe/chordpro";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import { useLiveSync } from "@/lib/use-live-sync";
+import { formatTom } from "@/lib/tom";
 import type { SharedPackage } from "./public-repertoire";
 
-/** Persiste as preferências de exibição do Ao vivo (#85) — fonte, velocidade, esconder cifra. */
-function savePrefs(patch: { font?: number; speed?: number; hide?: boolean }) {
+/** Persiste as preferências de exibição do Ao vivo (#85) — fonte, velocidade, esconder cifra, offset. */
+function savePrefs(patch: { font?: number; speed?: number; hide?: boolean; offset?: number }) {
   try {
     const cur = JSON.parse(localStorage.getItem("asafe.live.prefs") ?? "{}");
     localStorage.setItem("asafe.live.prefs", JSON.stringify({ ...cur, ...patch }));
@@ -41,7 +42,9 @@ export function LiveMode({
   const items = [...arranged.slots.flatMap((s) => s.items), ...arranged.unslotted];
 
   const [idx, setIdx] = useState(0);
-  const [tom, setTom] = useState(0); // transposição da sessão (semitons; + sobe, − desce)
+  const [tom, setTom] = useState(0); // tom da sessão em semitons (mestre / sem sync); zera por música
+  const [offset, setOffset] = useState(0); // #86: ajuste pessoal (capo/instrumento) do seguidor; persiste
+  const [remoteTom, setRemoteTom] = useState(0); // tom do mestre recebido (sync)
   const [hide, setHide] = useState(false);
   const [scrolling, setScrolling] = useState(false);
   const [speed, setSpeed] = useState(3);
@@ -88,12 +91,30 @@ export function LiveMode({
     enabled: sync,
     userId,
     name: userName,
-    state: { idx, anchor },
-    onRemote: ({ idx: rIdx, anchor: rAnchor }) => {
+    state: { idx, anchor, tom },
+    onRemote: ({ idx: rIdx, anchor: rAnchor, tom: rTom }) => {
+      if (typeof rTom === "number") setRemoteTom(rTom);
       if (rIdx !== idx) applyRemoteIdx(rIdx);
       else if (rAnchor != null) scrollToParagraph(rAnchor);
     },
   });
+
+  // #86: seguidor segue o tom do MESTRE + o seu offset pessoal (capo/instrumento). Mestre/sem sync
+  // usam o próprio `tom`. `effectiveTom` é o que realmente se aplica à cifra deste aparelho.
+  const followingKey = sync && live.following && !live.isMaster;
+  const effectiveTom = followingKey ? remoteTom + offset : tom;
+  const tomEdit = followingKey ? offset : tom; // valor que os botões −/+ ajustam
+
+  // Ajusta o tom (mestre/sem sync) ou o offset pessoal (seguidor); ambos em −11..11 semitons.
+  function bumpTom(delta: number) {
+    const v = Math.max(-11, Math.min(11, tomEdit + delta));
+    if (followingKey) {
+      setOffset(v);
+      savePrefs({ offset: v });
+    } else {
+      setTom(v);
+    }
+  }
 
   // Mestre: ao rolar, transmite o parágrafo no topo (com throttle) — a seção que todos seguem.
   function onScroll() {
@@ -119,7 +140,7 @@ export function LiveMode({
 
   // Cifra exibida: tom do item + a transposição da sessão (`tom`); "esconder cifra" → stripChords.
   let body = item?.chordpro ?? "";
-  if (body.trim()) body = transpose(body, (item?.transpose ?? 0) + tom);
+  if (body.trim()) body = transpose(body, (item?.transpose ?? 0) + effectiveTom);
   if (hide) body = stripChords(body);
   const html = body.trim() ? toHtml(body) : "";
 
@@ -130,10 +151,11 @@ export function LiveMode({
     try {
       const raw = localStorage.getItem("asafe.live.prefs");
       if (!raw) return;
-      const pref = JSON.parse(raw) as { font?: number; speed?: number; hide?: boolean };
+      const pref = JSON.parse(raw) as { font?: number; speed?: number; hide?: boolean; offset?: number };
       if (typeof pref.font === "number") setFont(pref.font);
       if (typeof pref.speed === "number") setSpeed(pref.speed);
       if (typeof pref.hide === "boolean") setHide(pref.hide);
+      if (typeof pref.offset === "number") setOffset(pref.offset);
     } catch {
       // storage indisponível/corrompido — segue com os defaults
     }
@@ -355,10 +377,10 @@ export function LiveMode({
       {settings && (
         <div className="live-settings">
           <span className="live-group">
-            tom
-            <button type="button" onClick={() => setTom((v) => Math.max(-11, v - 1))} aria-label="Tom −">−</button>
-            <span className="live-num">{tom > 0 ? `+${tom}` : tom}</span>
-            <button type="button" onClick={() => setTom((v) => Math.min(11, v + 1))} aria-label="Tom +">+</button>
+            {followingKey ? "seu tom" : "tom"}
+            <button type="button" onClick={() => bumpTom(-1)} aria-label="Tom −">−</button>
+            <span className="live-num">{formatTom(tomEdit)}</span>
+            <button type="button" onClick={() => bumpTom(1)} aria-label="Tom +">+</button>
           </span>
           <span className="live-group">
             fonte
@@ -391,7 +413,7 @@ export function LiveMode({
               💬
             </button>
           )}
-          {tom !== 0 && <span className="live-tom">tom {tom > 0 ? `+${tom}` : tom}</span>}
+          {effectiveTom !== 0 && <span className="live-tom">tom {formatTom(effectiveTom)}</span>}
         </h2>
         {item?.composer && <div className="live-composer">{item.composer}</div>}
         {noteOpen && item?.notes && <div className="live-note">{item.notes}</div>}
