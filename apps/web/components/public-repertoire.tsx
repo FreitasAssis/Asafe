@@ -31,6 +31,7 @@ export interface SharedPackage {
 }
 
 function ItemView({ item, hide }: { item: PublicItem; hide: boolean }) {
+  const [noteOpen, setNoteOpen] = useState(false);
   let cifra = item.chordpro ?? "";
   const isReference = !cifra.trim();
   if (cifra.trim() && item.transpose) cifra = transpose(cifra, item.transpose);
@@ -47,13 +48,37 @@ function ItemView({ item, hide }: { item: PublicItem; hide: boolean }) {
             (tom {item.transpose > 0 ? `+${item.transpose}` : item.transpose})
           </span>
         ) : null}
+        {/* Observação: escondida atrás do balão 💬, revela ao clicar (igual ao Ao vivo). */}
+        {item.notes && (
+          <button
+            type="button"
+            onClick={() => setNoteOpen((o) => !o)}
+            aria-label={noteOpen ? "Esconder observação" : "Ver observação"}
+            aria-expanded={noteOpen}
+            style={{ background: "transparent", border: 0, cursor: "pointer", fontSize: 13, padding: "0 4px" }}
+          >
+            💬
+          </button>
+        )}
       </div>
       {/* Atribuição (direito moral, §5/§10): o autor aparece sempre que a obra é exibida. */}
       {item.composer && (
         <div style={{ color: "var(--text-muted)", fontSize: 13 }}>{item.composer}</div>
       )}
-      {item.notes && (
-        <div style={{ color: "#a60", fontSize: 13, fontStyle: "italic" }}>{item.notes}</div>
+      {noteOpen && item.notes && (
+        <div
+          style={{
+            whiteSpace: "pre-wrap",
+            color: "#a60",
+            fontSize: 13,
+            fontStyle: "italic",
+            borderLeft: "3px solid var(--border)",
+            paddingLeft: 8,
+            margin: "4px 0",
+          }}
+        >
+          {item.notes}
+        </div>
       )}
       {html && (
         <div
