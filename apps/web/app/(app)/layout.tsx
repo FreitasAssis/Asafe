@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { serverClient } from "@/lib/supabase/server";
 import { isModerator, pendingModerationCount } from "@/lib/repertoires";
 import { Sidebar } from "@/components/sidebar";
+import { WelcomeModal } from "@/components/welcome-modal";
 
 /**
  * Shell das páginas logadas: busca o usuário uma vez, redireciona sem sessão e
@@ -24,6 +25,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     <div style={{ minHeight: "100dvh" }}>
       <Sidebar userName={name} isModerator={moderator} moderationCount={modCount} />
       <div className="app-content">{children}</div>
+      <WelcomeModal />
     </div>
   );
 }

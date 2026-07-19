@@ -93,6 +93,17 @@ export function Sidebar({
             )}
           </a>
         )}
+        <button
+          type="button"
+          className="app-navlink"
+          style={{ background: "none", border: 0, textAlign: "left", font: "inherit", cursor: "pointer" }}
+          onClick={() => {
+            setOpen(false);
+            window.dispatchEvent(new CustomEvent("asafe:tour"));
+          }}
+        >
+          Ajuda
+        </button>
         <div className="app-sidebar-footer">
           <div className="mb-2 font-semibold text-ink">{userName}</div>
           <div className="flex items-center gap-2">

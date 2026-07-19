@@ -725,3 +725,72 @@
 .song-card-snippet.is-ref {
   font-style: italic;
 }
+
+/* Modal de boas-vindas / tutorial (#90). */
+.tour-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.55);
+}
+.tour-card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 28px 24px 20px;
+  text-align: center;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+}
+.tour-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: none;
+  border: 0;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.tour-icon {
+  font-size: 44px;
+  line-height: 1;
+}
+.tour-title {
+  margin: 12px 0 8px;
+  font-size: 20px;
+}
+.tour-body {
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 0 0 18px;
+}
+.tour-dots {
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+  margin-bottom: 18px;
+}
+.tour-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border);
+}
+.tour-dot.on {
+  background: var(--primary);
+}
+.tour-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
