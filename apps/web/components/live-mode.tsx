@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { arrangeRepertoire } from "@asafe/core";
+import { arrangeRepertoire, liturgicalColorHex } from "@asafe/core";
 import { hasChorus, stripChords, toHtml, transpose } from "@asafe/chordpro";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import { useLiveSync } from "@/lib/use-live-sync";
@@ -40,6 +40,9 @@ export function LiveMode({
   // Ordem de execução = ordem do arranjo (mesma da leitura), achatada em lista linear.
   const arranged = arrangeRepertoire(pkg.slots, pkg.items);
   const items = [...arranged.slots.flatMap((s) => s.items), ...arranged.unslotted];
+  // Detalhe litúrgico: filete no topo na cor do dia (Missa resolvida).
+  const litColor = liturgicalColorHex(pkg.repertoire.liturgicalSnapshot?.color ?? null);
+  const litBorder = litColor ? { borderTop: `3px solid ${litColor}` } : undefined;
 
   const [idx, setIdx] = useState(0);
   const [tom, setTom] = useState(0); // tom da sessão em semitons (mestre / sem sync); zera por música
@@ -299,7 +302,7 @@ export function LiveMode({
 
   if (items.length === 0) {
     return (
-      <div className="live-mode">
+      <div className="live-mode" style={litBorder}>
         <div className="live-bar">
           <span className="flex-1">{pkg.repertoire.title}</span>
           <a href={backHref} aria-label="Sair" className="live-exit">✕</a>

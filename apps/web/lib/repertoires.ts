@@ -20,6 +20,8 @@ export interface RepertoireListItem {
   ownerId: string;
   groupName: string | null;
   communityStatus: CommunityStatus;
+  /** Cor litúrgica do dia (Missa resolvida), crua ("green"…); null se não houver. */
+  liturgicalColor: string | null;
 }
 
 /** Item da aba Comunidade: repertório aprovado de outra pessoa (com o autor). */
@@ -118,6 +120,7 @@ export async function listRepertoires(
       owner_id: string;
       community_status: CommunityStatus;
       group_name: string | null;
+      liturgical_color: string | null;
     }[]
   ).map((r) => ({
     id: r.id,
@@ -127,6 +130,7 @@ export async function listRepertoires(
     ownerId: r.owner_id,
     communityStatus: r.community_status,
     groupName: r.group_name,
+    liturgicalColor: r.liturgical_color,
   }));
 }
 

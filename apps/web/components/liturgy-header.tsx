@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { LiturgyContext, ReadingRef, ReadingWithText } from "@asafe/core";
+import { LITURGICAL_COLOR_HEX, type LiturgyContext, type ReadingRef, type ReadingWithText } from "@asafe/core";
 import { getDayReadingTexts } from "@/lib/liturgy/read-actions";
 
 const READING_LABELS: Record<ReadingRef["kind"], string> = {
@@ -10,14 +10,6 @@ const READING_LABELS: Record<ReadingRef["kind"], string> = {
   segunda: "2ª leitura",
   evangelho: "Evangelho",
   sequencia: "Sequência",
-};
-
-const COLOR_DOT: Record<LiturgyContext["color"], string> = {
-  green: "#2a7d4f",
-  purple: "#6b3fa0",
-  white: "#c9c4b8",
-  red: "#b33",
-  rose: "#d98cae",
 };
 
 /**
@@ -63,7 +55,7 @@ export function LiturgyHeader({ liturgy }: { readonly liturgy: LiturgyContext | 
             width: 12,
             height: 12,
             borderRadius: "50%",
-            background: COLOR_DOT[liturgy.color],
+            background: LITURGICAL_COLOR_HEX[liturgy.color],
             border: "1px solid var(--border)",
           }}
         />

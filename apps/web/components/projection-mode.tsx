@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { arrangeRepertoire } from "@asafe/core";
+import { arrangeRepertoire, liturgicalColorHex } from "@asafe/core";
 import { lyricParagraphs } from "@asafe/chordpro";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import type { SharedPackage } from "./public-repertoire";
@@ -28,6 +28,9 @@ export function ProjectionMode({
   readonly pkg: SharedPackage;
   readonly backHref: string;
 }) {
+  // Detalhe litúrgico: filete no topo na cor do dia (Missa resolvida).
+  const litColor = liturgicalColorHex(pkg.repertoire.liturgicalSnapshot?.color ?? null);
+  const litBorder = litColor ? { borderTop: `3px solid ${litColor}` } : undefined;
   const slides = useMemo<Slide[]>(() => {
     const arranged = arrangeRepertoire(pkg.slots, pkg.items);
     const items = [...arranged.slots.flatMap((s) => s.items), ...arranged.unslotted];
@@ -168,14 +171,14 @@ export function ProjectionMode({
 
   if (slides.length === 0) {
     return (
-      <div className="projection-mode">
+      <div className="projection-mode" style={litBorder}>
         <div className="projection-stage">Este repertório ainda não tem músicas.</div>
       </div>
     );
   }
 
   return (
-    <div className={`projection-mode${showUI ? "" : " projection-idle"}`}>
+    <div className={`projection-mode${showUI ? "" : " projection-idle"}`} style={litBorder}>
       <div className="projection-bar">
         <span className="truncate">{slide.title}</span>
         <span className="projection-pos">
