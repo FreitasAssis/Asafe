@@ -7,16 +7,19 @@ import { useWakeLock } from "@/lib/use-wake-lock";
 import type { SharedPackage } from "./public-repertoire";
 
 interface Slide {
+  songIdx: number;
   title: string;
   lines: string[];
+  chorus: boolean;
 }
 
 /**
  * Modo projeção (B2): a LETRA num telão/TV para a assembleia, grande e limpa (sem cifra).
  *
  * Apresentação em **slides**: cada slide é uma **estrofe inteira** ou o **refrão inteiro**
- * (um parágrafo), na ordem das músicas do repertório. **Operação manual** (setas/teclado);
- * a Projeção não entra na sincronia do Ao vivo — quem opera o telão o conduz. Ver DESIGN §7.
+ * (um parágrafo). ← → navegam **dentro da música** (não pulam de música sem querer); há botão
+ * **Refrão** (pula pro refrão e volta) e, na última estrofe, **Próxima música**. **Operação
+ * manual** (setas/teclado); a Projeção não entra na sincronia do Ao vivo. Ver DESIGN §7.
  */
 export function ProjectionMode({
   pkg,
@@ -29,24 +32,75 @@ export function ProjectionMode({
     const arranged = arrangeRepertoire(pkg.slots, pkg.items);
     const items = [...arranged.slots.flatMap((s) => s.items), ...arranged.unslotted];
     // Cada música vira um ou mais slides (um por estrofe/refrão). Sem letra (referência) → 1 slide.
-    return items.flatMap((it) => {
+    return items.flatMap((it, songIdx) => {
       const paras = lyricParagraphs(it.chordpro ?? "");
       return paras.length > 0
-        ? paras.map((lines) => ({ title: it.title, lines }))
-        : [{ title: it.title, lines: [] }];
+        ? paras.map((p) => ({ songIdx, title: it.title, lines: p.lines, chorus: p.chorus }))
+        : [{ songIdx, title: it.title, lines: [], chorus: false }];
     });
   }, [pkg]);
 
   const [s, setS] = useState(0);
+  const [chorusReturn, setChorusReturn] = useState<number | null>(null);
   const [showUI, setShowUI] = useState(true);
   const stageRef = useRef<HTMLDivElement>(null);
   const lyricsRef = useRef<HTMLDivElement>(null);
   useWakeLock();
 
-  const slide = slides[s];
+  const slide = slides[s]!;
+  // Fronteiras da música atual (para não cruzar de música sem querer).
+  let firstOfSong = s;
+  let lastOfSong = s;
+  while (firstOfSong > 0 && slides[firstOfSong - 1]!.songIdx === slide.songIdx) firstOfSong--;
+  while (lastOfSong < slides.length - 1 && slides[lastOfSong + 1]!.songIdx === slide.songIdx) lastOfSong++;
+  const chorusIdx = slides.findIndex((x) => x.songIdx === slide.songIdx && x.chorus);
+  const atFirst = s === firstOfSong;
+  const atLast = s === lastOfSong;
+  const slideInSong = s - firstOfSong + 1;
+  const songSlideCount = lastOfSong - firstOfSong + 1;
 
-  function go(delta: number) {
-    setS((i) => Math.min(slides.length - 1, Math.max(0, i + delta)));
+  // ← → só andam DENTRO da música (usam updater p/ o teclado não pegar `s` velho).
+  function back() {
+    setChorusReturn(null);
+    setS((cur) => {
+      const song = slides[cur]!.songIdx;
+      let first = cur;
+      while (first > 0 && slides[first - 1]!.songIdx === song) first--;
+      return cur > first ? cur - 1 : cur;
+    });
+  }
+  function fwd() {
+    setChorusReturn(null);
+    setS((cur) => {
+      const song = slides[cur]!.songIdx;
+      let last = cur;
+      while (last < slides.length - 1 && slides[last + 1]!.songIdx === song) last++;
+      return cur < last ? cur + 1 : cur;
+    });
+  }
+  function toChorus() {
+    if (chorusReturn !== null) {
+      setS(chorusReturn);
+      setChorusReturn(null);
+    } else if (chorusIdx >= 0 && s !== chorusIdx) {
+      setChorusReturn(s);
+      setS(chorusIdx);
+    }
+  }
+  function nextSong() {
+    setChorusReturn(null);
+    setS(lastOfSong + 1);
+  }
+  function prevSong() {
+    setChorusReturn(null);
+    const prev = slides[firstOfSong - 1]!.songIdx;
+    let f = firstOfSong - 1;
+    while (f > 0 && slides[f - 1]!.songIdx === prev) f--;
+    setS(f);
+  }
+  function restart() {
+    setChorusReturn(null);
+    setS(firstOfSong);
   }
 
   // Fit-to-screen: acha a MAIOR fonte em que o slide (estrofe/refrão) cabe inteiro na tela —
@@ -83,8 +137,8 @@ export function ProjectionMode({
   // Setas navegam entre slides; Esc sai.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") go(1);
-      else if (e.key === "ArrowLeft" || e.key === "PageUp") go(-1);
+      if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") fwd();
+      else if (e.key === "ArrowLeft" || e.key === "PageUp") back();
       else if (e.key === "Escape") window.location.assign(backHref);
     };
     window.addEventListener("keydown", onKey);
@@ -123,8 +177,10 @@ export function ProjectionMode({
   return (
     <div className={`projection-mode${showUI ? "" : " projection-idle"}`}>
       <div className="projection-bar">
-        <span className="truncate">{slide?.title}</span>
-        <span className="projection-pos">{s + 1}/{slides.length}</span>
+        <span className="truncate">{slide.title}</span>
+        <span className="projection-pos">
+          {slide.chorus ? "refrão" : `${slideInSong}/${songSlideCount}`}
+        </span>
         <a href={backHref} aria-label="Sair" className="projection-exit">✕</a>
       </div>
 
@@ -141,8 +197,32 @@ export function ProjectionMode({
       </div>
 
       <div className="projection-nav">
-        <button type="button" onClick={() => go(-1)} disabled={s === 0} aria-label="Anterior">←</button>
-        <button type="button" onClick={() => go(1)} disabled={s === slides.length - 1} aria-label="Próxima">→</button>
+        {atFirst && firstOfSong > 0 && (
+          <button type="button" className="projection-song-btn" onClick={prevSong}>
+            ← Música anterior
+          </button>
+        )}
+        <button type="button" onClick={back} disabled={atFirst} aria-label="Estrofe anterior">←</button>
+        {chorusIdx >= 0 && (
+          <button
+            type="button"
+            onClick={toChorus}
+            aria-label={chorusReturn !== null ? "Voltar" : "Ir ao refrão"}
+          >
+            {chorusReturn !== null ? "↩ Voltar" : "Refrão"}
+          </button>
+        )}
+        <button type="button" onClick={fwd} disabled={atLast} aria-label="Próxima estrofe">→</button>
+        {atLast && lastOfSong < slides.length - 1 && (
+          <button type="button" className="projection-song-btn" onClick={nextSong}>
+            Próxima música →
+          </button>
+        )}
+        {atLast && lastOfSong === slides.length - 1 && songSlideCount > 1 && (
+          <button type="button" className="projection-song-btn" onClick={restart}>
+            ⤒ Início
+          </button>
+        )}
       </div>
     </div>
   );
