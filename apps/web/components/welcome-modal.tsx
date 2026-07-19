@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 interface Step {
   icon: string;
@@ -46,6 +47,9 @@ const KEY = "asafe.onboarded";
 export function WelcomeModal() {
   const [open, setOpen] = useState(false);
   const [i, setI] = useState(0);
+  // Não aparece por cima dos modos tela-cheia (Ao vivo / Projeção) — lá não é hora de onboarding.
+  const pathname = usePathname();
+  const fullscreen = /\/(ao-vivo|projecao)$/.test(pathname ?? "");
 
   useEffect(() => {
     try {
@@ -82,7 +86,7 @@ export function WelcomeModal() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, close]);
 
-  if (!open) return null;
+  if (!open || fullscreen) return null;
   const step = STEPS[i]!;
   const last = i === STEPS.length - 1;
 
