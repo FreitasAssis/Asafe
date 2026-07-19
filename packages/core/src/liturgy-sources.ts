@@ -130,6 +130,8 @@ export function mapLitcalEvents(events: LitcalRawEvent[], date: string): Liturgy
 
 interface DancrfReading {
   referencia?: string;
+  titulo?: string;
+  texto?: string;
 }
 interface DancrfRaw {
   liturgia?: string;
@@ -154,4 +156,38 @@ export function parseDancrfReadings(raw: DancrfRaw): DailyReadings {
   push("segunda", L.segundaLeitura);
   push("evangelho", L.evangelho);
   return { refs, celebration: raw.liturgia?.trim() || undefined };
+}
+
+/** Uma leitura com o TEXTO (para exibição ao vivo, creditada, NUNCA persistida). */
+export interface ReadingWithText {
+  kind: ReadingRef["kind"];
+  ref: string;
+  title: string;
+  text: string;
+}
+
+/**
+ * Extrai as leituras COM o texto integral — para o "ler as leituras" (buscado ao
+ * vivo e exibido com crédito à CNBB, mas nunca gravado; ver A0/§6). Pula leituras
+ * sem texto (ex.: feria sem 2ª leitura).
+ */
+export function parseDancrfFull(raw: DancrfRaw): ReadingWithText[] {
+  const L = raw.leituras ?? {};
+  const out: ReadingWithText[] = [];
+  const push = (kind: ReadingRef["kind"], list: DancrfReading[] | undefined) => {
+    const r = Array.isArray(list) ? list[0] : undefined;
+    if (r?.texto?.trim()) {
+      out.push({
+        kind,
+        ref: r.referencia?.trim() ?? "",
+        title: r.titulo?.trim() ?? "",
+        text: r.texto.trim(),
+      });
+    }
+  };
+  push("primeira", L.primeiraLeitura);
+  push("salmo", L.salmo);
+  push("segunda", L.segundaLeitura);
+  push("evangelho", L.evangelho);
+  return out;
 }

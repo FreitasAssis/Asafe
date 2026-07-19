@@ -3,6 +3,8 @@ export interface SlotDef {
   key: string;
   label: string;
   optional: boolean;
+  /** Dica contextual (ex.: a referência do salmo do dia, vinda da liturgia). */
+  hint?: string;
 }
 
 /** Mínimo que um item de repertório precisa para ser arranjado. */

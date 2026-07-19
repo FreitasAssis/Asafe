@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { arrangeRepertoire } from "@asafe/core";
+import { applyLiturgy, arrangeRepertoire } from "@asafe/core";
 import { browserClient } from "@/lib/supabase/client";
 import { formatTom } from "@/lib/tom";
 import type { SongListItem, Tag } from "@/lib/songs";
@@ -23,6 +23,7 @@ import {
 import type { ShareLink } from "@/lib/share-links";
 import type { Group } from "@/lib/groups";
 import { Breadcrumb } from "@/components/breadcrumb";
+import { LiturgyHeader } from "./liturgy-header";
 import { SongPicker } from "./song-picker";
 import { ShareSection } from "./share-section";
 import { CommunitySection } from "./community-section";
@@ -56,10 +57,11 @@ export function RepertoireBuilder({
   const [error, setError] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
 
-  const arranged = useMemo(
-    () => arrangeRepertoire(template.slots, items),
-    [template.slots, items],
+  const { slots: litSlots, liturgy } = useMemo(
+    () => applyLiturgy(template.slots, repertoire.liturgicalSnapshot),
+    [template.slots, repertoire.liturgicalSnapshot],
   );
+  const arranged = useMemo(() => arrangeRepertoire(litSlots, items), [litSlots, items]);
   const isLivre = template.slots.length === 0;
 
   function openPicker(slot: string | null) {
@@ -187,11 +189,13 @@ export function RepertoireBuilder({
     slotKey,
     label,
     optional,
+    hint,
     slotItems,
   }: {
     slotKey: string | null;
     label: string;
     optional?: boolean;
+    hint?: string;
     slotItems: RepertoireItemFull[];
   }) {
     const open = pickerOpen && pickerSlot === slotKey;
@@ -200,6 +204,9 @@ export function RepertoireBuilder({
         <div style={{ fontWeight: 600 }}>
           {label}
           {optional && <span style={{ color: "var(--text-muted)", fontWeight: 400 }}> (opcional)</span>}
+          {hint && (
+            <span style={{ color: "var(--primary)", fontWeight: 400, fontSize: 13 }}> · {hint}</span>
+          )}
         </div>
         <ul style={{ listStyle: "none", padding: 0, margin: "4px 0" }}>
           {slotItems.map((it) => (
@@ -302,6 +309,8 @@ export function RepertoireBuilder({
         {!isOwner && " · compartilhado com você"}
       </div>
 
+      <LiturgyHeader liturgy={liturgy} />
+
       {isOwner && (
         <div style={{ marginTop: 10, fontSize: 14 }}>
           <div style={{ marginBottom: 4 }}>Compartilhar com grupos:</div>
@@ -342,6 +351,7 @@ export function RepertoireBuilder({
             slotKey={s.key}
             label={s.label}
             optional={s.optional}
+            hint={s.hint}
             slotItems={s.items}
           />
         ))
