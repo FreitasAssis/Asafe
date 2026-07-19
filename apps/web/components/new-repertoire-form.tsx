@@ -7,11 +7,10 @@ import {
   REPERTOIRE_TYPE_LABELS,
   type RepertoireType,
 } from "@asafe/core";
-import { browserClient } from "@/lib/supabase/client";
-import { createRepertoire } from "@/lib/repertoires";
+import { createRepertoireAction } from "@/app/(app)/repertorios/novo/actions";
 import { Breadcrumb } from "@/components/breadcrumb";
 
-export function NewRepertoireForm({ userId }: { readonly userId: string }) {
+export function NewRepertoireForm() {
   const router = useRouter();
   const [type, setType] = useState<RepertoireType>("Missa");
   const [title, setTitle] = useState("");
@@ -27,7 +26,7 @@ export function NewRepertoireForm({ userId }: { readonly userId: string }) {
     setSaving(true);
     setError(null);
     try {
-      const { id } = await createRepertoire(browserClient(), userId, {
+      const { id } = await createRepertoireAction({
         title: title.trim(),
         type,
         date: date.trim() || null,

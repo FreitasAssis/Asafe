@@ -9,5 +9,5 @@ export default async function NovoRepertorio() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  return <NewRepertoireForm userId={user.id} />;
+  return <NewRepertoireForm />;
 }
