@@ -35,6 +35,22 @@ const COLOR_LABELS: Record<LiturgicalColor, string> = {
   rose: "Rosa",
 };
 
+/** Hex de cada cor litúrgica — fonte única para a bolinha/realce em toda a UI. */
+export const LITURGICAL_COLOR_HEX: Record<LiturgicalColor, string> = {
+  green: "#2a7d4f",
+  purple: "#6b3fa0",
+  white: "#c9c4b8",
+  red: "#b33",
+  rose: "#d98cae",
+};
+
+/** Hex a partir de uma cor possivelmente crua/ausente (ex.: vinda do banco); null se inválida. */
+export function liturgicalColorHex(color: string | null | undefined): string | null {
+  return color && color in LITURGICAL_COLOR_HEX
+    ? LITURGICAL_COLOR_HEX[color as LiturgicalColor]
+    : null;
+}
+
 /** Estações em que o Glória é omitido (fora de solenidades/festas). */
 const NO_GLORIA: ReadonlySet<LiturgicalSeason> = new Set(["advent", "lent"]);
 

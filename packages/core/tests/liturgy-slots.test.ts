@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyLiturgy, type LiturgicalSnapshot, type SlotDef } from "../src";
+import { applyLiturgy, liturgicalColorHex, type LiturgicalSnapshot, type SlotDef } from "../src";
 
 const MISSA_SLOTS: SlotDef[] = [
   { key: "entrada", label: "Entrada", optional: false },
@@ -59,6 +59,12 @@ describe("applyLiturgy", () => {
     const acl = out.slots.find((s) => s.key === "aclamacao");
     expect(acl?.label).toMatch(/sem Aleluia/i);
     expect(out.liturgy?.seasonLabel).toBe("Quaresma");
+  });
+
+  it("liturgicalColorHex: cor válida → hex; ausente/inválida → null", () => {
+    expect(liturgicalColorHex("purple")).toBe("#6b3fa0");
+    expect(liturgicalColorHex(null)).toBeNull();
+    expect(liturgicalColorHex("cinza")).toBeNull();
   });
 
   it("não muta os slots de entrada", () => {

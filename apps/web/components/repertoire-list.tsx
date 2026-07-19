@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { REPERTOIRE_TYPE_LABELS } from "@asafe/core";
+import { liturgicalColorHex, REPERTOIRE_TYPE_LABELS } from "@asafe/core";
 import { browserClient } from "@/lib/supabase/client";
 import { deleteRepertoire, type RepertoireListItem } from "@/lib/repertoires";
 import { RowActions } from "@/components/row-actions";
@@ -34,6 +34,19 @@ export function RepertoireList({
             gap: 8,
           }}
         >
+          {liturgicalColorHex(r.liturgicalColor) && (
+            <span
+              title="Cor litúrgica do dia"
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                background: liturgicalColorHex(r.liturgicalColor)!,
+                border: "1px solid var(--border)",
+                flexShrink: 0,
+              }}
+            />
+          )}
           <div style={{ flex: 1 }}>
             <a href={`/repertorios/${r.id}`} style={{ fontSize: 17, fontWeight: 600 }}>
               {r.title}

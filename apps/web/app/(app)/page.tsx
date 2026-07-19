@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { REPERTOIRE_TYPE_LABELS } from "@asafe/core";
+import { liturgicalColorHex, REPERTOIRE_TYPE_LABELS } from "@asafe/core";
 import { serverClient } from "@/lib/supabase/server";
 import { listRepertoires } from "@/lib/repertoires";
 import { PREFS_COOKIE, parsePrefs } from "@/lib/preferences";
@@ -70,15 +70,24 @@ export default async function Home() {
             </div>
             <ul className="mt-2 list-none p-0">
               {recent.map((r) => (
-                <li key={r.id} className="border-b border-border py-2">
-                  <a href={`/repertorios/${r.id}`} className="font-semibold">
-                    {r.title}
-                  </a>
-                  <span className="text-muted">
-                    {" "}
-                    — {REPERTOIRE_TYPE_LABELS[r.type]}
-                    {r.date ? ` · ${r.date}` : ""}
-                    {r.groupName ? ` · 👥 ${r.groupName}` : ""}
+                <li key={r.id} className="flex items-center gap-2 border-b border-border py-2">
+                  {liturgicalColorHex(r.liturgicalColor) && (
+                    <span
+                      title="Cor litúrgica do dia"
+                      className="inline-block shrink-0 rounded-full border border-border"
+                      style={{ width: 10, height: 10, background: liturgicalColorHex(r.liturgicalColor)! }}
+                    />
+                  )}
+                  <span>
+                    <a href={`/repertorios/${r.id}`} className="font-semibold">
+                      {r.title}
+                    </a>
+                    <span className="text-muted">
+                      {" "}
+                      — {REPERTOIRE_TYPE_LABELS[r.type]}
+                      {r.date ? ` · ${r.date}` : ""}
+                      {r.groupName ? ` · 👥 ${r.groupName}` : ""}
+                    </span>
                   </span>
                 </li>
               ))}
