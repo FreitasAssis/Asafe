@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { arrangeRepertoire, liturgicalColorHex } from "@asafe/core";
+import { buildStageSequence, liturgicalColorHex, type ReadingWithText } from "@asafe/core";
 import { lyricParagraphs } from "@asafe/chordpro";
 import { useWakeLock } from "@/lib/use-wake-lock";
+import { getDayReadingTexts } from "@/lib/liturgy/read-actions";
+import { READING_LABELS } from "@/lib/liturgy/reading-labels";
 import type { SharedPackage } from "./public-repertoire";
 
 interface Slide {
@@ -11,6 +13,10 @@ interface Slide {
   title: string;
   lines: string[];
   chorus: boolean;
+  /** Slide de leitura (texto litúrgico), não estrofe de música. */
+  reading?: boolean;
+  /** Rótulo curto p/ os botões de navegação (ex.: "Evangelho"); música = undefined. */
+  navLabel?: string;
 }
 
 /**
@@ -29,19 +35,49 @@ export function ProjectionMode({
   readonly backHref: string;
 }) {
   // Detalhe litúrgico: filete no topo na cor do dia (Missa resolvida).
-  const litColor = liturgicalColorHex(pkg.repertoire.liturgicalSnapshot?.color ?? null);
+  const snapshot = pkg.repertoire.liturgicalSnapshot ?? null;
+  const litColor = liturgicalColorHex(snapshot?.color ?? null);
   const litBorder = litColor ? { borderTop: `3px solid ${litColor}` } : undefined;
+
+  // Textos das leituras: buscados ao vivo (© CNBB, não persistidos), por tipo.
+  const [readingTexts, setReadingTexts] = useState<Record<string, ReadingWithText>>({});
+  useEffect(() => {
+    if (!snapshot?.date) return;
+    let alive = true;
+    void getDayReadingTexts(snapshot.date).then((rs) => {
+      if (alive) setReadingTexts(Object.fromEntries(rs.map((r) => [r.kind, r])));
+    });
+    return () => {
+      alive = false;
+    };
+  }, [snapshot?.date]);
+
   const slides = useMemo<Slide[]>(() => {
-    const arranged = arrangeRepertoire(pkg.slots, pkg.items);
-    const items = [...arranged.slots.flatMap((s) => s.items), ...arranged.unslotted];
-    // Cada música vira um ou mais slides (um por estrofe/refrão). Sem letra (referência) → 1 slide.
-    return items.flatMap((it, songIdx) => {
+    // Passos = músicas + leituras na ordem litúrgica (#102). Cada música vira 1+
+    // slides (estrofe/refrão); cada leitura vira 1 slide (o texto entra ao carregar).
+    const steps = buildStageSequence(pkg.slots, pkg.items, snapshot);
+    return steps.flatMap((step, songIdx) => {
+      if (step.kind === "reading") {
+        const t = readingTexts[step.reading.kind];
+        const ref = step.reading.ref ? ` · ${step.reading.ref}` : "";
+        return [
+          {
+            songIdx,
+            title: `${READING_LABELS[step.reading.kind]}${ref}`,
+            lines: t ? t.text.split("\n").filter((l) => l.trim()) : [],
+            chorus: false,
+            reading: true,
+            navLabel: READING_LABELS[step.reading.kind],
+          },
+        ];
+      }
+      const it = step.item;
       const paras = lyricParagraphs(it.chordpro ?? "");
       return paras.length > 0
         ? paras.map((p) => ({ songIdx, title: it.title, lines: p.lines, chorus: p.chorus }))
         : [{ songIdx, title: it.title, lines: [], chorus: false }];
     });
-  }, [pkg]);
+  }, [pkg, snapshot, readingTexts]);
 
   const [s, setS] = useState(0);
   const [chorusReturn, setChorusReturn] = useState<number | null>(null);
@@ -61,6 +97,9 @@ export function ProjectionMode({
   const atLast = s === lastOfSong;
   const slideInSong = s - firstOfSong + 1;
   const songSlideCount = lastOfSong - firstOfSong + 1;
+  // Rótulos de "anterior/próxima": se o alvo for leitura, mostra o que é (ex.: "Evangelho").
+  const prevNav = slides[firstOfSong - 1]?.navLabel;
+  const nextNav = slides[lastOfSong + 1]?.navLabel;
 
   // ← → só andam DENTRO da música (usam updater p/ o teclado não pegar `s` velho).
   function back() {
@@ -195,14 +234,16 @@ export function ProjectionMode({
             ))}
           </div>
         ) : (
-          <p className="projection-empty">— sem letra disponível</p>
+          <p className="projection-empty">
+            {slide?.reading ? "carregando a leitura…" : "— sem letra disponível"}
+          </p>
         )}
       </div>
 
       <div className="projection-nav">
         {atFirst && firstOfSong > 0 && (
           <button type="button" className="projection-song-btn" onClick={prevSong}>
-            ← Música anterior
+            ← {prevNav ?? "Música anterior"}
           </button>
         )}
         <button type="button" onClick={back} disabled={atFirst} aria-label="Estrofe anterior">←</button>
@@ -218,7 +259,7 @@ export function ProjectionMode({
         <button type="button" onClick={fwd} disabled={atLast} aria-label="Próxima estrofe">→</button>
         {atLast && lastOfSong < slides.length - 1 && (
           <button type="button" className="projection-song-btn" onClick={nextSong}>
-            Próxima música →
+            {nextNav ?? "Próxima música"} →
           </button>
         )}
         {atLast && lastOfSong === slides.length - 1 && songSlideCount > 1 && (
