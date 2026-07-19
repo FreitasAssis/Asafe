@@ -118,30 +118,23 @@ export function SongPicker({
         </div>
       )}
 
-      <ul style={{ listStyle: "none", padding: 0, margin: "8px 0 0", maxHeight: 220, overflow: "auto" }}>
-        {filtered.length === 0 ? (
-          <li style={{ color: "var(--text-muted)" }}>Nenhuma música encontrada.</li>
-        ) : (
-          filtered.map((s) => (
-            <li key={s.id} style={{ padding: "4px 0" }}>
-              <button
-                type="button"
-                onClick={() => onPick(s.id)}
-                style={{
-                  width: "100%",
-                  textAlign: "left",
-                  padding: "6px 8px",
-                  border: "none",
-                  background: "transparent",
-                  cursor: "pointer",
-                }}
-              >
-                + {s.title} <FreshnessTag lastUsed={s.lastUsed} />
-              </button>
-            </li>
-          ))
-        )}
-      </ul>
+      {filtered.length === 0 ? (
+        <p style={{ color: "var(--text-muted)", margin: "10px 0 0" }}>Nenhuma música encontrada.</p>
+      ) : (
+        <div className="song-cards">
+          {filtered.map((s) => (
+            <button key={s.id} type="button" className="song-card" onClick={() => onPick(s.id)}>
+              <span className="song-card-title">
+                {s.title} <FreshnessTag lastUsed={s.lastUsed} />
+              </span>
+              {s.composer && <span className="song-card-sub">{s.composer}</span>}
+              <span className={`song-card-snippet${s.snippet ? "" : " is-ref"}`}>
+                {s.snippet || "— referência (sem cifra)"}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
