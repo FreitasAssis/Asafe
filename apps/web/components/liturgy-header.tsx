@@ -21,8 +21,19 @@ export function LiturgyHeader({ liturgy }: { readonly liturgy: LiturgyContext | 
   const [open, setOpen] = useState(false);
   const [texts, setTexts] = useState<ReadingWithText[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
 
   if (!liturgy) return null;
+
+  async function copy(kind: string, text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(kind);
+      setTimeout(() => setCopied((c) => (c === kind ? null : c)), 1500);
+    } catch {
+      // área de transferência indisponível (ex.: contexto não seguro) — ignora
+    }
+  }
 
   async function toggle() {
     const next = !open;
@@ -104,11 +115,21 @@ export function LiturgyHeader({ liturgy }: { readonly liturgy: LiturgyContext | 
           {!loading &&
             texts?.map((r) => (
               <div key={r.kind} style={{ margin: "12px 0" }}>
-                <div style={{ fontWeight: 600, fontSize: 14 }}>
-                  {READING_LABELS[r.kind]}
-                  {r.ref ? (
-                    <span style={{ color: "var(--text-muted)", fontWeight: 400 }}> · {r.ref}</span>
-                  ) : null}
+                <div style={{ fontWeight: 600, fontSize: 14, display: "flex", alignItems: "center", gap: 8 }}>
+                  <span>
+                    {READING_LABELS[r.kind]}
+                    {r.ref ? (
+                      <span style={{ color: "var(--text-muted)", fontWeight: 400 }}> · {r.ref}</span>
+                    ) : null}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void copy(r.kind, r.text)}
+                    title="Copiar o texto para criar uma música no catálogo"
+                    style={{ fontSize: 12, fontWeight: 400, color: "var(--primary)" }}
+                  >
+                    {copied === r.kind ? "copiado ✓" : "copiar"}
+                  </button>
                 </div>
                 {r.title && (
                   <div style={{ fontStyle: "italic", fontSize: 13, color: "var(--text-muted)" }}>
