@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { stripChords } from "@asafe/chordpro";
 import type {
   CopyrightStatus,
   LicenseKind,
@@ -51,6 +52,8 @@ export interface SongListItem {
   tagIds: string[];
   /** Última data efetiva de uso (YYYY-MM-DD) entre meus repertórios, ou null. */
   lastUsed: string | null;
+  /** Trecho da letra (2 linhas) p/ o card do seletor; vazio se referência (sem cifra liberada). */
+  snippet: string;
 }
 
 interface SongRow {
@@ -76,6 +79,15 @@ interface SongRow {
 function bodyOf(row: SongRow): string {
   const sc = Array.isArray(row.song_content) ? row.song_content[0] : row.song_content;
   return sc?.chordpro_body ?? "";
+}
+
+/** Trecho da letra (sem cifra nem diretivas) p/ o card do seletor: as 2 primeiras linhas. */
+function lyricSnippet(chordpro: string): string {
+  const lines = stripChords(chordpro)
+    .split("\n")
+    .map((l) => l.replace(/\{[^}]*\}/g, "").trim())
+    .filter((l) => l !== "");
+  return lines.slice(0, 2).join(" · ").slice(0, 90);
 }
 
 function rowToSong(row: SongRow): Song {
@@ -194,7 +206,7 @@ export async function listSongs(supabase: SupabaseClient): Promise<SongListItem[
   const [songsRes, usageRes] = await Promise.all([
     supabase
       .from("song")
-      .select("id, title, composer, owner_id, community_status, song_tag(tag_id)")
+      .select("id, title, composer, owner_id, community_status, song_tag(tag_id), song_content(chordpro_body)")
       .order("title"),
     supabase.from("repertoire_item").select("song_id, repertoire(date, created_at)"),
   ]);
@@ -222,6 +234,7 @@ export async function listSongs(supabase: SupabaseClient): Promise<SongListItem[
     communityStatus: r.community_status,
     tagIds: (r.song_tag ?? []).map((st) => st.tag_id),
     lastUsed: lastUsed.get(r.id) ?? null,
+    snippet: lyricSnippet(bodyOf(r)),
   }));
 }
 
