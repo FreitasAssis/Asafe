@@ -108,11 +108,26 @@ Expressas em **RLS no Postgres** (ver as políticas em `packages/db`). Modelo ce
 
 Duas fontes complementares + cache durável em Postgres (sem Redis):
 
-1. **Calendário canônico — LitCal API** (open source): tempo litúrgico, semana, cor,
-   solenidades, ciclos dominical (A/B/C) e ferial (I/II), santo do dia. Suporta calendários
-   nacionais.
+1. **Calendário canônico — LitCal API** (open source, Apache-2.0): tempo litúrgico, semana,
+   cor, solenidades, ciclo dominical (A/B/C), santo do dia. Suporta calendários nacionais.
 2. **Leituras + santo em PT — API brasileira de liturgia.** Atenção: a maioria faz scraping
    (frágil) e há direitos sobre o texto das leituras.
+
+**Decisões do A0 (#26), spikes de 2026-07-19.** Fontes concretas escolhidas:
+
+- **Leituras:** não há API oficial (CNBB/Vaticano); todas que trazem texto fazem scraping.
+  Primária `liturgia.up.railway.app` (Dancrf) + fallback `api-liturgia-diaria.vercel.app`
+  (JosueSantos — provedor/fonte diferentes, cobre santo-do-dia). Tudo **atrás de uma
+  interface `LiturgyProvider.getDailyLiturgy(date, {includeText?})`**, para trocar a fonte
+  sem tocar no resto.
+- **Cache `lectionary` guarda só REFERÊNCIAS** ("Lc 15,11-32", salmo, cor) — risco ~zero e é
+  tudo que o eixo por perícope (§6, A4) precisa. O texto integral tem copyright CNBB: é
+  buscado ao vivo para exibir e **não é persistido**.
+- **Calendário:** a LitCal **não tem o Brasil** (só VA/CA/HR/IT/NL/US). Usa-se o **Geral
+  Romano** (já dá tempo/cor/semana/ciclo A-B-C/Páscoa móvel — suficiente p/ as regras de
+  slot) + uma **camada local** com o próprio do Brasil (Aparecida como solenidade em 12/out,
+  Anchieta, Frei Galvão…). Contribuir o `BR.json` à LitCal fica como item separado. O ciclo
+  ferial **I/II** não vem explícito → derivar (ímpar=I, par=II a partir do Advento).
 
 **Cache em duas camadas.** Separa-se a *resolução do dia* (`liturgical_day`, específica do
 ano porque a Páscoa é móvel) da *leitura em si* (`lectionary`, indexada pela **posição
@@ -170,13 +185,16 @@ histórico entre celebrações — ataca diretamente a repetição semana a sema
 
 ## 8. Partes fixas da Missa (Ordinário)
 
-- **Partes cantadas** (Santo, Cordeiro, Glória, aclamações) → são músicas no catálogo, tag
-  `Ordinário`. **Fazer.**
-- **Respostas curtas da assembleia** → baixo risco, compõem um "modo acompanhamento".
-- **Partes variáveis** (leituras/salmo) → vêm da API litúrgica (§6).
-- **Textos oficiais completos** (Orações Eucarísticas, Lecionário na íntegra) → **protegidos
-  pela CNBB**: engenharia trivial, gargalo é licenciamento. **DECISÃO EM ABERTO** — licenciar,
-  linkar fonte autorizada, ou começar só com as respostas curtas.
+- **Partes cantadas** (Santo, Cordeiro, Glória, aclamações, Aleluia) → são músicas no
+  catálogo, tag `Ordinário` (letra curta + cifra do usuário). **Fazer.** É o único texto
+  litúrgico que o app exibe.
+- **Partes variáveis** (leituras/salmo) → vêm da API litúrgica (§6), **só as referências**.
+- **Textos oficiais do sacerdote** (Orações Eucarísticas I–IV, Prefácio, Coleta, Lecionário na
+  íntegra) → **protegidos pela CNBB** (tradução recente, titular ativo): **fora do escopo** —
+  nem como texto nem como música. O padre os lê do Missal; um app de repertório não precisa
+  deles. (A0 decidido, ver §11.)
+- **Respostas/diálogos da assembleia** ("E com o vosso espírito", "Graças a Deus"…) → **fora**
+  (A0). O "modo acompanhamento" foi descartado; o A6 (#32) fica só com o Ordinário **cantado**.
 
 ## 9. Comunidade e custo
 
@@ -235,9 +253,16 @@ A adoção é uma fatia própria — a passada de UI pré-launch.
   Enquanto isso, a postura é **conservadora** (humano no loop; nada é auto-classificado).
   Evolução possível com base legal: **anexar** o comprovante de permissão (hoje a evidência
   é link/nota).
-- Licenciamento CNBB para textos oficiais (§8).
-- Completude do calendário nacional do Brasil na LitCal.
-- Escolha da API de liturgia diária + fragilidade de scraping.
+- ~~Licenciamento CNBB para textos oficiais (§8).~~ **Resolvido (A0/#26):** não versionar; o
+  app exibe só o Ordinário **cantado** como músicas (§8). Orações Eucarísticas/Prefácio/Coleta
+  e respostas/diálogos da assembleia ficam fora. Licenciar via Edições CNBB só se um dia fizer
+  sentido (iniciativa separada).
+- ~~Completude do calendário nacional do Brasil na LitCal.~~ **Resolvido (A0/#26):** LitCal não
+  tem BR; usa-se o Geral Romano + override local dos próprios do Brasil; contribuir o `BR.json`
+  fica como item separado (§6).
+- ~~Escolha da API de liturgia diária + fragilidade de scraping.~~ **Resolvido (A0/#26):**
+  Dancrf (primária) + JosueSantos (fallback) atrás de `LiturgyProvider`; cache só de
+  referências mitiga scraping e direitos (§6).
 - Domínio: rodar grátis em `*.workers.dev` ou registrar `asafe.com.br` / `asafe.app`.
 - ~~**O que "aprovar um repertório" publica.**~~ **Resolvido** (referência × conteúdo): a
   cifra saiu de `song` para `song_content`, com RLS própria; aprovar um repertório torna
