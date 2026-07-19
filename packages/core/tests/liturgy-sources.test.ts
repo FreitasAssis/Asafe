@@ -5,6 +5,7 @@ import {
   ferialCycleOf,
   mapLitcalEvents,
   parseDancrfReadings,
+  parseDancrfFull,
 } from "../src/liturgy";
 
 describe("datas litúrgicas", () => {
@@ -120,5 +121,38 @@ describe("parseDancrfReadings", () => {
     };
     const out = parseDancrfReadings(raw);
     expect(out.refs.map((r) => r.kind)).toEqual(["primeira", "salmo", "evangelho"]);
+  });
+});
+
+describe("parseDancrfFull (leitura ao vivo — texto não persistido)", () => {
+  it("inclui título e texto além da referência, na ordem canônica", () => {
+    const raw = {
+      leituras: {
+        primeiraLeitura: [{ referencia: "Gn 18,1-10", titulo: "Leitura do Gênesis", texto: "Naqueles dias…" }],
+        salmo: [{ referencia: "Sl 14", titulo: "Salmo", texto: "Senhor, quem…" }],
+        segundaLeitura: [{ referencia: "Cl 1,24-28", titulo: "Leitura de Colossenses", texto: "Irmãos…" }],
+        evangelho: [{ referencia: "Lc 10,38-42", titulo: "Evangelho", texto: "Naquele tempo…" }],
+      },
+    };
+    const out = parseDancrfFull(raw);
+    expect(out.map((r) => r.kind)).toEqual(["primeira", "salmo", "segunda", "evangelho"]);
+    expect(out[0]).toEqual({
+      kind: "primeira",
+      ref: "Gn 18,1-10",
+      title: "Leitura do Gênesis",
+      text: "Naqueles dias…",
+    });
+  });
+
+  it("pula leitura sem texto (ex.: feria sem 2ª)", () => {
+    const raw = {
+      leituras: {
+        primeiraLeitura: [{ referencia: "Ex 14", titulo: "1ª", texto: "…" }],
+        salmo: [{ referencia: "Ex 15", titulo: "Salmo", texto: "…" }],
+        segundaLeitura: [],
+        evangelho: [{ referencia: "Mt 12", titulo: "Ev", texto: "…" }],
+      },
+    };
+    expect(parseDancrfFull(raw).map((r) => r.kind)).toEqual(["primeira", "salmo", "evangelho"]);
   });
 });

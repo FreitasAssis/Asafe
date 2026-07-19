@@ -13,3 +13,4 @@ export * from "./copyright";
 export * from "./community";
 export * from "./song-identity";
 export * from "./liturgy";
+export * from "./liturgy-slots";

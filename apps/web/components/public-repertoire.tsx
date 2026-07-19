@@ -2,12 +2,15 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import {
+  applyLiturgy,
   arrangeRepertoire,
   audioProvider,
   REPERTOIRE_TYPE_LABELS,
+  type LiturgicalSnapshot,
   type RepertoireType,
   type SlotDef,
 } from "@asafe/core";
+import { LiturgyHeader } from "./liturgy-header";
 import { stripChords, toHtml, transpose } from "@asafe/chordpro";
 import { readPrefs, writePrefs } from "@/lib/preferences";
 import { formatTom } from "@/lib/tom";
@@ -26,7 +29,12 @@ export interface PublicItem {
 }
 
 export interface SharedPackage {
-  repertoire: { title: string; type: RepertoireType; date: string | null };
+  repertoire: {
+    title: string;
+    type: RepertoireType;
+    date: string | null;
+    liturgicalSnapshot?: LiturgicalSnapshot | null;
+  };
   slots: SlotDef[];
   items: PublicItem[];
 }
@@ -121,7 +129,8 @@ export function PublicRepertoire({
 }) {
   const [hide, setHide] = useState(false);
   useEffect(() => setHide(Boolean(readPrefs().hideChords)), []);
-  const arranged = arrangeRepertoire(pkg.slots, pkg.items);
+  const { slots, liturgy } = applyLiturgy(pkg.slots, pkg.repertoire.liturgicalSnapshot ?? null);
+  const arranged = arrangeRepertoire(slots, pkg.items);
   const slotsWithItems = arranged.slots.filter((s) => s.items.length > 0);
 
   return (
@@ -147,6 +156,8 @@ export function PublicRepertoire({
           esconder cifra
         </label>
       </div>
+
+      <LiturgyHeader liturgy={liturgy} />
 
       {slotsWithItems.length === 0 && arranged.unslotted.length === 0 && (
         <p style={{ color: "var(--text-muted)" }}>Este repertório ainda não tem músicas.</p>

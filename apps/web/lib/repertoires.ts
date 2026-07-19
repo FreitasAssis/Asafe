@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { songIdentityKey } from "@asafe/core";
 import type {
+  LiturgicalSnapshot,
   ModerationDecision,
   ModerationReason,
   RepertoireType,
@@ -64,6 +65,8 @@ export interface Repertoire {
   /** Grupos com quem o repertório está compartilhado (#79: N-para-N). */
   groupIds: string[];
   communityStatus: CommunityStatus;
+  /** Snapshot litúrgico congelado na criação (Missa com data); null se não resolvido. */
+  liturgicalSnapshot: LiturgicalSnapshot | null;
   items: RepertoireItemFull[];
 }
 
@@ -270,7 +273,7 @@ export async function getRepertoire(
   const { data, error } = await supabase
     .from("repertoire")
     .select(
-      `id, title, type, date, owner_id, community_status, repertoire_group(group_id), repertoire_item(${ITEM_COLS})`,
+      `id, title, type, date, owner_id, community_status, liturgical_snapshot, repertoire_group(group_id), repertoire_item(${ITEM_COLS})`,
     )
     .eq("id", id)
     .maybeSingle();
@@ -284,6 +287,7 @@ export async function getRepertoire(
     date: string | null;
     owner_id: string;
     community_status: CommunityStatus;
+    liturgical_snapshot: LiturgicalSnapshot | null;
     repertoire_group: { group_id: string }[];
     repertoire_item: ItemRow[];
   };
@@ -295,6 +299,7 @@ export async function getRepertoire(
     ownerId: row.owner_id,
     groupIds: (row.repertoire_group ?? []).map((rg) => rg.group_id),
     communityStatus: row.community_status,
+    liturgicalSnapshot: row.liturgical_snapshot ?? null,
     items: (row.repertoire_item ?? []).map(rowToItem),
   };
 }
@@ -415,7 +420,7 @@ export async function getRepertoirePackage(
   const { data, error } = await supabase
     .from("repertoire")
     .select(
-      `title, type, date, repertoire_item(id, moment_slot, order, transpose, notes, song(title, composer, audio_links, song_content(chordpro_body)))`,
+      `title, type, date, liturgical_snapshot, repertoire_item(id, moment_slot, order, transpose, notes, song(title, composer, audio_links, song_content(chordpro_body)))`,
     )
     .eq("id", id)
     .maybeSingle();
@@ -426,6 +431,7 @@ export async function getRepertoirePackage(
     title: string;
     type: RepertoireType;
     date: string | null;
+    liturgical_snapshot: LiturgicalSnapshot | null;
     repertoire_item: {
       id: string;
       moment_slot: string | null;
@@ -444,7 +450,12 @@ export async function getRepertoirePackage(
   };
   const { slots } = await slotTemplate(supabase, row.type);
   return {
-    repertoire: { title: row.title, type: row.type, date: row.date },
+    repertoire: {
+      title: row.title,
+      type: row.type,
+      date: row.date,
+      liturgicalSnapshot: row.liturgical_snapshot ?? null,
+    },
     slots,
     items: (row.repertoire_item ?? []).map((it) => {
       const sc = it.song?.song_content;
