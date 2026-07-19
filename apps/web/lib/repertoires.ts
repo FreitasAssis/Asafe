@@ -61,7 +61,8 @@ export interface Repertoire {
   type: RepertoireType;
   date: string | null;
   ownerId: string;
-  groupId: string | null;
+  /** Grupos com quem o repertório está compartilhado (#79: N-para-N). */
+  groupIds: string[];
   communityStatus: CommunityStatus;
   items: RepertoireItemFull[];
 }
@@ -268,7 +269,9 @@ export async function getRepertoire(
 ): Promise<Repertoire | null> {
   const { data, error } = await supabase
     .from("repertoire")
-    .select(`id, title, type, date, owner_id, group_id, community_status, repertoire_item(${ITEM_COLS})`)
+    .select(
+      `id, title, type, date, owner_id, community_status, repertoire_group(group_id), repertoire_item(${ITEM_COLS})`,
+    )
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -280,8 +283,8 @@ export async function getRepertoire(
     type: RepertoireType;
     date: string | null;
     owner_id: string;
-    group_id: string | null;
     community_status: CommunityStatus;
+    repertoire_group: { group_id: string }[];
     repertoire_item: ItemRow[];
   };
   return {
@@ -290,7 +293,7 @@ export async function getRepertoire(
     type: row.type,
     date: row.date,
     ownerId: row.owner_id,
-    groupId: row.group_id,
+    groupIds: (row.repertoire_group ?? []).map((rg) => rg.group_id),
     communityStatus: row.community_status,
     items: (row.repertoire_item ?? []).map(rowToItem),
   };
@@ -461,15 +464,42 @@ export async function getRepertoirePackage(
   };
 }
 
-/** Compartilha (ou descompartilha) o repertório com um grupo. Só o dono (RLS). */
-export async function setRepertoireGroup(
+/** Define com QUAIS grupos o repertório está compartilhado (#79). Só o dono (RLS). */
+export async function setRepertoireGroups(
   supabase: SupabaseClient,
   id: string,
-  groupId: string | null,
+  groupIds: string[],
 ): Promise<void> {
+  const wanted = new Set(groupIds);
+  const { data: cur, error: readErr } = await supabase
+    .from("repertoire_group")
+    .select("group_id")
+    .eq("repertoire_id", id);
+  if (readErr) throw readErr;
+  const have = new Set((cur as { group_id: string }[]).map((r) => r.group_id));
+
+  const toAdd = groupIds.filter((g) => !have.has(g));
+  const toRemove = [...have].filter((g) => !wanted.has(g));
+
+  if (toAdd.length > 0) {
+    const ins = await supabase
+      .from("repertoire_group")
+      .insert(toAdd.map((group_id) => ({ repertoire_id: id, group_id })));
+    if (ins.error) throw ins.error;
+  }
+  if (toRemove.length > 0) {
+    const del = await supabase
+      .from("repertoire_group")
+      .delete()
+      .eq("repertoire_id", id)
+      .in("group_id", toRemove);
+    if (del.error) throw del.error;
+  }
+
+  // Mantém a coluna `visibility` coerente para exibição (group se houver ≥1, senão private).
   const { error } = await supabase
     .from("repertoire")
-    .update({ group_id: groupId, visibility: groupId ? "group" : "private" })
+    .update({ visibility: wanted.size > 0 ? "group" : "private" })
     .eq("id", id);
   if (error) throw error;
 }

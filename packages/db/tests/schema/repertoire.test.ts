@@ -124,6 +124,28 @@ async function addMember(
   if (error) throw error;
 }
 
+/** Cliente autenticado, como o inferido por signUp (evita o `never` de ReturnType<typeof createClient>). */
+type TestClient = Awaited<ReturnType<typeof signUp>>["client"];
+
+/** Cria um repertório e o vincula a um grupo (#79: compartilhamento agora é N-para-N). */
+async function insertGroupRep(
+  client: TestClient,
+  fields: { title: string; type: string; owner_id: string },
+  groupId: string,
+) {
+  const res = await client
+    .from("repertoire")
+    .insert({ ...fields, visibility: "group" })
+    .select()
+    .single();
+  if (res.data) {
+    await client
+      .from("repertoire_group")
+      .insert({ repertoire_id: (res.data as { id: string }).id, group_id: groupId });
+  }
+  return res;
+}
+
 describe("repertoire (RLS)", () => {
   afterAll(async () => {
     await closeDb();
@@ -194,17 +216,11 @@ describe("repertoire (RLS)", () => {
 
     const groupId = await createGroupWithMember(a, b.userId);
 
-    const { data: rep, error: insErr } = await a.client
-      .from("repertoire")
-      .insert({
-        title: "De grupo",
-        type: "Missa",
-        owner_id: a.userId,
-        group_id: groupId,
-        visibility: "group",
-      })
-      .select()
-      .single();
+    const { data: rep, error: insErr } = await insertGroupRep(
+      a.client,
+      { title: "De grupo", type: "Missa", owner_id: a.userId },
+      groupId,
+    );
     expect(insErr).toBeNull();
 
     const { data: bSel, error: bErr } = await b.client
@@ -238,15 +254,10 @@ describe("repertoire_item (RLS)", () => {
 
     const { data: rep, error: repErr } = await a.client
       .from("repertoire")
-      .insert({
-        title: "Com itens",
-        type: "Missa",
-        owner_id: a.userId,
-        group_id: groupId,
-        visibility: "group",
-      })
+      .insert({ title: "Com itens", type: "Missa", owner_id: a.userId, visibility: "group" })
       .select()
       .single();
+    if (rep) await a.client.from("repertoire_group").insert({ repertoire_id: (rep as { id: string }).id, group_id: groupId });
     expect(repErr).toBeNull();
 
     const { data: item, error: itemErr } = await a.client
@@ -284,15 +295,10 @@ describe("repertoire_item (RLS)", () => {
 
     const { data: rep } = await a.client
       .from("repertoire")
-      .insert({
-        title: "Protegido",
-        type: "Missa",
-        owner_id: a.userId,
-        group_id: groupId,
-        visibility: "group",
-      })
+      .insert({ title: "Protegido", type: "Missa", owner_id: a.userId, visibility: "group" })
       .select()
       .single();
+    if (rep) await a.client.from("repertoire_group").insert({ repertoire_id: (rep as { id: string }).id, group_id: groupId });
 
     // B (membro) tenta inserir item -> withCheck do dono bloqueia.
     const { data: bIns, error: bInsErr } = await b.client
@@ -336,15 +342,10 @@ describe("repertoire_theme (RLS)", () => {
 
     const { data: rep } = await a.client
       .from("repertoire")
-      .insert({
-        title: "Com tema",
-        type: "Adoracao",
-        owner_id: a.userId,
-        group_id: groupId,
-        visibility: "group",
-      })
+      .insert({ title: "Com tema", type: "Adoracao", owner_id: a.userId, visibility: "group" })
       .select()
       .single();
+    if (rep) await a.client.from("repertoire_group").insert({ repertoire_id: (rep as { id: string }).id, group_id: groupId });
 
     const { error: themeErr } = await a.client
       .from("repertoire_theme")
@@ -388,15 +389,10 @@ describe("repertoire co-edição por editores do grupo (RLS)", () => {
 
     const { data: rep, error: repErr } = await a.client
       .from("repertoire")
-      .insert({
-        title: "Co-editável",
-        type: "Missa",
-        owner_id: a.userId,
-        group_id: groupId,
-        visibility: "group",
-      })
+      .insert({ title: "Co-editável", type: "Missa", owner_id: a.userId, visibility: "group" })
       .select()
       .single();
+    if (rep) await a.client.from("repertoire_group").insert({ repertoire_id: (rep as { id: string }).id, group_id: groupId });
     expect(repErr).toBeNull();
 
     // A (dono) cria um item base.
@@ -512,15 +508,10 @@ describe("repertoire co-edição por editores do grupo (RLS)", () => {
 
     const { data: rep, error: repErr } = await a.client
       .from("repertoire")
-      .insert({
-        title: "Tema co-editável",
-        type: "Adoracao",
-        owner_id: a.userId,
-        group_id: groupId,
-        visibility: "group",
-      })
+      .insert({ title: "Tema co-editável", type: "Adoracao", owner_id: a.userId, visibility: "group" })
       .select()
       .single();
+    if (rep) await a.client.from("repertoire_group").insert({ repertoire_id: (rep as { id: string }).id, group_id: groupId });
     expect(repErr).toBeNull();
 
     // (1) Editor B PODE inserir um tema.
@@ -561,6 +552,39 @@ describe("repertoire co-edição por editores do grupo (RLS)", () => {
       .select();
     expect(cInsErr).not.toBeNull();
     expect(cIns).toBeNull();
+  });
+
+  it("#79: compartilhado com VÁRIOS grupos — membro de qualquer um vê; desvincular revoga", async () => {
+    const a = await signUp(`o_${uniq()}@asafe.test`);
+    const m1 = await signUp(`m1_${uniq()}@asafe.test`);
+    const m2 = await signUp(`m2_${uniq()}@asafe.test`);
+    const g1 = await createGroup(a);
+    const g2 = await createGroup(a);
+    await addMember(a, g1, m1.userId, "viewer");
+    await addMember(a, g2, m2.userId, "editor");
+
+    const { data: rep } = await a.client
+      .from("repertoire")
+      .insert({ title: "Dois grupos", type: "Missa", owner_id: a.userId, visibility: "group" })
+      .select("id")
+      .single();
+    const repId = (rep as { id: string }).id;
+    await a.client.from("repertoire_group").insert([
+      { repertoire_id: repId, group_id: g1 },
+      { repertoire_id: repId, group_id: g2 },
+    ]);
+
+    const sees = async (u: Awaited<ReturnType<typeof signUp>>) =>
+      (await u.client.from("repertoire").select("id").eq("id", repId).maybeSingle()).data !== null;
+
+    // membro de QUALQUER grupo vinculado vê
+    expect(await sees(m1)).toBe(true);
+    expect(await sees(m2)).toBe(true);
+
+    // desvincula g2 → m2 perde acesso, m1 continua vendo
+    await a.client.from("repertoire_group").delete().eq("repertoire_id", repId).eq("group_id", g2);
+    expect(await sees(m2)).toBe(false);
+    expect(await sees(m1)).toBe(true);
   });
 });
 

@@ -176,6 +176,13 @@
       "when": 1784235785160,
       "tag": "0024_realtime_live_authz",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1784487066676,
+      "tag": "0025_repertoire_groups",
+      "breakpoints": true
     }
   ]
 }
