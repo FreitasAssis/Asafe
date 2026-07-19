@@ -115,10 +115,11 @@ describe("grupos E2 — convite, aprovação, co-edição (RLS)", () => {
       .single();
     const { data: rep } = await a.client
       .from("repertoire")
-      .insert({ title: "Missa Grupo", type: "Missa", owner_id: a.userId, group_id: groupId, visibility: "group" })
+      .insert({ title: "Missa Grupo", type: "Missa", owner_id: a.userId, visibility: "group" })
       .select("id")
       .single();
     const repId = (rep as { id: string }).id;
+    await a.client.from("repertoire_group").insert({ repertoire_id: repId, group_id: groupId });
     const songId = (song as { id: string }).id;
 
     // editor B insere item → OK

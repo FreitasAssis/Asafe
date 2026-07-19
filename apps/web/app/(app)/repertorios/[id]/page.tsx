@@ -1,7 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { serverClient } from "@/lib/supabase/server";
 import { getRepertoire, getRepertoirePackage } from "@/lib/repertoires";
-import { myMembershipRole } from "@/lib/groups";
 import { PublicRepertoire } from "@/components/public-repertoire";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { EditPencil } from "@/components/edit-pencil";
@@ -28,12 +27,10 @@ export default async function VerRepertorio({
   ]);
   if (!pkg || !repertoire) notFound();
 
-  // Edita o dono ou um editor do grupo (viewer só lê).
+  // Edita o dono ou um editor de ALGUM grupo vinculado (viewer só lê). #79: N-para-N via RLS.
   const isOwner = repertoire.ownerId === user.id;
-  const role = repertoire.groupId
-    ? await myMembershipRole(supabase, repertoire.groupId, user.id)
-    : null;
-  const canEdit = isOwner || role === "editor";
+  const { data: canCoEdit } = await supabase.rpc("edits_repertoire_group", { p_rep: id });
+  const canEdit = isOwner || canCoEdit === true;
   // Repertório da comunidade que não é meu → posso "pegar" (clonar) para os meus.
   const canTake = !isOwner && repertoire.communityStatus === "approved";
   // Breadcrumb reflete de onde vim (fila de moderação, aba comunidade, ou a lista padrão).

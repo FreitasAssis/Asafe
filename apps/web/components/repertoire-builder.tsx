@@ -14,7 +14,7 @@ import {
   setItemNotes,
   setItemOrder,
   setItemTranspose,
-  setRepertoireGroup,
+  setRepertoireGroups,
   updateRepertoire,
   type Repertoire,
   type RepertoireItemFull,
@@ -49,7 +49,7 @@ export function RepertoireBuilder({
   const router = useRouter();
   const [title, setTitle] = useState(repertoire.title);
   const [date, setDate] = useState(repertoire.date ?? "");
-  const [groupId, setGroupId] = useState(repertoire.groupId ?? "");
+  const [groupIds, setGroupIds] = useState<Set<string>>(new Set(repertoire.groupIds));
   const [items, setItems] = useState<RepertoireItemFull[]>(repertoire.items);
   const [pickerSlot, setPickerSlot] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -167,13 +167,18 @@ export function RepertoireBuilder({
     }
   }
 
-  async function changeGroup(value: string) {
-    setGroupId(value);
+  async function toggleGroup(gid: string) {
+    const prev = groupIds;
+    const next = new Set(prev);
+    if (next.has(gid)) next.delete(gid);
+    else next.add(gid);
+    setGroupIds(next);
     try {
-      await setRepertoireGroup(browserClient(), repertoire.id, value || null);
-      setSavedMsg(value ? "Compartilhado com o grupo ✓" : "Não compartilhado");
+      await setRepertoireGroups(browserClient(), repertoire.id, [...next]);
+      setSavedMsg(next.size > 0 ? "Compartilhamento atualizado ✓" : "Não compartilhado");
       router.refresh();
     } catch (e) {
+      setGroupIds(prev); // reverte
       setError(e instanceof Error ? e.message : "Erro ao compartilhar.");
     }
   }
@@ -299,17 +304,23 @@ export function RepertoireBuilder({
 
       {isOwner && (
         <div style={{ marginTop: 10, fontSize: 14 }}>
-          <label>
-            Compartilhar com grupo:{" "}
-            <select value={groupId} onChange={(e) => void changeGroup(e.target.value)}>
-              <option value="">— não compartilhado —</option>
+          <div style={{ marginBottom: 4 }}>Compartilhar com grupos:</div>
+          {groups.length === 0 ? (
+            <span style={{ color: "var(--text-muted)" }}>Você ainda não tem grupos.</span>
+          ) : (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
               {groups.map((g) => (
-                <option key={g.id} value={g.id}>
+                <label key={g.id} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                  <input
+                    type="checkbox"
+                    checked={groupIds.has(g.id)}
+                    onChange={() => void toggleGroup(g.id)}
+                  />
                   {g.name}
-                </option>
+                </label>
               ))}
-            </select>
-          </label>
+            </div>
+          )}
         </div>
       )}
 

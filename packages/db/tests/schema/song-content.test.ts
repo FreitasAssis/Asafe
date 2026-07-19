@@ -81,9 +81,12 @@ describe("song_content — referência × conteúdo (RLS)", () => {
     await db.insert(membership).values({ userId: b.userId, groupId, role: "viewer" });
     const { data: rep } = await a.client
       .from("repertoire")
-      .insert({ title: `R ${uniq()}`, type: "Missa", owner_id: a.userId, group_id: groupId, visibility: "group" })
+      .insert({ title: `R ${uniq()}`, type: "Missa", owner_id: a.userId, visibility: "group" })
       .select("id")
       .single();
+    await a.client
+      .from("repertoire_group")
+      .insert({ repertoire_id: (rep as { id: string }).id, group_id: groupId });
     await a.client
       .from("repertoire_item")
       .insert({ repertoire_id: (rep as { id: string }).id, song_id: songId, order: 0 });
