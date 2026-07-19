@@ -124,9 +124,12 @@ async function addMember(
   if (error) throw error;
 }
 
+/** Cliente autenticado, como o inferido por signUp (evita o `never` de ReturnType<typeof createClient>). */
+type TestClient = Awaited<ReturnType<typeof signUp>>["client"];
+
 /** Cria um repertório e o vincula a um grupo (#79: compartilhamento agora é N-para-N). */
 async function insertGroupRep(
-  client: ReturnType<typeof createClient>,
+  client: TestClient,
   fields: { title: string; type: string; owner_id: string },
   groupId: string,
 ) {
