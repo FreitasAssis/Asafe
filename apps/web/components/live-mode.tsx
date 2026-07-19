@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { arrangeRepertoire, liturgicalColorHex } from "@asafe/core";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { buildStageSequence, liturgicalColorHex, type ReadingWithText } from "@asafe/core";
 import { hasChorus, stripChords, toHtml, transpose } from "@asafe/chordpro";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import { useLiveSync } from "@/lib/use-live-sync";
+import { getDayReadingTexts } from "@/lib/liturgy/read-actions";
+import { READING_LABELS } from "@/lib/liturgy/reading-labels";
 import { formatTom } from "@/lib/tom";
 import type { SharedPackage } from "./public-repertoire";
 
@@ -37,12 +39,30 @@ export function LiveMode({
   readonly userId: string;
   readonly userName: string;
 }) {
-  // Ordem de execução = ordem do arranjo (mesma da leitura), achatada em lista linear.
-  const arranged = arrangeRepertoire(pkg.slots, pkg.items);
-  const items = [...arranged.slots.flatMap((s) => s.items), ...arranged.unslotted];
+  // Ordem de execução = ordem do arranjo, com as LEITURAS intercaladas na ordem
+  // litúrgica (#102). Determinística a partir do snapshot → mestre e seguidores têm
+  // a mesma lista, o `idx` do sync não desalinha; o texto entra depois.
+  const snapshot = pkg.repertoire.liturgicalSnapshot ?? null;
+  const steps = useMemo(
+    () => buildStageSequence(pkg.slots, pkg.items, snapshot),
+    [pkg.slots, pkg.items, snapshot],
+  );
   // Detalhe litúrgico: filete no topo na cor do dia (Missa resolvida).
-  const litColor = liturgicalColorHex(pkg.repertoire.liturgicalSnapshot?.color ?? null);
+  const litColor = liturgicalColorHex(snapshot?.color ?? null);
   const litBorder = litColor ? { borderTop: `3px solid ${litColor}` } : undefined;
+
+  // Textos das leituras: buscados ao vivo (© CNBB, não persistidos), indexados por tipo.
+  const [readingTexts, setReadingTexts] = useState<Record<string, ReadingWithText>>({});
+  useEffect(() => {
+    if (!snapshot?.date) return;
+    let alive = true;
+    void getDayReadingTexts(snapshot.date).then((rs) => {
+      if (alive) setReadingTexts(Object.fromEntries(rs.map((r) => [r.kind, r])));
+    });
+    return () => {
+      alive = false;
+    };
+  }, [snapshot?.date]);
 
   const [idx, setIdx] = useState(0);
   const [tom, setTom] = useState(0); // tom da sessão em semitons (mestre / sem sync); zera por música
@@ -70,7 +90,7 @@ export function LiveMode({
 
   // Aplica a música que veio do mestre (sem re-transmitir nem "soltar" o seguidor).
   function applyRemoteIdx(i: number) {
-    setIdx(Math.min(items.length - 1, Math.max(0, i)));
+    setIdx(Math.min(steps.length - 1, Math.max(0, i)));
     setScrolling(false);
     setChorusReturn(null);
     setTom(0);
@@ -138,7 +158,10 @@ export function LiveMode({
     setAnchor((a) => (a === cur ? a : cur));
   }
 
-  const item = items[idx];
+  const step = steps[idx];
+  const item = step?.kind === "song" ? step.item : null;
+  const reading = step?.kind === "reading" ? step.reading : null;
+  const readingText = reading ? readingTexts[reading.kind] : undefined;
   const songHasChorus = hasChorus(item?.chordpro ?? "");
 
   // Cifra exibida: tom do item + a transposição da sessão (`tom`); "esconder cifra" → stripChords.
@@ -208,7 +231,7 @@ export function LiveMode({
   function go(delta: number) {
     // Seguidor que navega sozinho se solta do mestre (leitura livre).
     if (sync && live.following && !live.isMaster) live.detach();
-    setIdx((i) => Math.min(items.length - 1, Math.max(0, i + delta)));
+    setIdx((i) => Math.min(steps.length - 1, Math.max(0, i + delta)));
     setScrolling(false);
     setChorusReturn(null);
     setTom(0);
@@ -286,7 +309,7 @@ export function LiveMode({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items.length]);
+  }, [steps.length]);
 
   const plural = live.count === 1 ? "" : "s";
   const peersLabel = live.peers.length > 0 ? live.peers.join(", ") : `${live.count} conectado${plural}`;
@@ -300,7 +323,7 @@ export function LiveMode({
     else syncStatus = "Leitura livre";
   }
 
-  if (items.length === 0) {
+  if (steps.length === 0) {
     return (
       <div className="live-mode" style={litBorder}>
         <div className="live-bar">
@@ -316,7 +339,7 @@ export function LiveMode({
     <div className="live-mode">
       <div className="live-bar">
         <span className="flex-1 truncate">{pkg.repertoire.title}</span>
-        <span className="live-pos">{idx + 1}/{items.length}</span>
+        <span className="live-pos">{idx + 1}/{steps.length}</span>
         <button
           type="button"
           className={`live-gear${syncPanel ? " on" : ""}${sync ? " live-sync-on" : ""}`}
@@ -403,29 +426,53 @@ export function LiveMode({
         onPointerUp={onPointerUp}
         onScroll={onScroll}
       >
-        <h2 className="live-title">
-          {item?.title}
-          {item?.notes && (
-            <button
-              type="button"
-              className="live-note-btn"
-              onClick={() => setNoteOpen((o) => !o)}
-              aria-label={noteOpen ? "Esconder observação" : "Ver observação"}
-              aria-expanded={noteOpen}
-            >
-              💬
-            </button>
-          )}
-          {effectiveTom !== 0 && <span className="live-tom">tom {formatTom(effectiveTom)}</span>}
-        </h2>
-        {item?.composer && <div className="live-composer">{item.composer}</div>}
-        {noteOpen && item?.notes && <div className="live-note">{item.notes}</div>}
-        {html ? (
-          <div className="live-cifra" style={{ fontSize: `${font}rem` }}>
-            <div className="chord-preview" dangerouslySetInnerHTML={{ __html: html }} />
-          </div>
+        {reading ? (
+          <>
+            <h2 className="live-title">
+              {READING_LABELS[reading.kind]}
+              {reading.ref && <span className="live-tom">{reading.ref}</span>}
+            </h2>
+            {readingText ? (
+              <>
+                {readingText.title && <div className="live-composer">{readingText.title}</div>}
+                <div className="live-cifra" style={{ fontSize: `${font}rem` }}>
+                  <p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{readingText.text}</p>
+                </div>
+                <p className="live-empty" style={{ opacity: 0.6, fontSize: 12 }}>
+                  Texto litúrgico © CNBB — exibido da fonte, não armazenado.
+                </p>
+              </>
+            ) : (
+              <p className="live-empty">carregando a leitura…</p>
+            )}
+          </>
         ) : (
-          <p className="live-empty">— cifra não disponível (referência)</p>
+          <>
+            <h2 className="live-title">
+              {item?.title}
+              {item?.notes && (
+                <button
+                  type="button"
+                  className="live-note-btn"
+                  onClick={() => setNoteOpen((o) => !o)}
+                  aria-label={noteOpen ? "Esconder observação" : "Ver observação"}
+                  aria-expanded={noteOpen}
+                >
+                  💬
+                </button>
+              )}
+              {effectiveTom !== 0 && <span className="live-tom">tom {formatTom(effectiveTom)}</span>}
+            </h2>
+            {item?.composer && <div className="live-composer">{item.composer}</div>}
+            {noteOpen && item?.notes && <div className="live-note">{item.notes}</div>}
+            {html ? (
+              <div className="live-cifra" style={{ fontSize: `${font}rem` }}>
+                <div className="chord-preview" dangerouslySetInnerHTML={{ __html: html }} />
+              </div>
+            ) : (
+              <p className="live-empty">— cifra não disponível (referência)</p>
+            )}
+          </>
         )}
       </div>
 
@@ -443,7 +490,7 @@ export function LiveMode({
         type="button"
         className="live-edge live-edge-right"
         onClick={() => go(1)}
-        disabled={idx === items.length - 1}
+        disabled={idx === steps.length - 1}
         aria-label="Próxima"
       >
         ›

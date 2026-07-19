@@ -5,7 +5,7 @@
  * Quaresma; salmo próprio do dia como dica) + o contexto litúrgico para exibir.
  */
 
-import type { SlotDef } from "./arrange-repertoire";
+import { arrangeRepertoire, type ArrangeableItem, type SlotDef } from "./arrange-repertoire";
 import type { LiturgicalColor, LiturgicalSeason, LiturgicalSnapshot, ReadingRef } from "./liturgy";
 
 export interface LiturgyContext {
@@ -88,4 +88,42 @@ export function applyLiturgy(
   };
 
   return { slots: adjusted, liturgy };
+}
+
+/** Um passo da apresentação (Ao vivo / Projeção): uma música OU uma leitura. */
+export type StageStep<T> =
+  | { kind: "song"; item: T }
+  | { kind: "reading"; reading: ReadingRef };
+
+/**
+ * Sequência linear dos modos de palco (#102) com as LEITURAS intercaladas na
+ * ordem litúrgica: **1ª leitura** antes do Salmo, **2ª leitura** depois do
+ * Salmo, **Evangelho** logo após a Aclamação. (Salmo e Aclamação seguem sendo
+ * os slots de música.)
+ *
+ * A estrutura é DETERMINÍSTICA a partir do snapshot — não depende de o texto ter
+ * sido carregado —, então mestre e seguidores têm a MESMA lista de passos e o
+ * `idx` do sync não desalinha. O texto entra depois, por leitura.
+ */
+export function buildStageSequence<T extends ArrangeableItem>(
+  slots: SlotDef[],
+  items: T[],
+  snapshot: LiturgicalSnapshot | null,
+): StageStep<T>[] {
+  const arranged = arrangeRepertoire(slots, items);
+  const readingByKind = new Map((snapshot?.readings ?? []).map((r) => [r.kind, r]));
+  const readingStep = (kind: ReadingRef["kind"]): StageStep<T>[] => {
+    const reading = readingByKind.get(kind);
+    return reading ? [{ kind: "reading", reading }] : [];
+  };
+
+  const steps: StageStep<T>[] = [];
+  for (const slot of arranged.slots) {
+    if (slot.key === "salmo") steps.push(...readingStep("primeira"));
+    for (const item of slot.items) steps.push({ kind: "song", item });
+    if (slot.key === "salmo") steps.push(...readingStep("segunda"));
+    if (slot.key === "aclamacao") steps.push(...readingStep("evangelho"));
+  }
+  for (const item of arranged.unslotted) steps.push({ kind: "song", item });
+  return steps;
 }
