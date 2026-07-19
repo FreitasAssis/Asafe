@@ -672,6 +672,12 @@
   opacity: 0.35;
   cursor: default;
 }
+/* Troca de música (aparece só nas pontas da música) — destaque p/ não confundir com estrofe. */
+.projection-nav .projection-song-btn {
+  font-size: 15px;
+  color: #c2a14e;
+  border-color: #6a5a34;
+}
 /* Inativo: some a interface para a assembleia ver só a letra. */
 .projection-idle {
   cursor: none;
