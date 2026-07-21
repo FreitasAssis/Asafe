@@ -132,6 +132,8 @@ interface DancrfReading {
   referencia?: string;
   titulo?: string;
   texto?: string;
+  /** Só no salmo responsorial: o refrão (resposta cantada pela assembleia). */
+  refrao?: string;
 }
 interface DancrfRaw {
   liturgia?: string;
@@ -164,6 +166,8 @@ export interface ReadingWithText {
   ref: string;
   title: string;
   text: string;
+  /** Refrão do salmo responsorial (a resposta cantada); ausente nas demais. */
+  refrain?: string;
 }
 
 /**
@@ -182,6 +186,7 @@ export function parseDancrfFull(raw: DancrfRaw): ReadingWithText[] {
         ref: r.referencia?.trim() ?? "",
         title: r.titulo?.trim() ?? "",
         text: r.texto.trim(),
+        ...(r.refrao?.trim() ? { refrain: r.refrao.trim() } : {}),
       });
     }
   };

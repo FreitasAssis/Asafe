@@ -77,7 +77,12 @@ export function applyLiturgy(
       return slot;
     });
 
-  const liturgy: LiturgyContext = {
+  return { slots: adjusted, liturgy: liturgyContext(snapshot) };
+}
+
+/** Contexto litúrgico exibível a partir do snapshot (celebração, tempo, cor, leituras). */
+export function liturgyContext(snapshot: LiturgicalSnapshot): LiturgyContext {
+  return {
     date: snapshot.date,
     celebration: snapshot.celebration,
     season: snapshot.season,
@@ -86,8 +91,6 @@ export function applyLiturgy(
     colorLabel: COLOR_LABELS[snapshot.color],
     readings: snapshot.readings,
   };
-
-  return { slots: adjusted, liturgy };
 }
 
 /** Um passo da apresentação (Ao vivo / Projeção): uma música OU uma leitura. */

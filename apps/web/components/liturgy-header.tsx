@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LITURGICAL_COLOR_HEX, type LiturgyContext, type ReadingRef, type ReadingWithText } from "@asafe/core";
 import { getDayReadingTexts } from "@/lib/liturgy/read-actions";
 
@@ -17,11 +17,36 @@ const READING_LABELS: Record<ReadingRef["kind"], string> = {
  * "Ler as leituras" busca o TEXTO ao vivo (server action → fonte), exibido com
  * crédito à CNBB e NUNCA persistido (ver A0/§6). Não renderiza nada sem liturgia.
  */
-export function LiturgyHeader({ liturgy }: { readonly liturgy: LiturgyContext | null }) {
-  const [open, setOpen] = useState(false);
+export function LiturgyHeader({
+  liturgy,
+  defaultOpen = false,
+}: {
+  readonly liturgy: LiturgyContext | null;
+  /** Já abre as leituras e busca o texto ao montar (ex.: página Liturgia diária). */
+  readonly defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
   const [texts, setTexts] = useState<ReadingWithText[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+
+  // Busca o texto quando as leituras estão abertas — CHAVEADO pela data, para
+  // rebuscar quando o dia muda (ex.: seletor da Liturgia diária). Limpa o texto
+  // anterior enquanto carrega; o `alive` evita gravar resultado de data trocada.
+  const date = liturgy?.date;
+  useEffect(() => {
+    if (!open || !date) return;
+    let alive = true;
+    setLoading(true);
+    setTexts(null);
+    void getDayReadingTexts(date)
+      .then((rs) => alive && setTexts(rs))
+      .catch(() => alive && setTexts([]))
+      .finally(() => alive && setLoading(false));
+    return () => {
+      alive = false;
+    };
+  }, [open, date]);
 
   if (!liturgy) return null;
 
@@ -35,18 +60,8 @@ export function LiturgyHeader({ liturgy }: { readonly liturgy: LiturgyContext | 
     }
   }
 
-  async function toggle() {
-    const next = !open;
-    setOpen(next);
-    if (next && texts === null && liturgy) {
-      setLoading(true);
-      try {
-        setTexts(await getDayReadingTexts(liturgy.date));
-      } catch {
-        setTexts([]);
-      }
-      setLoading(false);
-    }
+  function toggle() {
+    setOpen((o) => !o); // o efeito acima cuida de carregar o texto na 1ª abertura
   }
 
   return (
@@ -98,7 +113,7 @@ export function LiturgyHeader({ liturgy }: { readonly liturgy: LiturgyContext | 
 
       <button
         type="button"
-        onClick={() => void toggle()}
+        onClick={toggle}
         style={{ marginTop: 8, fontSize: 13, color: "var(--primary)" }}
       >
         {open ? "▲ ocultar leituras" : "▼ ler as leituras"}
@@ -124,7 +139,7 @@ export function LiturgyHeader({ liturgy }: { readonly liturgy: LiturgyContext | 
                   </span>
                   <button
                     type="button"
-                    onClick={() => void copy(r.kind, r.text)}
+                    onClick={() => void copy(r.kind, r.refrain ? `${r.refrain}\n\n${r.text}` : r.text)}
                     title="Copiar o texto para criar uma música no catálogo"
                     style={{ fontSize: 12, fontWeight: 400, color: "var(--primary)" }}
                   >
@@ -135,6 +150,11 @@ export function LiturgyHeader({ liturgy }: { readonly liturgy: LiturgyContext | 
                   <div style={{ fontStyle: "italic", fontSize: 13, color: "var(--text-muted)" }}>
                     {r.title}
                   </div>
+                )}
+                {r.refrain && (
+                  <p style={{ fontWeight: 600, margin: "4px 0 0", fontSize: 14 }}>
+                    <span style={{ color: "var(--text-muted)" }}>Refrão:</span> {r.refrain}
+                  </p>
                 )}
                 <p style={{ whiteSpace: "pre-wrap", margin: "4px 0 0", fontSize: 14 }}>{r.text}</p>
               </div>
