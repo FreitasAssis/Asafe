@@ -309,7 +309,8 @@ export function RepertoireBuilder({
         {!isOwner && " · compartilhado com você"}
       </div>
 
-      <LiturgyHeader liturgy={liturgy} />
+      {/* Os momentos do template alimentam o "momento sugerido" ao vincular (A4). */}
+      <LiturgyHeader liturgy={liturgy} moments={litSlots} />
 
       {isOwner && (
         <div style={{ marginTop: 10, fontSize: 14 }}>
