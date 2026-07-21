@@ -31,7 +31,8 @@ export const songPericope = pgTable(
       .notNull()
       .default(sql`auth.uid()`)
       .references(() => user.id, { onDelete: "cascade" }),
-    communityStatus: communityStatus("community_status").notNull().default("none"),
+    // A4b: nasce na fila de moderação — mas 'pending' aqui já é público.
+    communityStatus: communityStatus("community_status").notNull().default("pending"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -42,26 +43,30 @@ export const songPericope = pgTable(
     index("song_pericope_community_status_idx")
       .on(t.communityStatus)
       .where(sql`${t.communityStatus} <> 'none'`),
+    // A4b: o vínculo é GLOBAL — todo logado vê. 'pending' aqui JÁ É PÚBLICO
+    // (fila reativa: o moderador tria depois, não bloqueia a publicação).
     pgPolicy("song_pericope_select", {
       for: "select",
       to: authenticatedRole,
-      using: sql`${t.ownerId} = auth.uid() OR ${t.communityStatus} = 'approved' OR (${t.communityStatus} = 'pending' AND public.is_moderator())`,
+      using: sql`true`,
     }),
     pgPolicy("song_pericope_insert_own", {
       for: "insert",
       to: authenticatedRole,
       withCheck: sql`${t.ownerId} = auth.uid()`,
     }),
-    pgPolicy("song_pericope_update_own", {
+    // Editar/remover: o dono OU um moderador (que remove qualquer vínculo e
+    // "aprova" — o que significa apenas tirar da fila).
+    pgPolicy("song_pericope_update", {
       for: "update",
       to: authenticatedRole,
-      using: sql`${t.ownerId} = auth.uid()`,
-      withCheck: sql`${t.ownerId} = auth.uid()`,
+      using: sql`${t.ownerId} = auth.uid() OR public.is_moderator()`,
+      withCheck: sql`${t.ownerId} = auth.uid() OR public.is_moderator()`,
     }),
-    pgPolicy("song_pericope_delete_own", {
+    pgPolicy("song_pericope_delete", {
       for: "delete",
       to: authenticatedRole,
-      using: sql`${t.ownerId} = auth.uid()`,
+      using: sql`${t.ownerId} = auth.uid() OR public.is_moderator()`,
     }),
   ],
 ).enableRLS();

@@ -116,50 +116,123 @@ describe("pericope / pericope_segment (RLS)", () => {
   });
 });
 
-describe("song_pericope — vínculo música↔leitura (próprio + global/aprovado) (RLS)", () => {
-  it("dono vê o próprio; estranho não; aprovado todos veem; pending só moderador", async () => {
+/** Perícope global (catálogo), criada pela ingestão — é a que os vínculos usam. */
+async function makeGlobalPericope() {
+  const [p] = await db.execute<{ id: string }>(
+    sql`insert into pericope (label, owner_id) values (${`Lc 15 ${uniq()}`}, null) returning id`,
+  );
+  return (p as { id: string }).id;
+}
+
+describe("song_pericope — vínculo GLOBAL + fila reativa (A4)", () => {
+  it("vínculo nasce 'pending' e JÁ é visível a todos (fila reativa, não bloqueante)", async () => {
+    const a = await signUp();
+    const b = await signUp();
+    const songA = await makeSong(a);
+    const pericopeId = await makeGlobalPericope();
+
+    const { data: link, error } = await a.client
+      .from("song_pericope")
+      .insert({ song_id: songA, pericope_id: pericopeId, suggested_moment: "comunhao" })
+      .select("id, community_status")
+      .single();
+    expect(error).toBeNull();
+    // nasce na fila...
+    expect((link as { community_status: string }).community_status).toBe("pending");
+    // ...mas já público (é o que inverte o padrão do resto do app)
+    expect(await sees(b.client, "song_pericope", (link as { id: string }).id)).toBe(true);
+  });
+
+  it("vincular expõe a REFERÊNCIA da música, mas NUNCA a cifra", async () => {
+    const a = await signUp();
+    const b = await signUp();
+    const songA = await makeSong(a); // música privada de A
+    await a.client.from("song_content").insert({ song_id: songA, chordpro_body: "[C]cifra secreta" });
+
+    // antes de vincular: estranho não vê nem a referência
+    expect(await sees(b.client, "song", songA)).toBe(false);
+
+    await a.client
+      .from("song_pericope")
+      .insert({ song_id: songA, pericope_id: await makeGlobalPericope() });
+
+    // depois: vê a referência (metadado)...
+    expect(await sees(b.client, "song", songA)).toBe(true);
+    // ...e a cifra continua fechada (song_content tem RLS própria)
+    const { data: body } = await b.client
+      .from("song_content")
+      .select("chordpro_body")
+      .eq("song_id", songA);
+    expect((body ?? []).length).toBe(0);
+  });
+
+  it("remoção: dono remove o seu; estranho NÃO remove o alheio; moderador remove qualquer um", async () => {
     const a = await signUp();
     const b = await signUp();
     const mod = await signUp();
     await makeModerator(mod.userId);
-
     const songA = await makeSong(a);
-    const [p] = await db.execute<{ id: string }>(sql`insert into pericope (label, owner_id) values (${`Mt 5 ${uniq()}`}, null) returning id`);
-    const pericopeId = (p as { id: string }).id;
+    const pericopeId = await makeGlobalPericope();
 
-    // vínculo próprio de A (community_status default 'none')
-    const { data: link, error: linkErr } = await a.client
+    const mk = async () => {
+      const { data } = await a.client
+        .from("song_pericope")
+        .insert({ song_id: songA, pericope_id: pericopeId })
+        .select("id")
+        .single();
+      return (data as { id: string }).id;
+    };
+
+    // estranho não remove
+    const l1 = await mk();
+    await b.client.from("song_pericope").delete().eq("id", l1);
+    expect(await sees(a.client, "song_pericope", l1)).toBe(true);
+
+    // dono remove o seu
+    await a.client.from("song_pericope").delete().eq("id", l1);
+    expect(await sees(a.client, "song_pericope", l1)).toBe(false);
+
+    // moderador remove o de outro
+    const l2 = await mk();
+    await mod.client.from("song_pericope").delete().eq("id", l2);
+    expect(await sees(a.client, "song_pericope", l2)).toBe(false);
+  });
+
+  it("moderador aprova = só tira da fila; o vínculo continua visível a todos", async () => {
+    const a = await signUp();
+    const b = await signUp();
+    const mod = await signUp();
+    await makeModerator(mod.userId);
+    const songA = await makeSong(a);
+    const { data: link } = await a.client
       .from("song_pericope")
-      .insert({ song_id: songA, pericope_id: pericopeId, suggested_moment: "comunhao" })
+      .insert({ song_id: songA, pericope_id: await makeGlobalPericope() })
       .select("id")
       .single();
-    expect(linkErr).toBeNull();
-    const ownLinkId = (link as { id: string }).id;
+    const id = (link as { id: string }).id;
 
-    expect(await sees(a.client, "song_pericope", ownLinkId)).toBe(true);
-    expect(await sees(b.client, "song_pericope", ownLinkId)).toBe(false);
-    expect(await sees(mod.client, "song_pericope", ownLinkId)).toBe(false); // 'none' não é fila de moderação
+    const { error } = await mod.client
+      .from("song_pericope")
+      .update({ community_status: "approved" })
+      .eq("id", id);
+    expect(error).toBeNull();
 
-    // vínculo aprovado (curado) → todos veem
-    const [appr] = await db.execute<{ id: string }>(sql`insert into song_pericope (song_id, pericope_id, owner_id, community_status) values (${songA}, ${pericopeId}, ${a.userId}, 'approved') returning id`);
-    const apprId = (appr as { id: string }).id;
-    expect(await sees(b.client, "song_pericope", apprId)).toBe(true);
-
-    // vínculo pending → moderador vê, estranho não
-    const [pend] = await db.execute<{ id: string }>(sql`insert into song_pericope (song_id, pericope_id, owner_id, community_status) values (${songA}, ${pericopeId}, ${a.userId}, 'pending') returning id`);
-    const pendId = (pend as { id: string }).id;
-    expect(await sees(mod.client, "song_pericope", pendId)).toBe(true);
-    expect(await sees(b.client, "song_pericope", pendId)).toBe(false);
+    const { data: after } = await mod.client
+      .from("song_pericope")
+      .select("community_status")
+      .eq("id", id)
+      .single();
+    expect((after as { community_status: string }).community_status).toBe("approved");
+    expect(await sees(b.client, "song_pericope", id)).toBe(true); // segue visível
   });
 
   it("não dá pra criar vínculo em nome de outro (withCheck do owner_id)", async () => {
     const a = await signUp();
     const b = await signUp();
     const songA = await makeSong(a);
-    const [p] = await db.execute<{ id: string }>(sql`insert into pericope (label, owner_id) values (${`Mc 1 ${uniq()}`}, null) returning id`);
     const ins = await b.client
       .from("song_pericope")
-      .insert({ song_id: songA, pericope_id: (p as { id: string }).id, owner_id: a.userId });
+      .insert({ song_id: songA, pericope_id: await makeGlobalPericope(), owner_id: a.userId });
     expect(denied(ins.error)).toBe(true);
   });
 });
