@@ -44,6 +44,16 @@ describe("parseReadingRef — formatos reais da liturgia", () => {
     expect(parse("1 Cor 10,1-6")).toEqual(["1COR 10:1-6"]);
   });
 
+  it("ponto e vírgula separa GRUPOS DE CAPÍTULO (formato real da fonte)", () => {
+    // 04/07/2025: Gn 23,1-4.19; 24,1-8.62-67
+    expect(parse("Gn 23,1-4.19; 24,1-8.62-67")).toEqual([
+      "GN 23:1-4",
+      "GN 23:19-19",
+      "GN 24:1-8",
+      "GN 24:62-67",
+    ]);
+  });
+
   it("referência vazia/ininteligível → sem segmentos (degrada, não quebra)", () => {
     expect(parse("")).toEqual([]);
     expect(parse("???")).toEqual([]);
@@ -67,6 +77,13 @@ describe("sobreposição — o resgate do A4", () => {
 
   it("sobreposição na borda casa", () => {
     expect(refsOverlap("Jo 8,21-30", "Jo 8,30-40")).toBe(true);
+  });
+
+  it("PRECISÃO com dado real: mesmo capítulo, recortes disjuntos NÃO casam", () => {
+    // 30/06/2025 (Gn 18,16-33) × 20/07/2025 (Gn 18,1-10) — mesmo capítulo, trechos diferentes
+    expect(refsOverlap("Gn 18,16-33", "Gn 18,1-10")).toBe(false);
+    // mas um recorte que os cruza casa com os dois
+    expect(refsOverlap("Gn 18,1-33", "Gn 18,16-33")).toBe(true);
   });
 
   it("salmo: numeração alternativa casa (101(102) × 102)", () => {

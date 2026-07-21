@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { LITURGICAL_COLOR_HEX, type LiturgyContext, type ReadingRef, type ReadingWithText } from "@asafe/core";
 import { getDayReadingTexts } from "@/lib/liturgy/read-actions";
+import { ReadingLinks } from "./reading-links";
 
 const READING_LABELS: Record<ReadingRef["kind"], string> = {
   primeira: "1ª leitura",
@@ -20,10 +21,13 @@ const READING_LABELS: Record<ReadingRef["kind"], string> = {
 export function LiturgyHeader({
   liturgy,
   defaultOpen = false,
+  moments,
 }: {
   readonly liturgy: LiturgyContext | null;
   /** Já abre as leituras e busca o texto ao montar (ex.: página Liturgia diária). */
   readonly defaultOpen?: boolean;
+  /** Momentos da celebração, p/ sugerir ao vincular (só onde há template). */
+  readonly moments?: readonly { key: string; label: string }[];
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const [texts, setTexts] = useState<ReadingWithText[] | null>(null);
@@ -157,6 +161,7 @@ export function LiturgyHeader({
                   </p>
                 )}
                 <p style={{ whiteSpace: "pre-wrap", margin: "4px 0 0", fontSize: 14 }}>{r.text}</p>
+                {r.ref && <ReadingLinks readingRef={r.ref} moments={moments} />}
               </div>
             ))}
           {!loading && texts && texts.length > 0 && (
