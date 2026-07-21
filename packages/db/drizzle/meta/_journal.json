@@ -204,6 +204,13 @@
       "when": 1784664066768,
       "tag": "0028_pericope_link_global",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1784666494216,
+      "tag": "0029_pending_pericope_links",
+      "breakpoints": true
     }
   ]
 }

@@ -149,6 +149,57 @@ export async function songsForReading(readingRef: string): Promise<LinkedSong[]>
   }));
 }
 
+/** Um vínculo na fila de moderação. */
+export interface PendingLink {
+  linkId: string;
+  songId: string;
+  songTitle: string;
+  readingLabel: string;
+  suggestedMoment: string | null;
+  authorName: string | null;
+}
+
+/**
+ * Fila de moderação dos vínculos: os que ainda não foram triados. Lembrando que
+ * eles JÁ estão públicos (A4b) — a fila é reativa: o moderador só decide entre
+ * REMOVER o vínculo ou MANTER (o que apenas o tira da fila).
+ */
+export async function listPendingLinks(): Promise<PendingLink[]> {
+  const supabase = await serverClient();
+  // RPC security definer: o join com o autor não sai da RLS (mesmo padrão das
+  // outras filas); a função se protege com is_moderator().
+  const { data, error } = await supabase.rpc("pending_pericope_links");
+  if (error) throw error;
+
+  type Row = {
+    id: string;
+    song_id: string;
+    song_title: string;
+    reading_label: string;
+    suggested_moment: string | null;
+    author_name: string | null;
+    author_email: string;
+  };
+  return ((data ?? []) as Row[]).map((r) => ({
+    linkId: r.id,
+    songId: r.song_id,
+    songTitle: r.song_title,
+    readingLabel: r.reading_label,
+    suggestedMoment: r.suggested_moment,
+    authorName: r.author_name ?? r.author_email,
+  }));
+}
+
+/** "Manter": tira da fila sem mudar nada para quem vê (o vínculo já era público). */
+export async function keepLink(linkId: string): Promise<void> {
+  const supabase = await serverClient();
+  const { error } = await supabase
+    .from("song_pericope")
+    .update({ community_status: "approved" })
+    .eq("id", linkId);
+  if (error) throw error;
+}
+
 /** Catálogo do usuário para o seletor de músicas (o mesmo do construtor). */
 export async function catalogForPicker(): Promise<{ songs: SongListItem[]; tags: Tag[] }> {
   const supabase = await serverClient();
