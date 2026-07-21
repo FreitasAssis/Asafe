@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 const LINKS = [
   { href: "/musicas", label: "Catálogo" },
   { href: "/repertorios", label: "Repertórios" },
+  { href: "/liturgia", label: "Liturgia diária" },
   { href: "/grupos", label: "Grupos" },
   { href: "/meus-envios", label: "Meus envios" },
 ] as const;

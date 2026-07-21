@@ -144,6 +144,31 @@ describe("parseDancrfFull (leitura ao vivo — texto não persistido)", () => {
     });
   });
 
+  it("salmo: captura o refrão (resposta da assembleia)", () => {
+    const raw = {
+      leituras: {
+        salmo: [
+          {
+            referencia: "Sl 14(15)",
+            refrao: "Senhor, quem morará em vossa casa?",
+            texto: "— É aquele que caminha sem pecado…",
+          },
+        ],
+      },
+    };
+    const [salmo] = parseDancrfFull(raw);
+    expect(salmo?.kind).toBe("salmo");
+    expect(salmo?.refrain).toBe("Senhor, quem morará em vossa casa?");
+    expect(salmo?.text).toBe("— É aquele que caminha sem pecado…");
+  });
+
+  it("leitura comum não tem refrão", () => {
+    const raw = {
+      leituras: { primeiraLeitura: [{ referencia: "Gn 18", titulo: "Gênesis", texto: "…" }] },
+    };
+    expect(parseDancrfFull(raw)[0]?.refrain).toBeUndefined();
+  });
+
   it("pula leitura sem texto (ex.: feria sem 2ª)", () => {
     const raw = {
       leituras: {

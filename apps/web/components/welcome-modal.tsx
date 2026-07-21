@@ -21,6 +21,11 @@ const STEPS: Step[] = [
     body: "Monte o repertório por momento da celebração, escolhendo músicas do seu catálogo ou dos seus grupos.",
   },
   {
+    icon: "📖",
+    title: "Liturgia do dia",
+    body: "Numa Missa com data, o Asafe resolve o tempo litúrgico: monta os momentos certos (o Glória some no Advento e na Quaresma), traz o salmo e as leituras do dia — até no Ao vivo e na Projeção. E a Liturgia diária, no menu, mostra as leituras de qualquer data.",
+  },
+  {
     icon: "🎤",
     title: "Ao vivo & Projeção",
     body: "Toque música a música em tela cheia — transpor, autoscroll, pular pro refrão. No modo sincronizado, um mestre conduz o tom e a música para todos. E a Projeção joga a letra no telão em slides.",
