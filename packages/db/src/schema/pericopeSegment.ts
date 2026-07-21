@@ -25,6 +25,9 @@ export const pericopeSegment = pgTable(
   },
   (t) => [
     index("pericope_segment_pericope_id_idx").on(t.pericopeId),
+    // A4b: o casamento por sobreposição estreita por (livro, capítulo) e a
+    // interseção fina roda no @asafe/core.
+    index("pericope_segment_book_chapter_idx").on(t.book, t.chapter),
     pgPolicy("pericope_segment_select", {
       for: "select",
       to: authenticatedRole,

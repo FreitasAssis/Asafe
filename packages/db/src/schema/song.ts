@@ -56,10 +56,18 @@ export const song = pgTable(
     }),
     // Membro de um grupo lê as músicas que estão num repertório compartilhado com o
     // grupo — para ver/co-editar o conteúdo (DESIGN/fatia E2). Permissiva = OR.
+    // #79: o vínculo com grupos é N-para-N — a visibilidade vem de in_repertoire_group.
     pgPolicy("song_select_group", {
       for: "select",
       to: authenticatedRole,
-      using: sql`exists (select 1 from repertoire_item ri join repertoire r on r.id = ri.repertoire_id where ri.song_id = ${t.id} and r.group_id is not null and public.is_group_member(r.group_id))`,
+      using: sql`exists (select 1 from repertoire_item ri join repertoire r on r.id = ri.repertoire_id where ri.song_id = ${t.id} and public.in_repertoire_group(r.id))`,
+    }),
+    // A4b: vincular a música a uma leitura PUBLICA a referência (metadado).
+    // A cifra segue fechada — song_content tem RLS própria.
+    pgPolicy("song_select_pericope", {
+      for: "select",
+      to: authenticatedRole,
+      using: sql`exists (select 1 from song_pericope sp where sp.song_id = ${t.id})`,
     }),
     // Moderador lê músicas pendentes (submetidas direto OU dentro de um repertório pendente).
     pgPolicy("song_select_moderation", {
