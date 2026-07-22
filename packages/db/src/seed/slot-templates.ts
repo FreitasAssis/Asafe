@@ -42,6 +42,7 @@ export const SLOT_TEMPLATES: SlotTemplateSeed[] = [
       s("aspersao", "Aspersão", true),
       s("ato_penitencial", "Ato Penitencial", true),
       s("gloria", "Glória", true),
+      s("entrada_biblia", "Entrada da Bíblia", true),
       s("salmo", "Salmo Responsorial"),
       s("aclamacao", "Aclamação ao Evangelho"),
       s("ladainha", "Ladainha", true),
