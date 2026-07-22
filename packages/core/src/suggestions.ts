@@ -15,7 +15,7 @@
 
 import { freshnessLabel } from "./freshness";
 
-export type SuggestionReason = "leitura" | "momento" | "tempo" | "fresca";
+export type SuggestionReason = "leitura" | "momento" | "tempo" | "usada" | "fresca";
 
 export interface SuggestionCandidate {
   id: string;
@@ -25,6 +25,10 @@ export interface SuggestionCandidate {
   momentMatch: boolean;
   /** Tem a tag do tempo litúrgico do dia. */
   seasonMatch: boolean;
+  /** Vezes usada NAQUELE momento nos repertórios que vejo (hábito → comunidade). */
+  momentUsage?: number;
+  /** Dessas, quantas na MESMA celebração (liturgical_key). */
+  anchorUsage?: number;
   /** Última vez cantada (data efetiva), ou null se nunca. */
   lastUsed: Date | null;
 }
@@ -38,8 +42,14 @@ export interface RankedSuggestion {
 const W_READING = 100;
 const W_MOMENT = 20;
 const W_SEASON = 10;
+const W_USAGE = 8; // reforço por uso no momento (log → um hit não domina)
+const W_ANCHOR = 6; // reforço extra quando é a mesma celebração
 const BONUS_FRESH = 5; // nunca/há muito
 const PENALTY_RECENT = 15; // cantou faz pouco
+
+/** Reforço bounded (log2) para o número de usos — cresce devagar e não lidera. */
+const usageBoost = (weight: number, count: number) =>
+  count > 0 ? weight * Math.log2(1 + count) : 0;
 
 /** Ranqueia as candidatas para um momento; devolve as melhores com o motivo. */
 export function rankMomentSuggestions(
@@ -64,6 +74,13 @@ export function rankMomentSuggestions(
     if (cand.seasonMatch) {
       score += W_SEASON;
       reasons.push("tempo");
+    }
+    const momentUsage = cand.momentUsage ?? 0;
+    if (momentUsage > 0) {
+      // Hábito é um sinal de adequação por si só ("você costuma pôr esta aqui").
+      score += usageBoost(W_USAGE, momentUsage);
+      score += usageBoost(W_ANCHOR, cand.anchorUsage ?? 0);
+      reasons.push("usada");
     }
 
     // Sem sinal de adequação → não é sugestão (frescor sozinho não conta).

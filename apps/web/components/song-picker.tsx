@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   filterSongs,
   rankMomentSuggestions,
@@ -9,6 +9,8 @@ import {
   type SuggestionReason,
   type TagCategory,
 } from "@asafe/core";
+import { browserClient } from "@/lib/supabase/client";
+import { momentSongUsage, type MomentUsage } from "@/lib/liturgy/suggestions";
 import type { SongListItem, Tag } from "@/lib/songs";
 import { FreshnessTag } from "./freshness-tag";
 
@@ -16,13 +18,17 @@ import { FreshnessTag } from "./freshness-tag";
 export interface SuggestionContext {
   linkedSongIds: Set<string>;
   momentLabel: string;
+  /** Chave do slot (moment_slot), para o sinal de uso; null no "Livre". */
+  momentKey: string | null;
   seasonLabel: string | null;
+  liturgicalKey: string | null;
 }
 
 const REASON_LABEL: Record<SuggestionReason, string> = {
   leitura: "combina com a leitura",
   momento: "do momento",
   tempo: "do tempo",
+  usada: "costuma aparecer aqui",
   fresca: "nunca cantada",
 };
 
@@ -55,10 +61,26 @@ export function SongPicker({
 }) {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [usage, setUsage] = useState<Map<string, MomentUsage>>(new Map());
   const tagById = useMemo(() => new Map(tags.map((t) => [t.id, t])), [tags]);
 
+  // Sinal de uso (A5 v2): quantas vezes cada música aparece neste momento nos
+  // repertórios que vejo. Busca ao abrir; o ranqueamento reordena quando chega.
+  const momentKey = suggestion?.momentKey ?? null;
+  const liturgicalKey = suggestion?.liturgicalKey ?? null;
+  useEffect(() => {
+    if (!momentKey) return;
+    let alive = true;
+    void momentSongUsage(browserClient(), momentKey, liturgicalKey)
+      .then((u) => alive && setUsage(u))
+      .catch(() => alive && setUsage(new Map()));
+    return () => {
+      alive = false;
+    };
+  }, [momentKey, liturgicalKey]);
+
   // Sugeridas para o momento: cruza os sinais (ligada à leitura / tag do momento /
-  // do tempo / frescor) e ranqueia no core. Só quando há contexto litúrgico.
+  // do tempo / uso / frescor) e ranqueia no core. Só quando há contexto litúrgico.
   const suggested = useMemo(() => {
     if (!suggestion) return [];
     const { linkedSongIds, momentLabel, seasonLabel } = suggestion;
@@ -71,11 +93,14 @@ export function SongPicker({
         if (t.category === "momento" && t.name === momentLabel) momentMatch = true;
         if (t.category === "tempo_liturgico" && seasonLabel && t.name === seasonLabel) seasonMatch = true;
       }
+      const u = usage.get(s.id);
       return {
         id: s.id,
         linkedToReading: linkedSongIds.has(s.id),
         momentMatch,
         seasonMatch,
+        momentUsage: u?.nMoment ?? 0,
+        anchorUsage: u?.nAnchor ?? 0,
         lastUsed: s.lastUsed ? new Date(s.lastUsed) : null,
       };
     });
@@ -83,7 +108,7 @@ export function SongPicker({
     return rankMomentSuggestions(candidates, new Date())
       .map((r) => ({ song: byId.get(r.id)!, reasons: r.reasons }))
       .filter((x) => x.song);
-  }, [suggestion, songs, tagById]);
+  }, [suggestion, songs, tagById, usage]);
 
   const usedTags = useMemo(() => {
     const used = new Set<string>();

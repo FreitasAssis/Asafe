@@ -272,7 +272,9 @@ export function RepertoireBuilder({
             suggestion={{
               linkedSongIds: linkedSet,
               momentLabel: label,
+              momentKey: slotKey,
               seasonLabel: liturgy?.seasonLabel ?? null,
+              liturgicalKey: repertoire.liturgicalSnapshot?.key ?? null,
             }}
           />
         ) : (
