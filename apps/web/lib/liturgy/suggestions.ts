@@ -44,3 +44,31 @@ export async function linkedSongIdsForReadings(
 
   return [...new Set(((links ?? []) as { song_id: string }[]).map((l) => l.song_id))];
 }
+
+/** Uso de cada música NAQUELE momento (A5 v2): n no momento e n na mesma celebração. */
+export interface MomentUsage {
+  nMoment: number;
+  nAnchor: number;
+}
+
+/**
+ * Contagens de uso por música para um momento, via RPC `moment_song_usage`
+ * (SECURITY INVOKER: a RLS limita ao que o chamador vê — seus + grupos +
+ * aprovados). Devolve um mapa songId → {nMoment, nAnchor}.
+ */
+export async function momentSongUsage(
+  supabase: SupabaseClient,
+  momentKey: string,
+  liturgicalKey: string | null,
+): Promise<Map<string, MomentUsage>> {
+  const { data, error } = await supabase.rpc("moment_song_usage", {
+    p_moment: momentKey,
+    p_key: liturgicalKey ?? "",
+  });
+  if (error) throw error;
+  const map = new Map<string, MomentUsage>();
+  for (const r of (data ?? []) as { song_id: string; n_moment: number; n_anchor: number }[]) {
+    map.set(r.song_id, { nMoment: r.n_moment, nAnchor: r.n_anchor });
+  }
+  return map;
+}
