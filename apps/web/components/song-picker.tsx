@@ -1,9 +1,30 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { filterSongs, TAG_CATEGORY_COLORS, type TagCategory } from "@asafe/core";
+import {
+  filterSongs,
+  rankMomentSuggestions,
+  TAG_CATEGORY_COLORS,
+  type SuggestionCandidate,
+  type SuggestionReason,
+  type TagCategory,
+} from "@asafe/core";
 import type { SongListItem, Tag } from "@/lib/songs";
 import { FreshnessTag } from "./freshness-tag";
+
+/** Contexto litúrgico para as sugestões por momento (A5). */
+export interface SuggestionContext {
+  linkedSongIds: Set<string>;
+  momentLabel: string;
+  seasonLabel: string | null;
+}
+
+const REASON_LABEL: Record<SuggestionReason, string> = {
+  leitura: "combina com a leitura",
+  momento: "do momento",
+  tempo: "do tempo",
+  fresca: "nunca cantada",
+};
 
 const CATEGORIES: TagCategory[] = [
   "momento",
@@ -23,15 +44,46 @@ export function SongPicker({
   tags,
   onPick,
   onClose,
+  suggestion,
 }: {
   readonly songs: SongListItem[];
   readonly tags: Tag[];
   readonly onPick: (songId: string) => void;
   readonly onClose: () => void;
+  /** A5: sugere músicas do catálogo para o momento (leitura + tag + frescor). */
+  readonly suggestion?: SuggestionContext;
 }) {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const tagById = useMemo(() => new Map(tags.map((t) => [t.id, t])), [tags]);
+
+  // Sugeridas para o momento: cruza os sinais (ligada à leitura / tag do momento /
+  // do tempo / frescor) e ranqueia no core. Só quando há contexto litúrgico.
+  const suggested = useMemo(() => {
+    if (!suggestion) return [];
+    const { linkedSongIds, momentLabel, seasonLabel } = suggestion;
+    const candidates: SuggestionCandidate[] = songs.map((s) => {
+      let momentMatch = false;
+      let seasonMatch = false;
+      for (const id of s.tagIds) {
+        const t = tagById.get(id);
+        if (!t) continue;
+        if (t.category === "momento" && t.name === momentLabel) momentMatch = true;
+        if (t.category === "tempo_liturgico" && seasonLabel && t.name === seasonLabel) seasonMatch = true;
+      }
+      return {
+        id: s.id,
+        linkedToReading: linkedSongIds.has(s.id),
+        momentMatch,
+        seasonMatch,
+        lastUsed: s.lastUsed ? new Date(s.lastUsed) : null,
+      };
+    });
+    const byId = new Map(songs.map((s) => [s.id, s]));
+    return rankMomentSuggestions(candidates, new Date())
+      .map((r) => ({ song: byId.get(r.id)!, reasons: r.reasons }))
+      .filter((x) => x.song);
+  }, [suggestion, songs, tagById]);
 
   const usedTags = useMemo(() => {
     const used = new Set<string>();
@@ -115,6 +167,43 @@ export function SongPicker({
                 );
               }),
           )}
+        </div>
+      )}
+
+      {suggested.length > 0 && (
+        <div style={{ marginTop: 10 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)" }}>
+            Sugeridas para {suggestion!.momentLabel}
+          </div>
+          <div className="song-cards">
+            {suggested.map(({ song: s, reasons }) => (
+              <button key={s.id} type="button" className="song-card" onClick={() => onPick(s.id)}>
+                <span className="song-card-title">
+                  {s.title} <FreshnessTag lastUsed={s.lastUsed} />
+                </span>
+                {s.composer && <span className="song-card-sub">{s.composer}</span>}
+                <span style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 3 }}>
+                  {reasons.map((r) => (
+                    <span
+                      key={r}
+                      style={{
+                        fontSize: 10,
+                        padding: "0 6px",
+                        borderRadius: 999,
+                        background: "var(--border)",
+                        color: "var(--text-muted)",
+                      }}
+                    >
+                      {REASON_LABEL[r]}
+                    </span>
+                  ))}
+                </span>
+              </button>
+            ))}
+          </div>
+          <div style={{ fontSize: 12, color: "var(--text-muted)", margin: "10px 0 2px" }}>
+            Todo o catálogo
+          </div>
         </div>
       )}
 

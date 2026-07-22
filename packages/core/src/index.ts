@@ -15,3 +15,4 @@ export * from "./song-identity";
 export * from "./liturgy";
 export * from "./liturgy-slots";
 export * from "./pericope";
+export * from "./suggestions";
