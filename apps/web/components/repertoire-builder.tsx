@@ -24,6 +24,7 @@ import type { ShareLink } from "@/lib/share-links";
 import type { Group } from "@/lib/groups";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { LiturgyHeader } from "./liturgy-header";
+import { ReuseAnchor } from "./reuse-anchor";
 import { SongPicker } from "./song-picker";
 import { ShareSection } from "./share-section";
 import { CommunitySection } from "./community-section";
@@ -311,6 +312,17 @@ export function RepertoireBuilder({
 
       {/* Os momentos do template alimentam o "momento sugerido" ao vincular (A4). */}
       <LiturgyHeader liturgy={liturgy} moments={litSlots} />
+
+      {/* A5: numa Missa recém-criada e vazia, oferece reaproveitar um repertório da
+          mesma celebração (âncora = liturgical_key). Some assim que há músicas. */}
+      {isOwner && items.length === 0 && liturgy && repertoire.liturgicalSnapshot?.key && (
+        <ReuseAnchor
+          currentId={repertoire.id}
+          liturgicalKey={repertoire.liturgicalSnapshot.key}
+          celebration={liturgy.celebration}
+          userId={userId}
+        />
+      )}
 
       {isOwner && (
         <div style={{ marginTop: 10, fontSize: 14 }}>

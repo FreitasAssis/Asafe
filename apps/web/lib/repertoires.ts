@@ -315,15 +315,22 @@ export async function getRepertoire(
  * RLS já permite (leio o aprovado, escrevo no meu). Retorna o id do novo repertório; se os itens
  * falharem, apaga o repertório recém-criado (rollback best-effort).
  */
-export async function cloneCommunityRepertoire(
+/**
+ * Copia o ARRANJO de um repertório para outro que já existe (o alvo). Reusa a
+ * MINHA versão de cada música quando eu já a tenho (identidade título+compositor);
+ * o que não tenho mantém a referência da origem (alvo do "digitar uma vez"). Não
+ * copia cifra alheia — a RLS nem entrega. Base do "pegar" (C8) e do reaproveitar
+ * pela âncora (A5).
+ */
+export async function copyRepertoireItemsInto(
   supabase: SupabaseClient,
   sourceId: string,
+  targetId: string,
   userId: string,
-): Promise<string> {
+): Promise<void> {
   const source = await getRepertoire(supabase, sourceId);
   if (!source) throw new Error("Repertório não encontrado.");
 
-  // Minhas músicas por identidade — para usar a MINHA versão quando eu já tenho a música.
   const { data: mineData, error: mineErr } = await supabase
     .from("song")
     .select("id, title, composer")
@@ -336,6 +343,28 @@ export async function cloneCommunityRepertoire(
     ]),
   );
 
+  const rows = source.items.map((it) => ({
+    repertoire_id: targetId,
+    song_id: mineByKey.get(songIdentityKey(it.songTitle, it.songComposer)) ?? it.songId,
+    moment_slot: it.momentSlot,
+    order: it.order,
+    transpose: it.transpose,
+    notes: it.notes,
+  }));
+  if (rows.length > 0) {
+    const { error: iErr } = await supabase.from("repertoire_item").insert(rows);
+    if (iErr) throw iErr;
+  }
+}
+
+export async function cloneCommunityRepertoire(
+  supabase: SupabaseClient,
+  sourceId: string,
+  userId: string,
+): Promise<string> {
+  const source = await getRepertoire(supabase, sourceId);
+  if (!source) throw new Error("Repertório não encontrado.");
+
   const { data: created, error: cErr } = await supabase
     .from("repertoire")
     .insert({ title: `${source.title} (cópia)`, type: source.type, owner_id: userId, visibility: "private" })
@@ -345,23 +374,48 @@ export async function cloneCommunityRepertoire(
   const newId = (created as { id: string }).id;
 
   try {
-    const rows = source.items.map((it) => ({
-      repertoire_id: newId,
-      song_id: mineByKey.get(songIdentityKey(it.songTitle, it.songComposer)) ?? it.songId,
-      moment_slot: it.momentSlot,
-      order: it.order,
-      transpose: it.transpose,
-      notes: it.notes,
-    }));
-    if (rows.length > 0) {
-      const { error: iErr } = await supabase.from("repertoire_item").insert(rows);
-      if (iErr) throw iErr;
-    }
+    await copyRepertoireItemsInto(supabase, sourceId, newId, userId);
   } catch (e) {
     await supabase.from("repertoire").delete().eq("id", newId);
     throw e;
   }
   return newId;
+}
+
+/** Item de "reaproveitar pela âncora" (A5): repertório da mesma celebração. */
+export interface AnchorRepertoire {
+  id: string;
+  title: string;
+  date: string | null;
+  /** Meu ou do meu grupo? (senão, é da comunidade aprovada) */
+  mine: boolean;
+  authorName: string | null;
+}
+
+/**
+ * Repertórios da mesma celebração (`liturgical_key`) para reaproveitar — os meus /
+ * do grupo e os da comunidade aprovados, exceto o `excludeId` (o atual). Via RPC
+ * `repertoires_for_key` (security definer, ver A5).
+ */
+export async function repertoiresForKey(
+  supabase: SupabaseClient,
+  key: string,
+  excludeId: string,
+): Promise<AnchorRepertoire[]> {
+  const { data, error } = await supabase.rpc("repertoires_for_key", {
+    p_key: key,
+    p_exclude: excludeId,
+  });
+  if (error) throw error;
+  return (
+    data as { id: string; title: string; date: string | null; mine: boolean; author_name: string | null; author_email: string }[]
+  ).map((r) => ({
+    id: r.id,
+    title: r.title,
+    date: r.date,
+    mine: r.mine,
+    authorName: r.author_name ?? r.author_email,
+  }));
 }
 
 /**
