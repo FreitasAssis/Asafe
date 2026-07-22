@@ -15,6 +15,7 @@ export const GLOBAL_TAGS: {
     category: "momento",
     names: [
       "Entrada",
+      "Entrada da Bíblia",
       "Ato Penitencial",
       "Aspersão",
       "Glória",
@@ -47,7 +48,7 @@ export const GLOBAL_TAGS: {
   },
   {
     category: "tema",
-    names: ["Adoração", "Mártires", "Maria", "São José", "Espírito Santo", "Padroeiro(a)"],
+    names: ["Adoração", "Mártires", "Maria", "São José", "Espírito Santo", "Padroeiro(a)", "Vocação", "Diversos"],
   },
   {
     category: "ocasiao",
