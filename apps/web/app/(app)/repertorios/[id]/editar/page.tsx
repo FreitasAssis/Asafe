@@ -4,6 +4,7 @@ import { getRepertoire, slotTemplate } from "@/lib/repertoires";
 import { listSongs, listTags } from "@/lib/songs";
 import { listShareLinks } from "@/lib/share-links";
 import { listGroups } from "@/lib/groups";
+import { linkedSongIdsForReadings } from "@/lib/liturgy/suggestions";
 import { RepertoireBuilder } from "@/components/repertoire-builder";
 
 export default async function MontarRepertorio({
@@ -22,12 +23,16 @@ export default async function MontarRepertorio({
   if (!repertoire) notFound();
 
   const isOwner = repertoire.ownerId === user.id;
-  const [template, songs, tags, shareLinks, groups] = await Promise.all([
+  // A5: as leituras do dia (do snapshot) → músicas ligadas por sobreposição, o
+  // sinal mais forte das sugestões por momento.
+  const readingRefs = (repertoire.liturgicalSnapshot?.readings ?? []).map((r) => r.ref);
+  const [template, songs, tags, shareLinks, groups, linkedSongIds] = await Promise.all([
     slotTemplate(supabase, repertoire.type),
     listSongs(supabase),
     listTags(supabase),
     isOwner ? listShareLinks(supabase, repertoire.id) : Promise.resolve([]),
     isOwner ? listGroups(supabase) : Promise.resolve([]),
+    readingRefs.length > 0 ? linkedSongIdsForReadings(supabase, readingRefs) : Promise.resolve([]),
   ]);
 
   return (
@@ -40,6 +45,7 @@ export default async function MontarRepertorio({
       isOwner={isOwner}
       userId={user.id}
       groups={groups}
+      linkedSongIds={linkedSongIds}
     />
   );
 }

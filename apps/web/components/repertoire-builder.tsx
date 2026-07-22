@@ -38,6 +38,7 @@ export function RepertoireBuilder({
   isOwner,
   userId,
   groups,
+  linkedSongIds = [],
 }: {
   readonly repertoire: Repertoire;
   readonly template: SlotTemplate;
@@ -47,6 +48,8 @@ export function RepertoireBuilder({
   readonly isOwner: boolean;
   readonly userId: string;
   readonly groups: Group[];
+  /** A5: músicas ligadas às leituras do dia (sinal das sugestões por momento). */
+  readonly linkedSongIds?: string[];
 }) {
   const router = useRouter();
   const [title, setTitle] = useState(repertoire.title);
@@ -62,6 +65,7 @@ export function RepertoireBuilder({
     () => applyLiturgy(template.slots, repertoire.liturgicalSnapshot),
     [template.slots, repertoire.liturgicalSnapshot],
   );
+  const linkedSet = useMemo(() => new Set(linkedSongIds), [linkedSongIds]);
   const arranged = useMemo(() => arrangeRepertoire(litSlots, items), [litSlots, items]);
   const isLivre = template.slots.length === 0;
 
@@ -260,7 +264,17 @@ export function RepertoireBuilder({
           ))}
         </ul>
         {open ? (
-          <SongPicker songs={songs} tags={tags} onPick={(id) => void pick(id)} onClose={() => setPickerOpen(false)} />
+          <SongPicker
+            songs={songs}
+            tags={tags}
+            onPick={(id) => void pick(id)}
+            onClose={() => setPickerOpen(false)}
+            suggestion={{
+              linkedSongIds: linkedSet,
+              momentLabel: label,
+              seasonLabel: liturgy?.seasonLabel ?? null,
+            }}
+          />
         ) : (
           <button type="button" onClick={() => openPicker(slotKey)} style={{ fontSize: 13 }}>
             + adicionar música
