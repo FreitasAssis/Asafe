@@ -24,7 +24,7 @@ export const userSongTagOverride = pgTable(
       .references(() => user.id),
     songId: uuid("song_id")
       .notNull()
-      .references(() => song.id),
+      .references(() => song.id, { onDelete: "cascade" }),
     tagId: uuid("tag_id")
       .notNull()
       .references(() => tag.id),
