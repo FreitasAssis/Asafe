@@ -24,6 +24,31 @@ describe("rankMomentSuggestions", () => {
     expect(ids(out)).toEqual(["boa"]);
   });
 
+  it("música com lar em OUTRO momento não é sugerida aqui, nem por combinar com a leitura", () => {
+    // uma "música de comunhão" (tag de outro momento) ligada à leitura, no seletor da Entrada
+    const out = rankMomentSuggestions(
+      [c("comunhao", { linkedToReading: true, matchesOtherMoment: true, momentMatch: false })],
+      hoje,
+    );
+    expect(ids(out)).toEqual([]);
+  });
+
+  it("...mas aparece no PRÓPRIO momento (também casa aqui)", () => {
+    const out = rankMomentSuggestions(
+      [c("comunhao", { linkedToReading: true, matchesOtherMoment: true, momentMatch: true })],
+      hoje,
+    );
+    expect(ids(out)).toEqual(["comunhao"]);
+  });
+
+  it("música SEM tag de momento (coringa) segue sugerida por leitura em qualquer momento", () => {
+    const out = rankMomentSuggestions(
+      [c("coringa", { linkedToReading: true, matchesOtherMoment: false })],
+      hoje,
+    );
+    expect(ids(out)).toEqual(["coringa"]);
+  });
+
   it("frescor REBAIXA a recém-cantada, mas não a remove", () => {
     const out = rankMomentSuggestions(
       [c("recente", { momentMatch: true, lastUsed: diasAtras(3) }), c("antiga", { momentMatch: true, lastUsed: diasAtras(200) })],

@@ -56,5 +56,7 @@ export default async function VerRepertorio({
     </div>
   );
 
-  return <PublicRepertoire pkg={pkg} header={header} />;
+  return (
+    <PublicRepertoire pkg={pkg} header={header} editableByUserId={user.id} repertoireId={id} />
+  );
 }

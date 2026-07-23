@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { buildStageSequence, liturgicalColorHex, type ReadingWithText } from "@asafe/core";
+import { audioProvider, buildStageSequence, liturgicalColorHex, type ReadingWithText } from "@asafe/core";
 import { hasChorus, stripChords, toHtml, transpose } from "@asafe/chordpro";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import { useLiveSync } from "@/lib/use-live-sync";
@@ -464,6 +464,18 @@ export function LiveMode({
               {effectiveTom !== 0 && <span className="live-tom">tom {formatTom(effectiveTom)}</span>}
             </h2>
             {item?.composer && <div className="live-composer">{item.composer}</div>}
+            {item?.audioLinks && item.audioLinks.length > 0 && (
+              <div className="live-composer" style={{ marginTop: 2 }}>
+                {item.audioLinks.map((url, i) => (
+                  <span key={url}>
+                    {i > 0 ? " · " : ""}
+                    <a href={url} target="_blank" rel="noreferrer" style={{ color: "inherit" }}>
+                      {audioProvider(url) ?? "link"} ↗
+                    </a>
+                  </span>
+                ))}
+              </div>
+            )}
             {noteOpen && item?.notes && <div className="live-note">{item.notes}</div>}
             {html ? (
               <div className="live-cifra" style={{ fontSize: `${font}rem` }}>

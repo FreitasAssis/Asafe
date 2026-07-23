@@ -478,7 +478,7 @@ export async function getRepertoirePackage(
   const { data, error } = await supabase
     .from("repertoire")
     .select(
-      `title, type, date, liturgical_snapshot, repertoire_item(id, moment_slot, order, transpose, notes, song(title, composer, audio_links, song_content(chordpro_body)))`,
+      `title, type, date, liturgical_snapshot, repertoire_item(id, moment_slot, order, transpose, notes, song(id, title, composer, owner_id, audio_links, song_content(chordpro_body)))`,
     )
     .eq("id", id)
     .maybeSingle();
@@ -499,8 +499,10 @@ export async function getRepertoirePackage(
       // A cifra vem de song_content (RLS própria): fica null quando é só referência.
       // Autor e áudios são metadado do song (legíveis) — úteis mesmo quando é referência.
       song: {
+        id: string;
         title: string;
         composer: string | null;
+        owner_id: string | null;
         audio_links: string[] | null;
         song_content: Content | Content[] | null;
       } | null;
@@ -527,6 +529,8 @@ export async function getRepertoirePackage(
         title: it.song?.title ?? "(música)",
         composer: it.song?.composer ?? null,
         audioLinks: it.song?.audio_links ?? [],
+        songId: it.song?.id,
+        songOwnerId: it.song?.owner_id ?? null,
         chordpro: body,
       };
     }),

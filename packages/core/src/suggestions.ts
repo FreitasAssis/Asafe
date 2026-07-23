@@ -23,6 +23,8 @@ export interface SuggestionCandidate {
   linkedToReading: boolean;
   /** Tem a tag do momento atual (ex.: Comunhão). */
   momentMatch: boolean;
+  /** Tem tag de OUTRO momento (tem "lar" em outro lugar) — então não espalha aqui. */
+  matchesOtherMoment?: boolean;
   /** Tem a tag do tempo litúrgico do dia. */
   seasonMatch: boolean;
   /** Vezes usada NAQUELE momento nos repertórios que vejo (hábito → comunidade). */
@@ -51,52 +53,64 @@ const PENALTY_RECENT = 15; // cantou faz pouco
 const usageBoost = (weight: number, count: number) =>
   count > 0 ? weight * Math.log2(1 + count) : 0;
 
+/** Sinais de adequação da candidata a ESTE momento → pontuação + motivos. */
+function scoreAdequacy(cand: SuggestionCandidate): { score: number; reasons: SuggestionReason[] } {
+  const reasons: SuggestionReason[] = [];
+  let score = 0;
+  if (cand.linkedToReading) {
+    score += W_READING;
+    reasons.push("leitura");
+  }
+  if (cand.momentMatch) {
+    score += W_MOMENT;
+    reasons.push("momento");
+  }
+  if (cand.seasonMatch) {
+    score += W_SEASON;
+    reasons.push("tempo");
+  }
+  const momentUsage = cand.momentUsage ?? 0;
+  if (momentUsage > 0) {
+    // Hábito é um sinal de adequação por si só ("você costuma pôr esta aqui").
+    score += usageBoost(W_USAGE, momentUsage) + usageBoost(W_ANCHOR, cand.anchorUsage ?? 0);
+    reasons.push("usada");
+  }
+  return { score, reasons };
+}
+
+/** Uma candidata → sugestão ranqueada, ou null se não cabe neste momento. */
+function rankOne(cand: SuggestionCandidate, today: Date): RankedSuggestion | null {
+  // De outro momento (tem tag lá) e não casa este? Não sugere aqui — é o que impede
+  // uma "música de comunhão" ligada à leitura de vazar p/ todos os momentos. Sem tag
+  // de momento nenhum, segue coringa (aparece por leitura/tempo).
+  if (cand.matchesOtherMoment && !cand.momentMatch) return null;
+
+  const { score: base, reasons } = scoreAdequacy(cand);
+  // Sem sinal de adequação → não é sugestão (frescor sozinho não conta).
+  if (reasons.length === 0) return null;
+
+  // Frescor: rebaixa a recém-cantada; bônus (com motivo) à nunca usada.
+  const level = freshnessLabel(cand.lastUsed, today).level;
+  let fresh = 0;
+  if (level === "fresca") {
+    fresh = BONUS_FRESH;
+    reasons.push("fresca");
+  } else if (level === "recente") {
+    fresh = -PENALTY_RECENT;
+  }
+
+  return { id: cand.id, score: base + fresh, reasons };
+}
+
 /** Ranqueia as candidatas para um momento; devolve as melhores com o motivo. */
 export function rankMomentSuggestions(
   candidates: SuggestionCandidate[],
   today: Date,
   limit = 6,
 ): RankedSuggestion[] {
-  const ranked: RankedSuggestion[] = [];
-
-  for (const cand of candidates) {
-    const reasons: SuggestionReason[] = [];
-    let score = 0;
-
-    if (cand.linkedToReading) {
-      score += W_READING;
-      reasons.push("leitura");
-    }
-    if (cand.momentMatch) {
-      score += W_MOMENT;
-      reasons.push("momento");
-    }
-    if (cand.seasonMatch) {
-      score += W_SEASON;
-      reasons.push("tempo");
-    }
-    const momentUsage = cand.momentUsage ?? 0;
-    if (momentUsage > 0) {
-      // Hábito é um sinal de adequação por si só ("você costuma pôr esta aqui").
-      score += usageBoost(W_USAGE, momentUsage);
-      score += usageBoost(W_ANCHOR, cand.anchorUsage ?? 0);
-      reasons.push("usada");
-    }
-
-    // Sem sinal de adequação → não é sugestão (frescor sozinho não conta).
-    if (reasons.length === 0) continue;
-
-    const level = freshnessLabel(cand.lastUsed, today).level;
-    if (level === "fresca") {
-      score += BONUS_FRESH;
-      reasons.push("fresca");
-    } else if (level === "recente") {
-      score -= PENALTY_RECENT;
-    }
-
-    ranked.push({ id: cand.id, score, reasons });
-  }
-
-  ranked.sort((a, b) => b.score - a.score);
-  return ranked.slice(0, limit);
+  return candidates
+    .map((cand) => rankOne(cand, today))
+    .filter((r): r is RankedSuggestion => r !== null)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
 }

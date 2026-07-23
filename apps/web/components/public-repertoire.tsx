@@ -26,6 +26,9 @@ export interface PublicItem {
   // Metadado da música (opcional: o pacote via link público pode não trazer).
   composer?: string | null;
   audioLinks?: string[];
+  // Para o lápis por música na visualização in-app (ausentes no link público).
+  songId?: string;
+  songOwnerId?: string | null;
 }
 
 export interface SharedPackage {
@@ -39,13 +42,30 @@ export interface SharedPackage {
   items: PublicItem[];
 }
 
-function ItemView({ item, hide }: { item: PublicItem; hide: boolean }) {
+function ItemView({
+  item,
+  hide,
+  editableByUserId,
+  repertoireId,
+}: {
+  readonly item: PublicItem;
+  readonly hide: boolean;
+  readonly editableByUserId?: string;
+  readonly repertoireId?: string;
+}) {
   const [noteOpen, setNoteOpen] = useState(false);
   let cifra = item.chordpro ?? "";
   const isReference = !cifra.trim();
   if (cifra.trim() && item.transpose) cifra = transpose(cifra, item.transpose);
   if (hide) cifra = stripChords(cifra);
   const html = cifra.trim() ? toHtml(cifra) : "";
+  // Lápis só nas MINHAS músicas (digitar uma cifra / corrigir a letra). Ao editar,
+  // o "voltar" retorna a este repertório (via ?back=).
+  const canEdit = Boolean(editableByUserId && item.songId && item.songOwnerId === editableByUserId);
+  const backUrl = repertoireId ? `/repertorios/${repertoireId}` : "";
+  const editHref = backUrl
+    ? `/musicas/${item.songId}/editar?back=${encodeURIComponent(backUrl)}`
+    : `/musicas/${item.songId}/editar`;
 
   return (
     <div style={{ margin: "10px 0 16px" }}>
@@ -68,6 +88,16 @@ function ItemView({ item, hide }: { item: PublicItem; hide: boolean }) {
           >
             💬
           </button>
+        )}
+        {canEdit && (
+          <a
+            href={editHref}
+            title="Editar a música (cifra/letra)"
+            aria-label="Editar a música"
+            style={{ textDecoration: "none", fontSize: 13, padding: "0 4px" }}
+          >
+            ✏️
+          </a>
         )}
       </div>
       {/* Atribuição (direito moral, §5/§10): o autor aparece sempre que a obra é exibida. */}
@@ -97,21 +127,22 @@ function ItemView({ item, hide }: { item: PublicItem; hide: boolean }) {
         />
       )}
       {isReference && (
+        <div style={{ marginTop: 4, color: "var(--text-muted)", fontSize: 13, fontStyle: "italic" }}>
+          — cifra não disponível (referência)
+        </div>
+      )}
+      {/* Áudios de referência: agora sempre (antes só apareciam quando não havia cifra). */}
+      {item.audioLinks && item.audioLinks.length > 0 && (
         <div style={{ marginTop: 4, color: "var(--text-muted)", fontSize: 13 }}>
-          <div style={{ fontStyle: "italic" }}>— cifra não disponível (referência)</div>
-          {item.audioLinks && item.audioLinks.length > 0 && (
-            <div style={{ marginTop: 2 }}>
-              Ouça:{" "}
-              {item.audioLinks.map((url, i) => (
-                <span key={url}>
-                  {i > 0 ? " · " : ""}
-                  <a href={url} target="_blank" rel="noreferrer">
-                    {audioProvider(url) ?? "link"} ↗
-                  </a>
-                </span>
-              ))}
-            </div>
-          )}
+          Ouça:{" "}
+          {item.audioLinks.map((url, i) => (
+            <span key={url}>
+              {i > 0 ? " · " : ""}
+              <a href={url} target="_blank" rel="noreferrer">
+                {audioProvider(url) ?? "link"} ↗
+              </a>
+            </span>
+          ))}
         </div>
       )}
     </div>
@@ -122,10 +153,16 @@ function ItemView({ item, hide }: { item: PublicItem; hide: boolean }) {
 export function PublicRepertoire({
   pkg,
   header,
+  editableByUserId,
+  repertoireId,
 }: {
   readonly pkg: SharedPackage;
   /** Conteúdo opcional no topo (breadcrumb + lápis na visualização in-app). */
   readonly header?: ReactNode;
+  /** Se presente, mostra o lápis nas músicas deste usuário (só na visualização in-app). */
+  readonly editableByUserId?: string;
+  /** Id do repertório atual, para o "voltar" do editor retornar aqui. */
+  readonly repertoireId?: string;
 }) {
   const [hide, setHide] = useState(false);
   useEffect(() => setHide(Boolean(readPrefs().hideChords)), []);
@@ -178,7 +215,7 @@ export function PublicRepertoire({
             {s.label}
           </h2>
           {s.items.map((it) => (
-            <ItemView key={it.id} item={it} hide={hide} />
+            <ItemView key={it.id} item={it} hide={hide} editableByUserId={editableByUserId} repertoireId={repertoireId} />
           ))}
         </section>
       ))}
@@ -186,7 +223,7 @@ export function PublicRepertoire({
       {arranged.unslotted.length > 0 && (
         <section style={{ marginTop: 16 }}>
           {arranged.unslotted.map((it) => (
-            <ItemView key={it.id} item={it} hide={hide} />
+            <ItemView key={it.id} item={it} hide={hide} editableByUserId={editableByUserId} repertoireId={repertoireId} />
           ))}
         </section>
       )}
