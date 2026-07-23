@@ -274,7 +274,16 @@ export async function updateSong(
 
 export async function deleteSong(supabase: SupabaseClient, id: string): Promise<void> {
   const { error } = await supabase.from("song").delete().eq("id", id);
-  if (error) throw error;
+  if (error) {
+    // As relações próprias (tags/overrides) já cascateiam; a única FK que ainda
+    // bloqueia é repertoire_item — a música está em uso num repertório.
+    if (error.code === "23503") {
+      throw new Error(
+        "Esta música está em um ou mais repertórios. Remova-a deles antes de excluir.",
+      );
+    }
+    throw error;
+  }
 }
 
 /** Tags visíveis ao usuário: globais (owner_id nulo) + as próprias (RLS resolve). */
