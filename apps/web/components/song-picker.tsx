@@ -87,10 +87,14 @@ export function SongPicker({
     const candidates: SuggestionCandidate[] = songs.map((s) => {
       let momentMatch = false;
       let seasonMatch = false;
+      let otherMoment = false; // tem tag de OUTRO momento (tem lar em outro lugar)
       for (const id of s.tagIds) {
         const t = tagById.get(id);
         if (!t) continue;
-        if (t.category === "momento" && t.name === momentLabel) momentMatch = true;
+        if (t.category === "momento") {
+          if (t.name === momentLabel) momentMatch = true;
+          else otherMoment = true;
+        }
         if (t.category === "tempo_liturgico" && seasonLabel && t.name === seasonLabel) seasonMatch = true;
       }
       const u = usage.get(s.id);
@@ -98,6 +102,7 @@ export function SongPicker({
         id: s.id,
         linkedToReading: linkedSongIds.has(s.id),
         momentMatch,
+        matchesOtherMoment: otherMoment,
         seasonMatch,
         momentUsage: u?.nMoment ?? 0,
         anchorUsage: u?.nAnchor ?? 0,

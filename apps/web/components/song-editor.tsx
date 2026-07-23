@@ -40,10 +40,13 @@ export function SongEditor({
   userId,
   tags,
   song,
+  backHref,
 }: {
   readonly userId: string;
   readonly tags: Tag[];
   readonly song?: Song;
+  /** Origem para o "voltar" (ex.: o repertório de onde vim editar a música). */
+  readonly backHref?: string;
 }) {
   const router = useRouter();
   const editing = Boolean(song);
@@ -209,7 +212,10 @@ export function SongEditor({
         items={
           song
             ? [
-                { label: "Catálogo", href: "/musicas" },
+                // Vim de um repertório? O "voltar" retorna a ele; senão, ao Catálogo.
+                backHref
+                  ? { label: "← Repertório", href: backHref }
+                  : { label: "Catálogo", href: "/musicas" },
                 { label: song.title, href: `/musicas/${song.id}` },
                 { label: "Editar" },
               ]
