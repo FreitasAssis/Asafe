@@ -15,6 +15,28 @@
 
 import { freshnessLabel } from "./freshness";
 
+/**
+ * Slots cujo LABEL de exibição difere do NOME da tag de momento correspondente.
+ * Para a maioria dos momentos o label do slot é igual ao nome da tag (ex.:
+ * "Entrada", "Comunhão", "Entrada da Bíblia"), então o casamento por label
+ * funciona. Estes dois têm o label estendido no template ("… Responsorial",
+ * "… ao Evangelho") enquanto a tag é curta — precisam do alias explícito, senão
+ * a sugestão por momento nunca casa (e a música do momento é excluída).
+ */
+const MOMENT_TAG_ALIASES: Record<string, string> = {
+  salmo: "Salmo",
+  aclamacao: "Aclamação",
+};
+
+/**
+ * Nome da tag de momento (categoria `momento`) que corresponde a um slot do
+ * repertório. Use isto — não o label cru do slot — ao decidir se uma música
+ * "é do momento", pois alguns labels divergem do nome da tag.
+ */
+export function momentTagNameForSlot(slotKey: string | null, slotLabel: string): string {
+  return (slotKey && MOMENT_TAG_ALIASES[slotKey]) || slotLabel;
+}
+
 export type SuggestionReason = "leitura" | "momento" | "tempo" | "usada" | "fresca";
 
 export interface SuggestionCandidate {

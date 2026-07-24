@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   filterSongs,
+  momentTagNameForSlot,
   rankMomentSuggestions,
   TAG_CATEGORY_COLORS,
   type SuggestionCandidate,
@@ -83,7 +84,10 @@ export function SongPicker({
   // do tempo / uso / frescor) e ranqueia no core. Só quando há contexto litúrgico.
   const suggested = useMemo(() => {
     if (!suggestion) return [];
-    const { linkedSongIds, momentLabel, seasonLabel } = suggestion;
+    const { linkedSongIds, momentLabel, momentKey: mKey, seasonLabel } = suggestion;
+    // O nome da tag de momento pode divergir do label do slot (ex.: slot "Salmo
+    // Responsorial" → tag "Salmo"). Casar pelo label cru excluiria a música do momento.
+    const momentTagName = momentTagNameForSlot(mKey, momentLabel);
     const candidates: SuggestionCandidate[] = songs.map((s) => {
       let momentMatch = false;
       let seasonMatch = false;
@@ -92,7 +96,7 @@ export function SongPicker({
         const t = tagById.get(id);
         if (!t) continue;
         if (t.category === "momento") {
-          if (t.name === momentLabel) momentMatch = true;
+          if (t.name === momentTagName) momentMatch = true;
           else otherMoment = true;
         }
         if (t.category === "tempo_liturgico" && seasonLabel && t.name === seasonLabel) seasonMatch = true;
