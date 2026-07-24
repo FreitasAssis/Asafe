@@ -4,6 +4,7 @@ import { serverClient } from "@/lib/supabase/server";
 import { isModerator, pendingModerationCount } from "@/lib/repertoires";
 import { Sidebar } from "@/components/sidebar";
 import { WelcomeModal } from "@/components/welcome-modal";
+import { InstallNudge } from "@/components/install-nudge";
 
 /**
  * Shell das páginas logadas: busca o usuário uma vez, redireciona sem sessão e
@@ -26,6 +27,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       <Sidebar userName={name} isModerator={moderator} moderationCount={modCount} />
       <div className="app-content">{children}</div>
       <WelcomeModal />
+      <InstallNudge />
     </div>
   );
 }
