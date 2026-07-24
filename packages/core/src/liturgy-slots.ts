@@ -122,7 +122,12 @@ export function buildStageSequence<T extends ArrangeableItem>(
 
   const steps: StageStep<T>[] = [];
   for (const slot of arranged.slots) {
-    if (slot.key === "salmo") steps.push(...readingStep("primeira"));
+    if (slot.key === "salmo") {
+      steps.push(...readingStep("primeira"));
+      // Sem música no Salmo → mostra o salmo do dia como passo (logo após a 1ª
+      // leitura, onde entraria a música), como já fazemos com as leituras.
+      if (slot.items.length === 0) steps.push(...readingStep("salmo"));
+    }
     for (const item of slot.items) steps.push({ kind: "song", item });
     if (slot.key === "salmo") steps.push(...readingStep("segunda"));
     if (slot.key === "aclamacao") steps.push(...readingStep("evangelho"));

@@ -633,6 +633,9 @@
   align-items: safe center;
   justify-content: center;
   overflow-y: auto;
+  /* Reserva a calha da barra de rolagem: o clientWidth fica constante apareça ela ou não,
+     então o cálculo de "fit-to-screen" (largura útil) não oscila com a rolagem. */
+  scrollbar-gutter: stable;
   padding: 24px;
   text-align: center;
 }

@@ -436,6 +436,11 @@ export function LiveMode({
               <>
                 {readingText.title && <div className="live-composer">{readingText.title}</div>}
                 <div className="live-cifra" style={{ fontSize: `${font}rem` }}>
+                  {readingText.refrain && (
+                    <p style={{ whiteSpace: "pre-wrap", margin: "0 0 1em", fontWeight: 600 }}>
+                      <span style={{ opacity: 0.7 }}>Refrão:</span> {readingText.refrain}
+                    </p>
+                  )}
                   <p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{readingText.text}</p>
                 </div>
                 <p className="live-empty" style={{ opacity: 0.6, fontSize: 12 }}>

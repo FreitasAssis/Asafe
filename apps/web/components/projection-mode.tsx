@@ -60,11 +60,15 @@ export function ProjectionMode({
       if (step.kind === "reading") {
         const t = readingTexts[step.reading.kind];
         const ref = step.reading.ref ? ` · ${step.reading.ref}` : "";
+        const textLines = t ? t.text.split("\n").filter((l) => l.trim()) : [];
+        // Salmo: o refrão (resposta cantada) vai junto, no topo — a projeção não
+        // separa estrofes, então o salmo fica todo num slide só. Só o salmo tem refrão.
+        const lines = t?.refrain ? [`Refrão: ${t.refrain}`, "", ...textLines] : textLines;
         return [
           {
             songIdx,
             title: `${READING_LABELS[step.reading.kind]}${ref}`,
-            lines: t ? t.text.split("\n").filter((l) => l.trim()) : [],
+            lines,
             chorus: false,
             reading: true,
             navLabel: READING_LABELS[step.reading.kind],
@@ -152,6 +156,11 @@ export function ProjectionMode({
     const el = lyricsRef.current;
     if (!stage || !el) return;
     const fit = () => {
+      // Zera para o mínimo ANTES de medir a área: senão o elemento ainda carrega a fonte
+      // do slide anterior e, se transbordar, a barra de rolagem (que ocupa largura em alguns
+      // sistemas, ex.: macOS "sempre mostrar") encolhe o clientWidth — a MESMA leitura então
+      // media diferente conforme de onde se navegou (às vezes travando no piso de 16px).
+      el.style.fontSize = "16px";
       const cs = getComputedStyle(stage);
       const availH =
         stage.clientHeight - Number.parseFloat(cs.paddingTop) - Number.parseFloat(cs.paddingBottom);
