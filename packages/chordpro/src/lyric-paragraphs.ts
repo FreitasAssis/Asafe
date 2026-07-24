@@ -29,3 +29,18 @@ export function lyricParagraphs(chordpro: string): LyricParagraph[] {
     }))
     .filter((para) => para.lines.length > 0);
 }
+
+/**
+ * Ordem de projeção de UMA música: recebe a marcação de refrão de cada parágrafo
+ * (`true` = refrão) e devolve os índices na sequência a projetar — o refrão
+ * **entre as estrofes**, começando por ele. Ex.: `[R, E1, E2, E3]` →
+ * `[R, E1, R, E2, R, E3]`. Sem refrão, devolve só as estrofes na ordem. O loop
+ * (voltar ao começo depois da última) fica por conta de quem navega (módulo).
+ */
+export function projectionPlayOrder(chorus: boolean[]): number[] {
+  const stanzas = chorus.map((c, i) => (c ? -1 : i)).filter((i) => i >= 0);
+  const chorusIdx = chorus.indexOf(true);
+  if (chorusIdx < 0) return stanzas; // sem refrão: só as estrofes
+  if (stanzas.length === 0) return [chorusIdx]; // só refrão
+  return stanzas.flatMap((st) => [chorusIdx, st]); // refrão antes de cada estrofe
+}

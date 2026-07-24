@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { buildStageSequence, liturgicalColorHex, type ReadingWithText } from "@asafe/core";
-import { lyricParagraphs } from "@asafe/chordpro";
+import { lyricParagraphs, projectionPlayOrder } from "@asafe/chordpro";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import { getDayReadingTexts } from "@/lib/liturgy/read-actions";
 import { READING_LABELS } from "@/lib/liturgy/reading-labels";
@@ -19,13 +19,47 @@ interface Slide {
   navLabel?: string;
 }
 
+interface SongCycle {
+  /** Índices (em `slides`) dos parágrafos desta música, na ordem da fonte. */
+  idxs: number[];
+  /** Ordem de projeção: índices (em `slides`) com o refrão intercalado; o loop é do caller. */
+  cycle: number[];
+}
+
+/**
+ * Agrupa os slides por música (songIdx), preservando a ordem dos parágrafos, e calcula a
+ * ORDEM DE PROJEÇÃO de cada uma (refrão intercalado entre as estrofes). Leituras viram
+ * grupos de 1 slide.
+ */
+function groupSongCycles(slides: Slide[]): SongCycle[] {
+  const groups: number[][] = [];
+  slides.forEach((sl, i) => {
+    const last = groups.at(-1);
+    if (last && slides[last[0]!]!.songIdx === sl.songIdx) last.push(i);
+    else groups.push([i]);
+  });
+  return groups.map((idxs) => ({
+    idxs,
+    cycle: projectionPlayOrder(idxs.map((i) => slides[i]!.chorus)).map((k) => idxs[k]!),
+  }));
+}
+
+/** "refrão" / "estrofe X/N" / "" (leitura não numera). */
+function positionLabel(slide: Slide | undefined, stanzaNo: number, stanzaCount: number): string {
+  if (!slide || slide.reading) return "";
+  if (slide.chorus) return "refrão";
+  return stanzaCount > 1 ? `estrofe ${stanzaNo}/${stanzaCount}` : "";
+}
+
 /**
  * Modo projeção (B2): a LETRA num telão/TV para a assembleia, grande e limpa (sem cifra).
  *
  * Apresentação em **slides**: cada slide é uma **estrofe inteira** ou o **refrão inteiro**
- * (um parágrafo). ← → navegam **dentro da música** (não pulam de música sem querer); há botão
- * **Refrão** (pula pro refrão e volta) e, na última estrofe, **Próxima música**. **Operação
- * manual** (setas/teclado); a Projeção não entra na sincronia do Ao vivo. Ver DESIGN §7.
+ * (um parágrafo). 4 botões fixos: **Anterior · ← · → · Próxima**. `←`/`→` andam **dentro da
+ * música** com o **refrão intercalado entre as estrofes**, em loop (só refrão → estrofe →
+ * refrão → …; da última estrofe volta ao começo); **Anterior/Próxima** é o único jeito de
+ * trocar de música. **Operação manual** (setas/teclado); a Projeção não entra na sincronia do
+ * Ao vivo. Ver DESIGN §7.
  */
 export function ProjectionMode({
   pkg,
@@ -83,70 +117,48 @@ export function ProjectionMode({
     });
   }, [pkg, snapshot, readingTexts]);
 
-  const [s, setS] = useState(0);
-  const [chorusReturn, setChorusReturn] = useState<number | null>(null);
+  const songs = useMemo(() => groupSongCycles(slides), [slides]);
+
+  const [g, setG] = useState(0); // música atual
+  const [c, setC] = useState(0); // posição no ciclo da música
   const [showUI, setShowUI] = useState(true);
   const stageRef = useRef<HTMLDivElement>(null);
   const lyricsRef = useRef<HTMLDivElement>(null);
   useWakeLock();
 
-  const slide = slides[s]!;
-  // Fronteiras da música atual (para não cruzar de música sem querer).
-  let firstOfSong = s;
-  let lastOfSong = s;
-  while (firstOfSong > 0 && slides[firstOfSong - 1]!.songIdx === slide.songIdx) firstOfSong--;
-  while (lastOfSong < slides.length - 1 && slides[lastOfSong + 1]!.songIdx === slide.songIdx) lastOfSong++;
-  const chorusIdx = slides.findIndex((x) => x.songIdx === slide.songIdx && x.chorus);
-  const atFirst = s === firstOfSong;
-  const atLast = s === lastOfSong;
-  const slideInSong = s - firstOfSong + 1;
-  const songSlideCount = lastOfSong - firstOfSong + 1;
-  // Rótulos de "anterior/próxima": se o alvo for leitura, mostra o que é (ex.: "Evangelho").
-  const prevNav = slides[firstOfSong - 1]?.navLabel;
-  const nextNav = slides[lastOfSong + 1]?.navLabel;
+  // Índices saneados (o array pode mudar quando a leitura carrega; nunca sair do range).
+  const gi = songs.length ? Math.min(g, songs.length - 1) : 0;
+  const cycle = songs[gi]?.cycle ?? [0];
+  const ci = Math.min(c, cycle.length - 1);
+  const s = cycle[ci] ?? 0;
+  const slide = slides[s];
 
-  // ← → só andam DENTRO da música (usam updater p/ o teclado não pegar `s` velho).
+  // Rótulo de posição: refrão / estrofe X de N (leitura não numera).
+  const stanzaIdxs = (songs[gi]?.idxs ?? []).filter((i) => !slides[i]!.chorus && !slides[i]!.reading);
+  const posLabel = positionLabel(slide, stanzaIdxs.indexOf(s) + 1, stanzaIdxs.length);
+
+  const hasPrevSong = gi > 0;
+  const hasNextSong = gi < songs.length - 1;
+
+  // ← → andam DENTRO da música, em loop pelo ciclo (refrão entre estrofes).
   function back() {
-    setChorusReturn(null);
-    setS((cur) => {
-      const song = slides[cur]!.songIdx;
-      let first = cur;
-      while (first > 0 && slides[first - 1]!.songIdx === song) first--;
-      return cur > first ? cur - 1 : cur;
-    });
+    setC((x) => (x - 1 + cycle.length) % cycle.length);
   }
   function fwd() {
-    setChorusReturn(null);
-    setS((cur) => {
-      const song = slides[cur]!.songIdx;
-      let last = cur;
-      while (last < slides.length - 1 && slides[last + 1]!.songIdx === song) last++;
-      return cur < last ? cur + 1 : cur;
-    });
+    setC((x) => (x + 1) % cycle.length);
   }
-  function toChorus() {
-    if (chorusReturn !== null) {
-      setS(chorusReturn);
-      setChorusReturn(null);
-    } else if (chorusIdx >= 0 && s !== chorusIdx) {
-      setChorusReturn(s);
-      setS(chorusIdx);
+  // Anterior / Próxima cruzam de música (e só isso cruza); param nas pontas do repertório.
+  function prevSong() {
+    if (hasPrevSong) {
+      setG(gi - 1);
+      setC(0);
     }
   }
   function nextSong() {
-    setChorusReturn(null);
-    setS(lastOfSong + 1);
-  }
-  function prevSong() {
-    setChorusReturn(null);
-    const prev = slides[firstOfSong - 1]!.songIdx;
-    let f = firstOfSong - 1;
-    while (f > 0 && slides[f - 1]!.songIdx === prev) f--;
-    setS(f);
-  }
-  function restart() {
-    setChorusReturn(null);
-    setS(firstOfSong);
+    if (hasNextSong) {
+      setG(gi + 1);
+      setC(0);
+    }
   }
 
   // Fit-to-screen: acha a MAIOR fonte em que o slide (estrofe/refrão) cabe inteiro na tela —
@@ -185,17 +197,20 @@ export function ProjectionMode({
     return () => window.removeEventListener("resize", fit);
   }, [s, slides]);
 
-  // Setas navegam entre slides; Esc sai.
+  // Teclado: ← → dentro da música; ↑/PageUp e ↓/PageDown trocam de música; Esc sai.
+  // Depende de gi/songs para os closures pegarem o ciclo e a música atuais.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") fwd();
-      else if (e.key === "ArrowLeft" || e.key === "PageUp") back();
+      if (e.key === "ArrowRight" || e.key === " ") fwd();
+      else if (e.key === "ArrowLeft") back();
+      else if (e.key === "ArrowDown" || e.key === "PageDown") nextSong();
+      else if (e.key === "ArrowUp" || e.key === "PageUp") prevSong();
       else if (e.key === "Escape") window.location.assign(backHref);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slides.length]);
+  }, [gi, songs.length]);
 
   // Controles/legenda somem após inatividade (tela limpa para a assembleia).
   useEffect(() => {
@@ -217,7 +232,7 @@ export function ProjectionMode({
     };
   }, []);
 
-  if (slides.length === 0) {
+  if (!slide) {
     return (
       <div className="projection-mode" style={litBorder}>
         <div className="projection-stage">Este repertório ainda não tem músicas.</div>
@@ -229,9 +244,7 @@ export function ProjectionMode({
     <div className={`projection-mode${showUI ? "" : " projection-idle"}`} style={litBorder}>
       <div className="projection-bar">
         <span className="truncate">{slide.title}</span>
-        <span className="projection-pos">
-          {slide.chorus ? "refrão" : `${slideInSong}/${songSlideCount}`}
-        </span>
+        <span className="projection-pos">{posLabel}</span>
         <a href={backHref} aria-label="Sair" className="projection-exit">✕</a>
       </div>
 
@@ -249,33 +262,27 @@ export function ProjectionMode({
         )}
       </div>
 
+      {/* 4 botões fixos: Anterior · < · > · Próxima. Só Anterior/Próxima cruzam de música;
+          < e > andam dentro da música (refrão intercalado, em loop). */}
       <div className="projection-nav">
-        {atFirst && firstOfSong > 0 && (
-          <button type="button" className="projection-song-btn" onClick={prevSong}>
-            ← {prevNav ?? "Música anterior"}
-          </button>
-        )}
-        <button type="button" onClick={back} disabled={atFirst} aria-label="Estrofe anterior">←</button>
-        {chorusIdx >= 0 && (
-          <button
-            type="button"
-            onClick={toChorus}
-            aria-label={chorusReturn !== null ? "Voltar" : "Ir ao refrão"}
-          >
-            {chorusReturn !== null ? "↩ Voltar" : "Refrão"}
-          </button>
-        )}
-        <button type="button" onClick={fwd} disabled={atLast} aria-label="Próxima estrofe">→</button>
-        {atLast && lastOfSong < slides.length - 1 && (
-          <button type="button" className="projection-song-btn" onClick={nextSong}>
-            {nextNav ?? "Próxima música"} →
-          </button>
-        )}
-        {atLast && lastOfSong === slides.length - 1 && songSlideCount > 1 && (
-          <button type="button" className="projection-song-btn" onClick={restart}>
-            ⤒ Início
-          </button>
-        )}
+        <button
+          type="button"
+          className="projection-song-btn"
+          onClick={prevSong}
+          disabled={!hasPrevSong}
+        >
+          ← Anterior
+        </button>
+        <button type="button" onClick={back} aria-label="Voltar (dentro da música)">←</button>
+        <button type="button" onClick={fwd} aria-label="Avançar (dentro da música)">→</button>
+        <button
+          type="button"
+          className="projection-song-btn"
+          onClick={nextSong}
+          disabled={!hasNextSong}
+        >
+          Próxima →
+        </button>
       </div>
     </div>
   );
