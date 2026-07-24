@@ -63,6 +63,42 @@ describe("buildStageSequence", () => {
     ]);
   });
 
+  it("sem música no Salmo: mostra o salmo do dia como passo, logo após a 1ª leitura", () => {
+    const steps = buildStageSequence(
+      SLOTS,
+      // Repertório sem música no slot 'salmo' (só entrada, aclamação, comunhão).
+      [song("ent", "entrada"), song("acl", "aclamacao"), song("com", "comunhao")],
+      snap([
+        { kind: "primeira", ref: "Gn 18,1-10" },
+        { kind: "salmo", ref: "Sl 14" },
+        { kind: "segunda", ref: "Cl 1,24-28" },
+        { kind: "evangelho", ref: "Lc 10,38-42" },
+      ]),
+    );
+    expect(steps.map(label)).toEqual([
+      "song:ent",
+      "read:primeira",
+      "read:salmo",
+      "read:segunda",
+      "song:acl",
+      "read:evangelho",
+      "song:com",
+    ]);
+  });
+
+  it("com música no Salmo: NÃO insere o salmo do dia (a música ocupa o momento)", () => {
+    const steps = buildStageSequence(
+      SLOTS,
+      [song("sal", "salmo")],
+      snap([
+        { kind: "primeira", ref: "Gn 18" },
+        { kind: "salmo", ref: "Sl 14" },
+        { kind: "evangelho", ref: "Lc 10" },
+      ]),
+    );
+    expect(steps.map(label)).toEqual(["read:primeira", "song:sal", "read:evangelho"]);
+  });
+
   it("feria sem 2ª leitura: não insere o passo da 2ª", () => {
     const steps = buildStageSequence(
       SLOTS,
