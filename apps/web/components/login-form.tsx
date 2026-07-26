@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { browserClient } from "@/lib/supabase/client";
+import { PasswordInput } from "@/components/password-input";
 
 /** Traduz as mensagens de erro mais comuns do Supabase Auth para português. */
 function traduzErro(msg: string): string {
@@ -23,10 +24,12 @@ export function LoginForm({ next }: { readonly next?: string }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handle(action: "entrar" | "criar") {
     setError(null);
+    setNotice(null);
     // "Criar conta" é um botão (não dispara a validação nativa): exige nome, e-mail e senha.
     if (action === "criar" && (!name.trim() || !email.trim() || !password)) {
       setError("Para criar conta, preencha nome, e-mail e senha.");
@@ -49,6 +52,25 @@ export function LoginForm({ next }: { readonly next?: string }) {
     }
     router.push(dest);
     router.refresh();
+  }
+
+  async function handleReset() {
+    setError(null);
+    setNotice(null);
+    if (!email.trim()) {
+      setError("Digite seu e-mail para receber o link de redefinição.");
+      return;
+    }
+    setLoading(true);
+    const supabase = browserClient();
+    const redirectTo = `${window.location.origin}/auth/callback?next=/redefinir-senha`;
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
+    setLoading(false);
+    if (error) {
+      setError(traduzErro(error.message));
+      return;
+    }
+    setNotice("Enviamos um link para redefinir sua senha. Confira seu e-mail.");
   }
 
   return (
@@ -76,17 +98,20 @@ export function LoginForm({ next }: { readonly next?: string }) {
         autoComplete="email"
         className="input"
       />
-      <input
-        type="password"
-        placeholder="senha"
+      <PasswordInput
         value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
+        onChange={setPassword}
+        placeholder="senha"
         autoComplete="current-password"
-        className="input"
+        required
       />
 
       {error && <p className="m-0 text-danger">{error}</p>}
+      {notice && (
+        <p className="m-0" style={{ color: "var(--season)" }}>
+          {notice}
+        </p>
+      )}
 
       <div className="flex gap-2">
         <button type="submit" disabled={loading} className="btn btn-primary flex-1">
@@ -101,6 +126,16 @@ export function LoginForm({ next }: { readonly next?: string }) {
           Criar conta
         </button>
       </div>
+
+      <button
+        type="button"
+        disabled={loading}
+        onClick={() => void handleReset()}
+        className="mt-1 self-center text-sm text-muted"
+        style={{ background: "none", border: 0, cursor: "pointer" }}
+      >
+        Esqueci a senha
+      </button>
     </form>
   );
 }
