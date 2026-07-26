@@ -269,6 +269,31 @@
 }
 
 /* Botão de ação flutuante (FAB) */
+/* Campo de senha com botão mostrar/ocultar (👁) sobreposto à direita. */
+.pw-field {
+  position: relative;
+}
+.pw-input {
+  width: 100%;
+  padding-right: 44px;
+}
+.pw-toggle {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: 0;
+  padding: 4px 6px;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.75;
+}
+.pw-toggle:hover {
+  opacity: 1;
+}
+
 /* Nudge de instalação (PWA): pill discreto no canto inferior esquerdo (o FAB fica à direita). */
 .install-nudge {
   position: fixed;
