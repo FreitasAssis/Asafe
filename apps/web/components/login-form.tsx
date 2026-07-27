@@ -18,8 +18,8 @@ function traduzErro(msg: string): string {
 
 export function LoginForm({ next }: { readonly next?: string }) {
   const router = useRouter();
-  // Só aceita caminho interno (evita open-redirect); senão vai pra home.
-  const dest = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+  // Só aceita caminho interno (evita open-redirect); senão vai pra home do app.
+  const dest = next && next.startsWith("/") && !next.startsWith("//") ? next : "/inicio";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

@@ -41,7 +41,9 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  // "/" é a raiz pública (landing p/ deslogado; a própria página manda o logado pro app).
+  const isPublic =
+    pathname === "/" || PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
   if (!user && !isPublic) {
     // Preserva o destino para voltar após o login/cadastro (ex.: link de convite).
     const dest = pathname + request.nextUrl.search;

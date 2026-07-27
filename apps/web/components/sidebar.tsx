@@ -48,7 +48,7 @@ export function Sidebar({
         >
           ☰
         </button>
-        <a href="/" aria-label="Início">
+        <a href="/inicio" aria-label="Início">
           <Brand />
         </a>
       </div>
@@ -62,7 +62,7 @@ export function Sidebar({
       />
 
       <nav className={`app-sidebar${open ? " open" : ""}`} aria-label="Navegação principal">
-        <a href="/" aria-label="Início" className="px-2 pb-3 pt-1" onClick={() => setOpen(false)}>
+        <a href="/inicio" aria-label="Início" className="px-2 pb-3 pt-1" onClick={() => setOpen(false)}>
           <Brand />
         </a>
         {LINKS.map((l) => (
