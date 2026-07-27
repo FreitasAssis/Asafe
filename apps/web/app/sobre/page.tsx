@@ -34,10 +34,31 @@ export default function Sobre() {
       <section className="mt-6">
         <h2 className="font-serif text-xl font-semibold">O que é</h2>
         <p className="mt-2 leading-relaxed">
-          O Asafe ajuda ministérios de música a <strong>organizar e compartilhar repertórios</strong>
-          : montar a celebração pelos seus momentos, guardar cifras e letras, transpor e dividir com
-          o grupo ou por um link de leitura. Pensado pra usar no ensaio e na celebração.
+          O Asafe ajuda ministérios de música a{" "}
+          <strong>preparar a música da celebração</strong> — do ensaio ao altar.
         </p>
+        <ul className="mt-3 flex list-none flex-col gap-2 p-0 leading-relaxed">
+          <li>
+            <strong>Repertórios por momento</strong> — monte a celebração na ordem do rito, com
+            músicas do seu catálogo ou dos seus grupos.
+          </li>
+          <li>
+            <strong>Catálogo</strong> — guarde cifras e letras em ChordPro, transponha o tom e
+            esconda a cifra quando quiser.
+          </li>
+          <li>
+            <strong>Liturgia do dia</strong> — numa Missa com data, traz as leituras e o salmo do
+            dia, ajusta os momentos ao tempo litúrgico e sugere músicas ligadas às leituras.
+          </li>
+          <li>
+            <strong>Ao vivo &amp; Projeção</strong> — toque em tela cheia (transpor, autoscroll,
+            refrão) e projete a letra em slides; no modo sincronizado, um mestre conduz todos.
+          </li>
+          <li>
+            <strong>Grupos &amp; compartilhamento</strong> — divida repertórios com a equipe ou por
+            um link de leitura.
+          </li>
+        </ul>
       </section>
 
       <section className="mt-6">
