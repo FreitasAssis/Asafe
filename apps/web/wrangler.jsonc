@@ -9,6 +9,9 @@
   // Domínio de produção (a zona asafe.mus.br já está na Cloudflare). Deixa o custom domain
   // versionado: cada `deploy` reconcilia o apontamento em vez de arriscar removê-lo.
   "routes": [{ "pattern": "asafe.mus.br", "custom_domain": true }],
+  // Mantém o *.workers.dev ATIVO (definir `routes` sozinho desliga — error 1042). Precisamos
+  // dele vivo para os links antigos (WhatsApp) chegarem no Worker e serem 301 → asafe.mus.br.
+  "workers_dev": true,
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
