@@ -14,13 +14,8 @@ export default async function LoginPage({
   const intent = criar !== undefined ? "criar" : "entrar";
   return (
     <main className="mx-auto mt-24 max-w-sm px-4">
-      <div className="flex flex-col items-center text-center">
+      <div className="mb-6 flex flex-col items-center text-center">
         <Brand size={64} stacked />
-        <p className="mb-6 mt-3 text-muted">
-          {intent === "criar"
-            ? "Crie sua conta para montar seus repertórios."
-            : "Entre para montar seus repertórios."}
-        </p>
       </div>
       <LoginForm next={next} intent={intent} />
       <p className="mt-8 text-center text-sm text-muted">
