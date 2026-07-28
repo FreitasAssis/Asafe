@@ -3,12 +3,12 @@
 > Organize e compartilhe repertórios de música litúrgica católica — num lugar só,
 > no lugar das folhas soltas e dos PDFs perdidos no WhatsApp.
 
-**Ao vivo:** <https://asafe.repertorio.workers.dev> · em construção (veja o [Status](#status)).
+**No ar:** <https://asafe.mus.br> · pré-lançamento (veja o [Status](#status)).
 
 **Asafe** ajuda ministérios de música a montar repertórios de Missas, grupos de oração,
 casamentos e adorações: escolha cantos de um catálogo vivo com cifra e letra, transponha
 para o tom da sua voz, esconda os acordes para quem só canta, e acompanhe no celular ou
-tablet na hora da celebração — mesmo sem internet.
+tablet na hora da celebração — com o app instalável na tela inicial.
 
 Para a Missa, o app sabe o dia litúrgico, o tempo e as leituras, e ajuda a encontrar a
 música certa para cada momento, sem repetir o que você cantou nos últimos domingos.
@@ -30,24 +30,27 @@ Senhor (autor de uma dúzia de salmos). O app leva o nome e a missão.
 
 ## Status
 
-🚧 Em construção.
+🚧 Pré-lançamento.
 
 - ✅ Fundação do monorepo
 - ✅ Schema + RLS do MVP (`packages/db`)
 - ✅ Catálogo com filtro por tags e curadoria pessoal
 - ✅ Editor ChordPro: transpor, esconder acordes e modo visualização
 - ✅ Montar repertório por momento litúrgico e compartilhar por link
+- ✅ Liturgia da Missa: dia litúrgico, tempo, leituras e salmo do dia, com sugestão de música por momento
+- ✅ Ao vivo e Projeção: letra em tela cheia (transpor, autoscroll, refrão), modo sincronizado e slides no telão
 - ✅ Importação em lote (colar várias cifras de uma vez)
 - ✅ Grupos, convites e comunidade com moderação
 - ✅ Direitos autorais: referência × conteúdo, gate de promoção, consentimento de obra
   própria, permissão (por obra e fonte autorizada) e atribuição sempre visível
-- ✅ Identidade visual, navegação e onboarding
-- ✅ Deploy de referência na Cloudflare Workers (OpenNext)
+- ✅ Identidade visual, landing pública, navegação e onboarding
+- ✅ PWA instalável (service worker, ícone maskable, aviso de instalação)
+- ✅ Deploy na Cloudflare Workers (OpenNext) em <https://asafe.mus.br>
 
 **Próximos passos**
 
-- ⬜ Integrações litúrgicas: dia litúrgico, tempo e leituras, com sugestão de música por momento
-- ⬜ App no celular/tablet, com uso offline na hora da celebração
+- ⬜ Uso offline completo dos repertórios na hora da celebração
+- ⬜ App nativo (Expo) para celular/tablet
 
 Arquitetura e decisões de design: veja [docs/DESIGN.md](./docs/DESIGN.md). O roadmap por
 fases está lá também.
