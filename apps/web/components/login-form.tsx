@@ -16,10 +16,19 @@ function traduzErro(msg: string): string {
   return msg;
 }
 
-export function LoginForm({ next }: { readonly next?: string }) {
+export function LoginForm({
+  next,
+  intent = "entrar",
+}: {
+  readonly next?: string;
+  /** Ação em destaque (vinda da landing): "criar" chega de "Criar conta", "entrar" de "Entrar". */
+  readonly intent?: "entrar" | "criar";
+}) {
   const router = useRouter();
   // Só aceita caminho interno (evita open-redirect); senão vai pra home do app.
   const dest = next && next.startsWith("/") && !next.startsWith("//") ? next : "/inicio";
+  const secondary = intent === "criar" ? "entrar" : "criar";
+  const LABEL = { entrar: "Entrar", criar: "Criar conta" } as const;
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -77,7 +86,7 @@ export function LoginForm({ next }: { readonly next?: string }) {
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        void handle("entrar");
+        void handle(intent);
       }}
       className="flex flex-col gap-3"
     >
@@ -115,15 +124,15 @@ export function LoginForm({ next }: { readonly next?: string }) {
 
       <div className="flex gap-2">
         <button type="submit" disabled={loading} className="btn btn-primary flex-1">
-          Entrar
+          {LABEL[intent]}
         </button>
         <button
           type="button"
           disabled={loading}
-          onClick={() => void handle("criar")}
+          onClick={() => void handle(secondary)}
           className="btn flex-1"
         >
-          Criar conta
+          {LABEL[secondary]}
         </button>
       </div>
 
