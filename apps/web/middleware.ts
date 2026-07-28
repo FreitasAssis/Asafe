@@ -12,6 +12,18 @@ const PUBLIC_PATHS = ["/login", "/sobre", "/r", "/auth", "/redefinir-senha"];
  * tudo que não for público exige sessão — sem ela, redireciona para `/login`.
  */
 export async function middleware(request: NextRequest) {
+  // Links antigos (WhatsApp) apontam pro *.workers.dev. Redireciona 301 (permanente),
+  // preservando path e query, para o domínio oficial — sem matar os links antigos e
+  // consolidando tudo num endereço só (SEO). Roda antes de qualquer coisa.
+  const host = request.headers.get("host") ?? "";
+  if (host.endsWith(".workers.dev")) {
+    const url = new URL(request.url);
+    url.protocol = "https:";
+    url.host = "asafe.mus.br";
+    url.port = "";
+    return NextResponse.redirect(url, 301);
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -62,6 +74,6 @@ export const config = {
   // o Next extrai este matcher em build; uma expressão (ex.: String.raw) faz o Next
   // rodar o middleware em TODAS as rotas, inclusive os chunks JS (que viram redirect).
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|offline.html|apple-icon.png|icons/).*)",
+    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|offline.html|apple-icon.png|og.png|icons/).*)",
   ],
 };
