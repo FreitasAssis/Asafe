@@ -16,10 +16,25 @@ function traduzErro(msg: string): string {
   return msg;
 }
 
-export function LoginForm({ next }: { readonly next?: string }) {
+export function LoginForm({
+  next,
+  intent = "entrar",
+}: {
+  readonly next?: string;
+  /** Ação em destaque (vinda da landing): "criar" chega de "Criar conta", "entrar" de "Entrar". */
+  readonly intent?: "entrar" | "criar";
+}) {
   const router = useRouter();
   // Só aceita caminho interno (evita open-redirect); senão vai pra home do app.
   const dest = next && next.startsWith("/") && !next.startsWith("//") ? next : "/inicio";
+  const LABEL = { entrar: "Entrar", criar: "Criar conta" } as const;
+  const SUBTITLE = {
+    entrar: "Entre para montar seus repertórios.",
+    criar: "Crie sua conta para montar seus repertórios.",
+  } as const;
+  // Modo atual da tela (nasce do CTA da landing; o botão secundário alterna).
+  const [mode, setMode] = useState<"entrar" | "criar">(intent);
+  const secondary = mode === "criar" ? "entrar" : "criar";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -73,22 +88,32 @@ export function LoginForm({ next }: { readonly next?: string }) {
     setNotice("Enviamos um link para redefinir sua senha. Confira seu e-mail.");
   }
 
+  /** Botão secundário alterna o modo (revela/esconde o nome) em vez de submeter. */
+  function switchMode() {
+    setError(null);
+    setNotice(null);
+    setMode(secondary);
+  }
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        void handle("entrar");
+        void handle(mode);
       }}
       className="flex flex-col gap-3"
     >
-      <input
-        type="text"
-        placeholder="seu nome (ao criar conta)"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        autoComplete="name"
-        className="input"
-      />
+      <p className="m-0 text-center text-muted">{SUBTITLE[mode]}</p>
+      {mode === "criar" && (
+        <input
+          type="text"
+          placeholder="seu nome"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          autoComplete="name"
+          className="input"
+        />
+      )}
       <input
         type="email"
         placeholder="seu@email.com"
@@ -102,7 +127,7 @@ export function LoginForm({ next }: { readonly next?: string }) {
         value={password}
         onChange={setPassword}
         placeholder="senha"
-        autoComplete="current-password"
+        autoComplete={mode === "criar" ? "new-password" : "current-password"}
         required
       />
 
@@ -113,19 +138,21 @@ export function LoginForm({ next }: { readonly next?: string }) {
         </p>
       )}
 
-      <div className="flex gap-2">
-        <button type="submit" disabled={loading} className="btn btn-primary flex-1">
-          Entrar
-        </button>
+      <button type="submit" disabled={loading} className="btn btn-primary">
+        {LABEL[mode]}
+      </button>
+      <p className="m-0 text-center text-sm text-muted">
+        {mode === "criar" ? "Já tem conta?" : "Ainda não tem conta?"}{" "}
         <button
           type="button"
           disabled={loading}
-          onClick={() => void handle("criar")}
-          className="btn flex-1"
+          onClick={switchMode}
+          className="text-primary"
+          style={{ background: "none", border: 0, padding: 0, cursor: "pointer", font: "inherit" }}
         >
-          Criar conta
+          {LABEL[secondary]}
         </button>
-      </div>
+      </p>
 
       <button
         type="button"

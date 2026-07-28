@@ -9,10 +9,29 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", display: "swap" });
 
+const DESCRIPTION =
+  "Prepare a música da celebração: repertórios por momento, liturgia do dia, cifras, Ao vivo e Projeção. Grátis e open source.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL("https://asafe.mus.br"),
   title: "Asafe",
-  description: "Organize e compartilhe repertórios de música litúrgica católica.",
+  description: DESCRIPTION,
   appleWebApp: { capable: true, title: "Asafe", statusBarStyle: "default" },
+  openGraph: {
+    type: "website",
+    siteName: "Asafe",
+    title: "Asafe — repertórios litúrgicos",
+    description: DESCRIPTION,
+    url: "/",
+    locale: "pt_BR",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Asafe — prepare a música da celebração" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Asafe — repertórios litúrgicos",
+    description: DESCRIPTION,
+    images: ["/og.png"],
+  },
 };
 
 export const viewport: Viewport = {
