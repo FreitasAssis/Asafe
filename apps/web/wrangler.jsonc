@@ -6,6 +6,9 @@
   // nodejs_compat: APIs de Node no workerd (o app usa @supabase/ssr com cookies).
   // global_fetch_strictly_public: fetch() vai à internet pública (recomendado p/ OpenNext).
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  // Domínio de produção (a zona asafe.mus.br já está na Cloudflare). Deixa o custom domain
+  // versionado: cada `deploy` reconcilia o apontamento em vez de arriscar removê-lo.
+  "routes": [{ "pattern": "asafe.mus.br", "custom_domain": true }],
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
