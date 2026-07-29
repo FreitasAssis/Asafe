@@ -107,14 +107,26 @@ export function useLiveSync(params: {
     ch.on("presence", { event: "join" }, refresh);
     ch.on("presence", { event: "leave" }, refresh);
 
-    ch.subscribe((status) => {
-      if (status === "SUBSCRIBED") {
-        void ch.track({ name });
-        ch.send({ type: "broadcast", event: "hello", payload: { userId } });
-      }
-    });
+    // Autentica a conexão Realtime como o usuário ANTES de assinar. O canal é `private` e as
+    // policies de realtime.messages são `to authenticated` — sem isto o primeiro phx_join sai
+    // com a anon key e o broadcast é recusado (a presence engana: parece que conectou). Async
+    // porque a sessão do @asafe/ssr carrega do cookie; `cancelled` evita assinar canal já limpo.
+    let cancelled = false;
+    void (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (cancelled || !data.session) return;
+      await supabase.realtime.setAuth(data.session.access_token);
+      if (cancelled) return;
+      ch.subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          void ch.track({ name });
+          ch.send({ type: "broadcast", event: "hello", payload: { userId } });
+        }
+      });
+    })();
 
     return () => {
+      cancelled = true;
       void supabase.removeChannel(ch);
       chRef.current = null;
       setIsMaster(false);
