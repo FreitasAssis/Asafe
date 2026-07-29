@@ -5,6 +5,7 @@ import { listSongs, listTags } from "@/lib/songs";
 import { listShareLinks } from "@/lib/share-links";
 import { listGroups } from "@/lib/groups";
 import { linkedSongIdsForReadings } from "@/lib/liturgy/suggestions";
+import { dynamicTodaySnapshot } from "@/lib/liturgy/stage-package";
 import { RepertoireBuilder } from "@/components/repertoire-builder";
 
 export default async function MontarRepertorio({
@@ -19,8 +20,18 @@ export default async function MontarRepertorio({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const repertoire = await getRepertoire(supabase, id);
-  if (!repertoire) notFound();
+  const loaded = await getRepertoire(supabase, id);
+  if (!loaded) notFound();
+
+  // Missa sem data → liturgia de hoje (dinâmica) para o builder mostrar leituras/sugestões.
+  const repertoire = {
+    ...loaded,
+    liturgicalSnapshot: await dynamicTodaySnapshot(
+      loaded.type,
+      loaded.date,
+      loaded.liturgicalSnapshot,
+    ),
+  };
 
   const isOwner = repertoire.ownerId === user.id;
   // A5: as leituras do dia (do snapshot) → músicas ligadas por sobreposição, o

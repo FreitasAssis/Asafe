@@ -15,13 +15,13 @@ import {
   setItemOrder,
   setItemTranspose,
   setRepertoireGroups,
-  updateRepertoire,
   type Repertoire,
   type RepertoireItemFull,
   type SlotTemplate,
 } from "@/lib/repertoires";
 import type { ShareLink } from "@/lib/share-links";
 import type { Group } from "@/lib/groups";
+import { saveRepertoireMetaAction } from "@/app/(app)/repertorios/[id]/editar/actions";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { LiturgyHeader } from "./liturgy-header";
 import { ReuseAnchor } from "./reuse-anchor";
@@ -152,7 +152,9 @@ export function RepertoireBuilder({
   async function saveMeta() {
     setSavedMsg(null);
     try {
-      await updateRepertoire(browserClient(), repertoire.id, {
+      // Server action: salva e, para Missa, re-resolve a liturgia pela data (ou limpa se vazia).
+      await saveRepertoireMetaAction({
+        id: repertoire.id,
         title: title.trim() || "Sem título",
         date: date.trim() || null,
       });

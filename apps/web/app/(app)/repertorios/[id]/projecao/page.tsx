@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { serverClient } from "@/lib/supabase/server";
-import { getRepertoirePackage } from "@/lib/repertoires";
+import { getStagePackage } from "@/lib/liturgy/stage-package";
 import { ProjectionMode } from "@/components/projection-mode";
 
 /** Modo projeção (B2): letra grande no telão, tela cheia. Cobre a barra lateral. */
@@ -12,7 +12,7 @@ export default async function Projecao({ params }: { params: Promise<{ id: strin
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const pkg = await getRepertoirePackage(supabase, id);
+  const pkg = await getStagePackage(supabase, id);
   if (!pkg) notFound();
 
   return <ProjectionMode pkg={pkg} backHref={`/repertorios/${id}`} />;

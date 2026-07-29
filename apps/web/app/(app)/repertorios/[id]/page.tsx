@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { serverClient } from "@/lib/supabase/server";
-import { getRepertoire, getRepertoirePackage } from "@/lib/repertoires";
+import { getRepertoire } from "@/lib/repertoires";
+import { getStagePackage } from "@/lib/liturgy/stage-package";
 import { PublicRepertoire } from "@/components/public-repertoire";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { EditPencil } from "@/components/edit-pencil";
@@ -22,7 +23,7 @@ export default async function VerRepertorio({
   if (!user) redirect("/login");
 
   const [pkg, repertoire] = await Promise.all([
-    getRepertoirePackage(supabase, id),
+    getStagePackage(supabase, id),
     getRepertoire(supabase, id),
   ]);
   if (!pkg || !repertoire) notFound();
