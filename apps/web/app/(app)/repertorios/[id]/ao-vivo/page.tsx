@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { serverClient } from "@/lib/supabase/server";
-import { getRepertoirePackage } from "@/lib/repertoires";
+import { getStagePackage } from "@/lib/liturgy/stage-package";
 import { LiveMode } from "@/components/live-mode";
 
 /** Modo "Ao vivo" (B1): tela cheia escura para tocar o repertório. Cobre a barra lateral. */
@@ -12,7 +12,7 @@ export default async function AoVivo({ params }: { params: Promise<{ id: string 
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const pkg = await getRepertoirePackage(supabase, id);
+  const pkg = await getStagePackage(supabase, id);
   if (!pkg) notFound();
 
   // Só o primeiro nome (ou o começo do e-mail) — "Seguindo Fulano" não pode ficar extenso.
