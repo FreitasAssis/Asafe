@@ -190,12 +190,7 @@ export function PublishGate({
         </div>
       )}
       {warning && (
-        <p
-          className="mt-3 rounded p-2 text-sm"
-          style={{ color: "#92400e", background: "#fef3c7", border: "1px solid #fcd34d" }}
-        >
-          ⚠ {warning}
-        </p>
+        <p className="notice-warn mt-3 rounded p-2 text-sm">⚠ {warning}</p>
       )}
       <div className="mt-3 flex gap-2">
         <button

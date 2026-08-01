@@ -12,6 +12,10 @@
   --border: #e3dbc9;
   --season: #4f7a55; /* acento litúrgico (estático por ora: tempo comum) */
   --danger: #b23b2e;
+  /* Aviso/devolutiva (âmbar) — tema-aware para não ficar claro no modo escuro. */
+  --warn-bg: #fef3c7;
+  --warn-fg: #92400e;
+  --warn-border: #fcd34d;
 }
 
 /* ===== Modo escuro / palco ===== */
@@ -25,6 +29,16 @@
   --accent: #c2a14e; /* dourado lê melhor no escuro */
   --border: #3a352f;
   --danger: #e0786b;
+  --warn-bg: #3a2f18;
+  --warn-fg: #e8c877;
+  --warn-border: #6a5a34;
+}
+
+/* Caixa de aviso/devolutiva (âmbar), tema-aware — usada na moderação e no gate de publicação. */
+.notice-warn {
+  background: var(--warn-bg);
+  color: var(--warn-fg);
+  border: 1px solid var(--warn-border);
 }
 
 /* Mapeia os tokens (runtime) para as utilitárias do Tailwind (bg-bg, text-ink, …). */

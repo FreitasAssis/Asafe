@@ -2,7 +2,8 @@
 
 Referência viva de **arquitetura e do *porquê*** das decisões do Asafe. O *como* do schema
 e das políticas de acesso vive no código (`packages/db`) — este documento explica as razões
-e o que não é óbvio a partir do código. Leia antes de contribuir.
+e o que não é óbvio a partir do código. Serve tanto a quem vai **contribuir** quanto a quem
+quer **entender as decisões** por trás do app (e conferir se batem com o código).
 
 > O nome **Asaf** foi o mestre de canto que o rei Davi pôs à frente da música na Casa do
 > Senhor, autor de uma dúzia de salmos (50, 73–83). O app leva o nome e a missão: ajudar a
@@ -289,8 +290,12 @@ caminho).
 
 ---
 
-**Status atual:** Fase 1 (MVP) entregue e **no ar** (Cloudflare Workers + Supabase de produção);
-comunidade com moderação, importação em lote e identidade visual também prontas. O épico de
-**direitos autorais** (referência × conteúdo, gate de promoção, consentimento, permissão por
-obra e fonte autorizada, atribuição sempre visível) está implementado. Próximo bloco grande: a **camada litúrgica** (§6) e os
-**modos de apresentação** (§7). O status vivo por funcionalidade fica no [`README.md`](../README.md).
+**Status atual:** Fases 1 e 2 entregues e **no ar** em <https://asafe.mus.br> (Cloudflare
+Workers + Supabase de produção). Além do MVP, já estão prontos: a **camada litúrgica** (§6 —
+dia litúrgico, tempo, leituras e salmo do dia, sugestão de música por momento e vínculo por
+perícope), os **modos Ao vivo e Projeção** (§7, incluindo navegação sincronizada), a
+**comunidade com moderação**, a importação em lote, a landing pública, o PWA instalável e o
+épico de **direitos autorais** (referência × conteúdo, gate de promoção, consentimento,
+permissão por obra e fonte autorizada, atribuição sempre visível). Próximos passos: uso
+offline completo dos repertórios e app nativo (Expo). O status vivo por funcionalidade fica no
+[`README.md`](../README.md).

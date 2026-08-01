@@ -116,10 +116,7 @@ export function CommunitySection({
       </div>
 
       {showsFeedback && feedback && (feedback.reason || feedback.note) && (
-        <div
-          className="mt-3 rounded p-3 text-sm"
-          style={{ color: "#92400e", background: "#fef3c7", border: "1px solid #fcd34d" }}
-        >
+        <div className="notice-warn mt-3 rounded p-3 text-sm">
           <strong>Retorno da moderação</strong>
           {feedback.reason && (
             <p className="mt-1">Motivo: {MODERATION_REASON_LABELS[feedback.reason]}</p>

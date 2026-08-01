@@ -66,40 +66,44 @@ export function ModerationList({
         const capturing = capture?.id === it.id;
         return (
           <li key={it.id} className="border-b border-border py-3">
-            <div className="flex flex-wrap items-center gap-3">
+            {/* Mobile: título em cima, ações numa linha própria (não quebra feio a 430pt).
+                sm+: tudo inline. */}
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
               <div className="flex-1">
                 <a href={viewHref(it.id)} className="font-semibold">
                   {it.title}
                 </a>
                 <span className="text-muted"> — {it.subtitle}</span>
               </div>
-              <a href={viewHref(it.id)} className="btn">
-                Revisar
-              </a>
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={busy === it.id}
-                onClick={() => void decide(it.id, "approve")}
-              >
-                Aprovar
-              </button>
-              <button
-                type="button"
-                className="btn"
-                disabled={busy === it.id}
-                onClick={() => openCapture(it.id, "return")}
-              >
-                Devolver
-              </button>
-              <button
-                type="button"
-                className="btn btn-danger"
-                disabled={busy === it.id}
-                onClick={() => openCapture(it.id, "reject")}
-              >
-                Recusar
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <a href={viewHref(it.id)} className="btn">
+                  Revisar
+                </a>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={busy === it.id}
+                  onClick={() => void decide(it.id, "approve")}
+                >
+                  Aprovar
+                </button>
+                <button
+                  type="button"
+                  className="btn"
+                  disabled={busy === it.id}
+                  onClick={() => openCapture(it.id, "return")}
+                >
+                  Devolver
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  disabled={busy === it.id}
+                  onClick={() => openCapture(it.id, "reject")}
+                >
+                  Recusar
+                </button>
+              </div>
             </div>
 
             {capturing && (
