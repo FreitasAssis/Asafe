@@ -136,7 +136,12 @@ export function LiveMode({
   // seguindo, mexe no DELTA PESSOAL (`offset`, persiste) — não zera por música nem ao entrar/sair
   // do sync, então é sempre o mesmo deslocamento.
   function bumpTom(delta: number) {
-    const v = Math.max(-11, Math.min(11, tomEdit + delta));
+    // ±12 semitons = uma oitava = os MESMOS acordes do base. Em vez de travar em ±11 (+5½ tom,
+    // ½ tom abaixo do base uma oitava acima), dá a volta pelo base: de +11 um "+" cai em 0, e
+    // de −11 um "−" cai em 0. Assim voltar ao tom base é sempre rápido pelos dois lados.
+    let v = tomEdit + delta;
+    if (v > 11) v -= 12;
+    else if (v < -11) v += 12;
     if (isMaster) {
       setTom(v);
     } else {
