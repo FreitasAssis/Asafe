@@ -122,20 +122,31 @@ export function LiveMode({
     },
   });
 
-  // #86: seguidor segue o tom do MESTRE + o seu offset pessoal (capo/instrumento). Mestre/sem sync
-  // usam o próprio `tom`. `effectiveTom` é o que realmente se aplica à cifra deste aparelho.
+  // #86: `offset` é o DELTA PESSOAL (capo/instrumento). Persiste (prefs), vale para TODAS as
+  // músicas e é o MESMO no solo e no sync — atravessa a troca (entro num sync e continuo o mesmo
+  // tanto acima). `tom` é o tom da BANDA, só no sync: quem comanda define e transmite, os
+  // seguidores acompanham via `remoteTom`. effectiveTom é o que se aplica à cifra deste aparelho:
+  //   sozinho → offset  ·  seguindo → tom da banda + offset  ·  comandando → tom da banda + offset
   const followingKey = sync && live.following && !live.isMaster;
-  const effectiveTom = followingKey ? remoteTom + offset : tom;
-  const tomEdit = followingKey ? offset : tom; // valor que os botões −/+ ajustam
+  const isMaster = sync && live.isMaster;
+  const effectiveTom = (sync ? (followingKey ? remoteTom : tom) : 0) + offset;
+  const tomEdit = isMaster ? tom : offset; // controle mostra o tom da banda (comando) ou o delta pessoal
 
-  // Ajusta o tom (mestre/sem sync) ou o offset pessoal (seguidor); ambos em −11..11 semitons.
+  // −/+ do tom (−11..11). Comandando, mexe no tom da BANDA (`tom`, transmitido). Sozinho ou
+  // seguindo, mexe no DELTA PESSOAL (`offset`, persiste) — não zera por música nem ao entrar/sair
+  // do sync, então é sempre o mesmo deslocamento.
   function bumpTom(delta: number) {
-    const v = Math.max(-11, Math.min(11, tomEdit + delta));
-    if (followingKey) {
+    // ±12 semitons = uma oitava = os MESMOS acordes do base. Em vez de travar em ±11 (+5½ tom,
+    // ½ tom abaixo do base uma oitava acima), dá a volta pelo base: de +11 um "+" cai em 0, e
+    // de −11 um "−" cai em 0. Assim voltar ao tom base é sempre rápido pelos dois lados.
+    let v = tomEdit + delta;
+    if (v > 11) v -= 12;
+    else if (v < -11) v += 12;
+    if (isMaster) {
+      setTom(v);
+    } else {
       setOffset(v);
       savePrefs({ offset: v });
-    } else {
-      setTom(v);
     }
   }
 
@@ -381,7 +392,14 @@ export function LiveMode({
       {syncPanel && (
         <div className="live-settings live-sync-panel">
           <label className="live-hide">
-            <input type="checkbox" checked={sync} onChange={(e) => setSync(e.target.checked)} /> Sincronizar
+            <input
+              type="checkbox"
+              checked={sync}
+              onChange={(e) => {
+                setSync(e.target.checked);
+                if (!e.target.checked) setTom(0); // sai do sync: some o tom da banda (o delta pessoal fica)
+              }}
+            /> Sincronizar
           </label>
           {sync && (
             <>
