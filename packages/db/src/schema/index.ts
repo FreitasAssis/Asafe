@@ -14,6 +14,7 @@ export * from "./songTag";
 export * from "./userSongTagOverride";
 export * from "./repertoire";
 export * from "./repertoireGroup";
+export * from "./repertoireFavorite";
 export * from "./repertoireItem";
 export * from "./repertoireTheme";
 export * from "./slotTemplate";

@@ -246,6 +246,20 @@
       "when": 1784839946395,
       "tag": "0034_repertoires_mine_order_upcoming",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1786406400000,
+      "tag": "0035_repertoire_favorite",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1786406500000,
+      "tag": "0036_share_audio_links",
+      "breakpoints": true
     }
   ]
 }

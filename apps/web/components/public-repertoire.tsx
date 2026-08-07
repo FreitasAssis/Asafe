@@ -229,7 +229,9 @@ export function PublicRepertoire({
       )}
 
       <footer style={{ marginTop: 32, color: "var(--text-muted)", fontSize: 12, textAlign: "center" }}>
-        Asafe 🎵
+        <a href="https://asafe.mus.br/" target="_blank" rel="noreferrer" style={{ color: "inherit" }}>
+          Asafe 🎵
+        </a>
       </footer>
     </main>
   );
