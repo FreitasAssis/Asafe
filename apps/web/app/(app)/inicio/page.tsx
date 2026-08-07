@@ -5,6 +5,7 @@ import { serverClient } from "@/lib/supabase/server";
 import { listRepertoires } from "@/lib/repertoires";
 import { PREFS_COOKIE, parsePrefs } from "@/lib/preferences";
 import { WelcomeCard } from "@/components/welcome-card";
+import { FavoriteStar } from "@/components/favorite-star";
 
 /** Home: mini-painel — próximo repertório, repertórios recentes e atalhos. */
 export default async function Home() {
@@ -23,7 +24,9 @@ export default async function Home() {
     reps
       .filter((r) => r.date && r.date >= today)
       .sort((a, b) => ((a.date ?? "") < (b.date ?? "") ? -1 : 1))[0] ?? null;
-  const recent = reps.slice(0, 4);
+  const favorites = reps.filter((r) => r.favorite);
+  // "Recentes" não repete os favoritos (esses já têm a seção fixa acima).
+  const recent = reps.filter((r) => !r.favorite).slice(0, 4);
 
   const acoes = (
     <div className="mt-6 flex flex-wrap gap-2">
@@ -61,6 +64,30 @@ export default async function Home() {
             </a>
           )}
 
+          {favorites.length > 0 && (
+            <section className="mt-6">
+              <h2 className="font-serif text-lg font-semibold">⭐ Favoritos</h2>
+              <ul className="mt-2 list-none p-0">
+                {favorites.map((r) => (
+                  <li key={r.id} className="flex items-center gap-2 border-b border-border py-2">
+                    <FavoriteStar repertoireId={r.id} userId={user.id} initialFavorite />
+                    <span>
+                      <a href={`/repertorios/${r.id}`} className="font-semibold">
+                        {r.title}
+                      </a>
+                      <span className="text-muted">
+                        {" "}
+                        — {REPERTOIRE_TYPE_LABELS[r.type]}
+                        {r.date ? ` · ${r.date}` : ""}
+                        {r.groupName ? ` · 👥 ${r.groupName}` : ""}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           <section className="mt-6">
             <div className="flex items-baseline justify-between">
               <h2 className="font-serif text-lg font-semibold">Repertórios</h2>
@@ -71,6 +98,7 @@ export default async function Home() {
             <ul className="mt-2 list-none p-0">
               {recent.map((r) => (
                 <li key={r.id} className="flex items-center gap-2 border-b border-border py-2">
+                  <FavoriteStar repertoireId={r.id} userId={user.id} initialFavorite={r.favorite} />
                   {liturgicalColorHex(r.liturgicalColor) && (
                     <span
                       title="Cor litúrgica do dia"

@@ -6,6 +6,7 @@ import { browserClient } from "@/lib/supabase/client";
 import { deleteRepertoire, type RepertoireListItem } from "@/lib/repertoires";
 import { RowActions } from "@/components/row-actions";
 import { StatusBadge } from "@/components/status-badge";
+import { FavoriteStar } from "@/components/favorite-star";
 
 /** Lista de repertórios com ações por linha (lápis/lixeira só para o dono). */
 export function RepertoireList({
@@ -34,6 +35,7 @@ export function RepertoireList({
             gap: 8,
           }}
         >
+          <FavoriteStar repertoireId={r.id} userId={userId} initialFavorite={r.favorite} />
           {liturgicalColorHex(r.liturgicalColor) && (
             <span
               title="Cor litúrgica do dia"

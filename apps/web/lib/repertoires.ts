@@ -22,6 +22,8 @@ export interface RepertoireListItem {
   communityStatus: CommunityStatus;
   /** Cor litúrgica do dia (Missa resolvida), crua ("green"…); null se não houver. */
   liturgicalColor: string | null;
+  /** EU favoritei este (pessoal, por usuário — #favoritos). */
+  favorite: boolean;
 }
 
 /** Item da aba Comunidade: repertório aprovado de outra pessoa (com o autor). */
@@ -121,6 +123,7 @@ export async function listRepertoires(
       community_status: CommunityStatus;
       group_name: string | null;
       liturgical_color: string | null;
+      favorite: boolean;
     }[]
   ).map((r) => ({
     id: r.id,
@@ -131,7 +134,50 @@ export async function listRepertoires(
     communityStatus: r.community_status,
     groupName: r.group_name,
     liturgicalColor: r.liturgical_color,
+    favorite: r.favorite,
   }));
+}
+
+/**
+ * Marca/desmarca um repertório como favorito PESSOAL (por usuário). Toggle idempotente:
+ * `true` insere (upsert p/ não duplicar na PK), `false` apaga. A RLS garante que a linha
+ * é do próprio usuário (user_id = auth.uid()).
+ */
+export async function setRepertoireFavorite(
+  supabase: SupabaseClient,
+  userId: string,
+  repertoireId: string,
+  favorite: boolean,
+): Promise<void> {
+  if (favorite) {
+    const { error } = await supabase
+      .from("repertoire_favorite")
+      .upsert({ user_id: userId, repertoire_id: repertoireId }, { onConflict: "user_id,repertoire_id" });
+    if (error) throw error;
+  } else {
+    const { error } = await supabase
+      .from("repertoire_favorite")
+      .delete()
+      .eq("user_id", userId)
+      .eq("repertoire_id", repertoireId);
+    if (error) throw error;
+  }
+}
+
+/** Este repertório está nos MEUS favoritos? (checagem pontual, ex.: página de detalhe). */
+export async function isRepertoireFavorite(
+  supabase: SupabaseClient,
+  userId: string,
+  repertoireId: string,
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("repertoire_favorite")
+    .select("repertoire_id")
+    .eq("user_id", userId)
+    .eq("repertoire_id", repertoireId)
+    .maybeSingle();
+  if (error) throw error;
+  return !!data;
 }
 
 /** Aba Comunidade: repertórios aprovados de outras pessoas (via `repertoires_community()`). */
