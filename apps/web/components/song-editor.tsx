@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   audioProvider,
@@ -59,6 +59,8 @@ export function SongEditor({
   const [audioLinks, setAudioLinks] = useState<string[]>(song?.audioLinks ?? []);
   const [offset, setOffset] = useState(0);
   const [hideChords, setHideChords] = useState(false);
+  // No celular o editor ocupa a tela toda; o preview abre num modal por este toggle.
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
@@ -126,6 +128,16 @@ export function SongEditor({
       return cifra;
     }
   }, [cifra, offset, hideChords]);
+
+  // Fecha o modal de preview (celular) com Esc.
+  useEffect(() => {
+    if (!previewOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPreviewOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [previewOpen]);
 
   function setLink(i: number, value: string) {
     setAudioLinks((links) => links.map((l, j) => (j === i ? value : l)));
@@ -206,6 +218,33 @@ export function SongEditor({
     }
   }
 
+  // Controles do preview (tom ± e esconder cifra) + a própria visualização. Reusado no
+  // desktop (coluna ao lado) e no celular (dentro do modal).
+  const previewPanel = (
+    <>
+      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
+        <button type="button" onClick={() => setOffset((o) => o - 1)}>
+          −
+        </button>
+        <span style={{ minWidth: 70, textAlign: "center", fontSize: 13 }}>
+          tom {offset > 0 ? `+${offset}` : offset}
+        </span>
+        <button type="button" onClick={() => setOffset((o) => o + 1)}>
+          +
+        </button>
+        <label style={{ marginLeft: 12, fontSize: 13 }}>
+          <input
+            type="checkbox"
+            checked={hideChords}
+            onChange={(e) => setHideChords(e.target.checked)}
+          />{" "}
+          esconder cifra
+        </label>
+      </div>
+      <ChordPreview chordpro={preview} />
+    </>
+  );
+
   return (
     <main style={{ maxWidth: 960, margin: "1.5rem auto", padding: "0 1rem" }}>
       <Breadcrumb
@@ -247,15 +286,9 @@ export function SongEditor({
         </div>
       </div>
 
-      {/* Editor + preview lado a lado */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 16,
-          marginTop: 16,
-        }}
-      >
+      {/* Editor + preview: lado a lado no desktop; no celular o editor toma a tela toda e
+          o preview abre num modal (botão abaixo do textarea). */}
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div>
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
             <label style={{ fontSize: 13, color: "var(--text-muted)" }}>
@@ -278,31 +311,50 @@ export function SongEditor({
             rows={18}
             style={{ width: "100%", padding: 10, fontFamily: "ui-monospace, monospace", fontSize: 14 }}
           />
+          {/* Só no celular: abre o preview num modal para não espremer o editor. */}
+          <button
+            type="button"
+            className="btn sm:hidden"
+            onClick={() => setPreviewOpen(true)}
+            style={{ marginTop: 8, width: "100%" }}
+          >
+            👁 Ver preview
+          </button>
         </div>
 
-        <div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
-            <button type="button" onClick={() => setOffset((o) => o - 1)}>
-              −
-            </button>
-            <span style={{ minWidth: 70, textAlign: "center", fontSize: 13 }}>
-              tom {offset > 0 ? `+${offset}` : offset}
-            </span>
-            <button type="button" onClick={() => setOffset((o) => o + 1)}>
-              +
-            </button>
-            <label style={{ marginLeft: 12, fontSize: 13 }}>
-              <input
-                type="checkbox"
-                checked={hideChords}
-                onChange={(e) => setHideChords(e.target.checked)}
-              />{" "}
-              esconder cifra
-            </label>
-          </div>
-          <ChordPreview chordpro={preview} />
-        </div>
+        {/* Desktop: preview lado a lado. */}
+        <div className="hidden sm:block">{previewPanel}</div>
       </div>
+
+      {/* Celular: preview em modal (toca fora / ✕ / Esc fecha). */}
+      {previewOpen && (
+        <div
+          className="fixed inset-0 z-[220] flex flex-col bg-black/50 p-3 sm:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Preview da música"
+          onClick={() => setPreviewOpen(false)}
+        >
+          <div
+            className="flex min-h-0 flex-1 flex-col overflow-auto rounded-lg p-3"
+            style={{ background: "var(--surface)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <strong>Preview</strong>
+              <button
+                type="button"
+                onClick={() => setPreviewOpen(false)}
+                aria-label="Fechar preview"
+                style={{ fontSize: 18, background: "transparent", border: 0, cursor: "pointer" }}
+              >
+                ✕
+              </button>
+            </div>
+            {previewPanel}
+          </div>
+        </div>
+      )}
 
       {/* Links de áudio */}
       <section style={{ marginTop: 16 }}>
