@@ -12,5 +12,8 @@
     "plugins": [{ "name": "next" }]
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  // worker.ts fica de fora: ele importa `.open-next/` (artefato de build, gitignorado)
+  // que não existe num clone fresco — o typecheck do CI quebraria. Quem o compila é o
+  // esbuild do wrangler, no deploy.
+  "exclude": ["node_modules", "worker.ts"]
 }
