@@ -230,7 +230,9 @@ código: `packages/db` + `@asafe/core`):
 - **Custo ~zero.** Dado é quase todo texto (~1–3 KB por música); os limites gratuitos do
   Supabase comportam um acervo muito maior que uma diocese produz. Áudio é **link** (sem
   upload); PDF é gerado sob demanda (não guardado); liturgia em cache; Cloudflare CDN na
-  frente dos links. Um ping diário (GitHub Actions) evita a pausa do Supabase. Único custo
+  frente dos links. Um ping diário (Cron Trigger da Cloudflare, no próprio Worker) evita a
+  pausa do Supabase — ficava no GitHub Actions, que desativa workflows agendados após 60
+  dias sem commits, justamente nos períodos parados em que o ping importa. Único custo
   quase certo: domínio (~R$ 40/ano), e mesmo assim opcional (`*.workers.dev` grátis).
 
 ## 10. Identidade e onboarding

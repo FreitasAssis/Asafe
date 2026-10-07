@@ -1,6 +1,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "main": ".open-next/worker.js",
+  // Entry custom: reexporta o worker do OpenNext e acrescenta o `scheduled` do cron
+  // (o `.open-next/worker.js` é regenerado a cada build e só exporta `fetch`).
+  "main": "worker.ts",
   "name": "asafe",
   "compatibility_date": "2024-12-30",
   // nodejs_compat: APIs de Node no workerd (o app usa @supabase/ssr com cookies).
@@ -15,5 +17,15 @@
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
+  },
+  // Keepalive do Supabase (worker.ts → scheduled): o free pausa o projeto após ~7 dias
+  // sem atividade. Uma vez por dia dá margem folgada. 05:00 UTC = 02:00 BRT; a fila de
+  // crons da Cloudflare pode atrasar alguns minutos, o que é irrelevante aqui.
+  "triggers": {
+    "crons": ["0 5 * * *"]
+  },
+  // Logs do cron no painel do Worker — sem isso o `throw` do keepalive falha em silêncio.
+  "observability": {
+    "enabled": true
   }
 }
